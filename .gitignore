@@ -3,3 +3,24 @@
 
 # Ignore Gradle build output directory
 build
+
+# LaTeX files
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz
+*.toc
+*.synctex(busy)
+*.dvi
+*.out
+*.bcf
+*.run.xml
+
+# BibTeX
+*-blx.bib
+*.bbl
+*.blg
+
+# OS X
+.DS_Store
