@@ -1,4 +1,4 @@
-package ch.samt.blockchain;
+package ch.samt.blockchain.node;
 
 import java.sql.Blob;
 import java.sql.Connection;
@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class DatabaseConnection {
+    
     /**
      * Creates a Connection object, it is used to connect to the database.
      */
@@ -30,21 +31,8 @@ public class DatabaseConnection {
         System.out.println("[database] :: connecting");
 
         try {
-            Class.forName("jdbc:sqlite:" + database);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        try {
             connection = DriverManager.getConnection("jdbc:sqlite:" + database);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        try {
-            statement = connection.createStatement(
-                    ResultSet.TYPE_SCROLL_SENSITIVE,
-                    ResultSet.CONCUR_UPDATABLE);
+            statement = connection.createStatement();
         } catch (SQLException e) {
             e.printStackTrace();
         }
