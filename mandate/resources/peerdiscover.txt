@@ -1,0 +1,10 @@
+Peer Discovery:
+The seed must contain a list of the last 1000 ip's (and also the port) active on the blockchain.
+If a machine wants to connect to the blockchain for the first time, it must first ask a seed for 100 random ip's
+that the seed believes are active. Once these ip's are saved in the appropriate table in the local database,
+the machine can start to search for a node on the blockchain, using the saved ip's.
+When it finds an active node it asks for the ip it knows, at this point the machine becomes
+a node of the blockchain that can communicate with other nodes.
+Alive status:
+Every 5 min both between nodes themselves and between node and seed, there is a communication from the node,
+which notifies its state of alive on the blockchain.
