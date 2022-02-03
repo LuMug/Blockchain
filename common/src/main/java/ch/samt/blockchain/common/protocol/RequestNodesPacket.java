@@ -1,20 +1,28 @@
 package ch.samt.blockchain.common.protocol;
 
 import ch.samt.blockchain.common.utils.byteutils.Offset;
+import static ch.samt.blockchain.common.utils.byteutils.ByteUtils.*;
 
 public class RequestNodesPacket {
     
+    private int amount;
+
     public RequestNodesPacket(byte[] packet) {
         Offset offset = new Offset(1);
+
+        this.amount = readIntLE(packet, offset);
     }
 
-    public static byte[] create(String username, byte[] password) {
-        byte[] packet = new byte[username.length() + password.length + 6];
+    public int getAmount() {
+        return amount;
+    }
+
+    public static byte[] create(int amount) {
+        byte[] packet = new byte[5];
         Offset offset = new Offset();
 
-        //writeByte(packet, Protocol.LOGIN, offset);
-        //writeString(packet, username, offset);
-        //writeBlob(packet, password, offset);
+        writeByte(packet, Protocol.REQUEST_NODES, offset);
+        writeIntLE(packet, amount, offset);
 
         return packet;
     }
