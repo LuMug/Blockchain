@@ -1,3 +1,4 @@
+package ch.samt.blockchain.common.utils.byteutils;
 
 public class Offset {
 

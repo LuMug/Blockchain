@@ -1,3 +1,4 @@
+package ch.samt.blockchain.common.utils.byteutils;
 
 import java.net.InetSocketAddress;
 import java.util.UUID;

@@ -1,3 +1,4 @@
+package ch.samt.blockchain.common.utils.stream;
 
 import java.io.IOException;
 import java.io.OutputStream;
