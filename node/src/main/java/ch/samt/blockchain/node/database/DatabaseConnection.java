@@ -1,4 +1,4 @@
-package ch.samt.blockchain.node;
+package ch.samt.blockchain.node.database;
 
 import java.sql.Blob;
 import java.sql.Connection;
