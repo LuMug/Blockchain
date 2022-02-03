@@ -1,0 +1,15 @@
+plugins {
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':common')
+}
+
+application {
+    mainClass = 'ch.samt.blockchain.seeder.Main'
+}
