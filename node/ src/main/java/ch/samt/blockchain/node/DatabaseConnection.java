@@ -1,3 +1,5 @@
+package ch.samt.blockchain;
+
 import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.DriverManager;

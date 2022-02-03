@@ -1,3 +1,20 @@
+plugins {
+    id 'application'
+}
+
+
 dependencies {
     implementation 'org.xerial:sqlite-jdbc:3.8.11.2'
+}
+
+application {
+    mainClass = 'ch.samt.blockchain.node.Main'
+}
+
+jar {
+    manifest {
+        attributes(
+            'Main-Class': 'ch.samt.blockchain.node.Main'
+        )
+    }
 }
