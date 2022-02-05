@@ -250,7 +250,50 @@ will execute one time to set its initial state, at which point the smart contrac
 \end{center}
 \egroup{}
 
+\pagebreak
+
+\section{Design change}
+
+This design change is related to how a user interacts with the blockchain. \\
+Our initial idea was to develop a \textit{client} software alongside the \textit{node} software.
+The \textit{client} would connect to a single node as an entry to the blockchain to broadcast its transactions.
+The user would then be able to broadcast transactions to the blockchain using a web-based application. \\
+This is a poor design choice since it has a number of problems.
+
+\begin{itemize}
+    \item \textbf{Problem 1} Dual-functionality: Each node would need to be able to handle and distinguish both a connection
+    from a node and a connection from a client.
+    \item \textbf{Problem 2} WebAssembly: Both the \textit{client} and \textit{node} software would share the same
+    protocol implementation, written in Java. Since the application is web-based, we would need to
+    compile the \textit{client} code to WebAssembly (WASM) to run on the browser.
+    \item \textbf{Problem 2.1} Sockets: It would be challenging to allow for \textit{socket connections}
+    from a Java-based WASM.
+    \item \textbf{Problem 3} Peer discovery: The client software can't store the addresses of other nodes
+    since it is a web-based application. Even by caching nodes using \textit{cookies}, clients will generally
+    need to rely on \textit{seeders} more than they should.
+\end{itemize}
+
+The solution is to completly remove the client. Only nodes can broacast transactions throughout the network.
+The web application will send requests to a server, which is also a node.
+This server will route the user transactions through its node.
+No WebAssembly is needed. Connection to the seeder will be established (possibly) only the first time the web
+application server's node connects to the blockchain. Users can still host their own node and use them as an entry to the network, and
+multiple users can host their own web application for the same purpose.
+
 \end{document}
 
 % COMPILE:
 % lualatex documentation.tex; mv documentation.pdf ..
+
+
+
+Peer Discovery:
+The seed must contain a list of the last 1000 ip's (and also the port) active on the blockchain.
+If a machine wants to connect to the blockchain for the first time, it must first ask a seed for 100 random ip's
+that the seed believes are active. Once these ip's are saved in the appropriate table in the local database,
+the machine can start to search for a node on the blockchain, using the saved ip's.
+When it finds an active node it asks for the ip it knows, at this point the machine becomes
+a node of the blockchain that can communicate with other nodes.
+Alive status:
+Every 5 min both between nodes themselves and between node and seed, there is a communication from the node,
+which notifies its state of alive on the blockchain.

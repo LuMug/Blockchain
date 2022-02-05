@@ -1,24 +1,23 @@
 package ch.samt.blockchain.node;
 
-import ch.samt.blockchain.node.database.*;
+import java.util.Scanner;
+
 
 public class Main {
+
     public static void main(String[] args) throws Exception {
-        DatabaseConnection db = new DatabaseConnection("node.db");
-        db.execute("""
-            CREATE TABLE IF NOT EXISTS test (
-                id INT PRIMARY KEY,
-                nome VARCHAR(25)
-            );
-        """);
+        var node = new Node(3432);
 
-        db.execute("INSERT INTO test (nome) VALUES ('ciao');");
+        // Start service
+        node.start();
 
-        var result = db.query("SELECT * FROM test;");
+        // Interactive console
+        try (var scanner = new Scanner(System.in)) {
+            while (true) {
+                switch (scanner.nextLine().toLowerCase()) {
 
-        while (result.next()) {
-            System.out.print(result.getInt(1));
-            System.out.println(result.getString(2));
+                }
+            }
         }
     }
 }

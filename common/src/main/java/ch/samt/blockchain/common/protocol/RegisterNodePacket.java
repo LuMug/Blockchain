@@ -4,15 +4,22 @@ import static ch.samt.blockchain.common.utils.byteutils.ByteUtils.*;
 
 public class RegisterNodePacket {
 
-    private RegisterNodePacket() {}
+    private int port;
 
-    private static byte[] packet = new byte[1];
-
-    static {
-        writeByte(packet, Protocol.REGISTER_NODE, 0);
+    public RegisterNodePacket(byte[] packet) {
+        this.port = readUShortLE(packet, 1);
     }
 
-    public static byte[] create() {
+    public int getPort() {
+        return port;
+    }
+
+    public static byte[] create(int port) {
+        byte[] packet = new byte[3];
+
+        writeByte(packet, Protocol.REGISTER_NODE, 0);
+        writeShortLE(packet, port, 1);
+        
         return packet;
     }
 

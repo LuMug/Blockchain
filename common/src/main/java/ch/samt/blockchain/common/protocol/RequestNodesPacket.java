@@ -1,6 +1,5 @@
 package ch.samt.blockchain.common.protocol;
 
-import ch.samt.blockchain.common.utils.byteutils.Offset;
 import static ch.samt.blockchain.common.utils.byteutils.ByteUtils.*;
 
 public class RequestNodesPacket {
@@ -8,9 +7,7 @@ public class RequestNodesPacket {
     private int amount;
 
     public RequestNodesPacket(byte[] packet) {
-        Offset offset = new Offset(1);
-
-        this.amount = readIntLE(packet, offset);
+        this.amount = readIntLE(packet, 1);
     }
 
     public int getAmount() {
@@ -19,10 +16,9 @@ public class RequestNodesPacket {
 
     public static byte[] create(int amount) {
         byte[] packet = new byte[5];
-        Offset offset = new Offset();
 
-        writeByte(packet, Protocol.REQUEST_NODES, offset);
-        writeIntLE(packet, amount, offset);
+        writeByte(packet, Protocol.REQUEST_NODES, 0);
+        writeIntLE(packet, amount, 1);
 
         return packet;
     }
