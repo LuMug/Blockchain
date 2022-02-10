@@ -12,6 +12,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import ch.samt.blockchain.common.protocol.Protocol;
+import ch.samt.blockchain.common.protocol.RegisterNodePacket;
 import ch.samt.blockchain.common.protocol.RequestNodesPacket;
 import ch.samt.blockchain.common.protocol.ServeNodesPacket;
 import ch.samt.blockchain.common.utils.stream.PacketInputStream;
@@ -51,12 +52,12 @@ public class Node extends Thread {
                     connection.start();
                     
                     // SHOULD BE DONE ASYNC
-                    database.cacheNode(socket.getLocalSocketAddress().toString(), socket.getPort());
+                    database.cacheNode(socket.getRemoteSocketAddress().toString(), socket.getPort());
                     if (neighbours.size() > Protocol.Node.MAX_CONNECTIONS) {
                         // disconnect from random node
                         var rnd_connection = getRandomNeighbour();
                         disconnect(rnd_connection);
-                        database.updateLastSeen(rnd_connection.getSocket().getLocalAddress().toString(), rnd_connection.getSocket().getPort());
+                        database.updateLastSeen(rnd_connection.getSocket().getRemoteSocketAddress().toString(), rnd_connection.getSocket().getPort());
                     }
 
                     if (neighbours.size() < Protocol.Node.MIN_CONNECTIONS) {
@@ -64,14 +65,14 @@ public class Node extends Thread {
                         for (var node : nodes) {
                             // TODO check if is not myself
                             if (!neighboursContain(node)) {
-                                var node_socket = tryConnection(node.getAddress().toString(), node.getPort());
+                                var node_socket = tryConnection(node.getHostString(), node.getPort());
                             
                                 // If has responded
                                 if (socket != null) {
                                     var node_connection = new Connection(this, node_socket);
                                     node_connection.start();
                                     neighbours.add(node_connection);
-                                    database.cacheNode(node.getAddress().toString(), node.getPort());
+                                    database.cacheNode(node.getHostString(), node.getPort());
                                 }
                             }
                         }
@@ -101,14 +102,14 @@ public class Node extends Thread {
                 for (var node : nodes) {
                     // TODO check if is not myself
                     if (!neighboursContain(node)) {
-                        var socket = tryConnection(node.getAddress().toString(), node.getPort());
+                        var socket = tryConnection(node.getHostString(), node.getPort());
                     
                         // If has responded
                         if (socket != null) {
                             var connection = new Connection(this, socket);
                             connection.start();
                             neighbours.add(connection);
-                            database.cacheNode(node.getAddress().toString(), node.getPort());
+                            database.cacheNode(node.getHostString(), node.getPort());
                         }
                     }
                 }
@@ -121,12 +122,17 @@ public class Node extends Thread {
         } else {
             updateFromNeighbours();
         }
+
+        registerToSeeder();
     }
 
     private boolean neighboursContain(InetSocketAddress address) {
         for (var neighbour : neighbours) {
             // ???
-            if (neighbour.getSocket().getLocalSocketAddress().equals(address)) {
+            System.out.println("XXX Checking " +
+                neighbour.getSocket().getRemoteSocketAddress().toString() +
+                " with " + address.getHostString());
+            if (neighbour.getSocket().getRemoteSocketAddress().toString().contains(address.getHostString())) {
                 return true;
             }
         }
@@ -135,14 +141,15 @@ public class Node extends Thread {
     }
 
     public void broadcast(byte[] data) {
+        // TODO:
 
     }
 
     private InetSocketAddress[] querySeeders(int amount) {
         // Select random seeder
-        var address = Seeders.seeders[(int) (Math.random() * Seeders.seeders.length)];
+        var address = getRandomSeeder();
 
-        try (var seeder = new Socket(address.getAddress().toString(), address.getPort())) {
+        try (var seeder = new Socket(address.getHostString(), address.getPort())) {
             var in = new PacketInputStream(seeder.getInputStream());
             var out = new PacketOutputStream(seeder.getOutputStream());
 
@@ -167,6 +174,7 @@ public class Node extends Thread {
         try {
             return new Socket(address, port);
         } catch (Exception e) {
+            e.printStackTrace();
             return null;
         }
     }
@@ -185,14 +193,14 @@ public class Node extends Thread {
             for (var node : nodes) {
                 // TODO check if is not myself
                 if (!neighboursContain(node)) {
-                    var socket = tryConnection(node.getAddress().toString(), node.getPort());
+                    var socket = tryConnection(node.getHostString(), node.getPort());
                 
                     // If has responded
                     if (socket != null) {
                         var connection = new Connection(this, socket);
                         connection.start();
                         neighbours.add(connection);
-                        database.cacheNode(node.getAddress().toString(), node.getPort());
+                        database.cacheNode(node.getHostString(), node.getPort());
                     }
                 }
             }
@@ -243,16 +251,47 @@ public class Node extends Thread {
         System.out.println("[NODE] :: Initializing periodic register to a random seeder");
         scheduler.scheduleAtFixedRate(
             () -> {
-                System.out.println("[NODE] :: Registering to a random seeder");
-            
+                registerToSeeder();
             },
             Protocol.Node.REGISTER_INTERVAL,
             Protocol.Node.REGISTER_INTERVAL,
             TimeUnit.MILLISECONDS);
     }
 
+    private void registerToSeeder() { // should be exhaustive
+        System.out.println("[NODE] :: Registering to a random seeder");
+        var seeder = getRandomSeeder();
+        
+        var connection = tryConnection(seeder.getHostString(), seeder.getPort());
+        
+        if (connection != null) {
+            try {
+                var out = new PacketOutputStream(connection.getOutputStream());
+                out.writePacket(RegisterNodePacket.create(port));
+                Thread.sleep(100);
+                connection.close();
+            } catch (IOException | InterruptedException e) {
+
+            }
+        }
+    }
+
     private Connection getRandomNeighbour() {
         return neighbours.get((int) (Math.random() * neighbours.size()));
     }
+
+    private InetSocketAddress getRandomSeeder() {
+        return Seeders.seeders[(int) (Math.random() * Seeders.seeders.length)];
+    }
+
+    /**
+     * TODO:
+     * queryNeighbours, querySeeder and registerToSeeder shoul be more exhaustive
+     * when the connection fails
+     * 
+     * simplify var in, var out with class
+     * 
+     * Ask seeder what's my Ip address
+     */
 
 }

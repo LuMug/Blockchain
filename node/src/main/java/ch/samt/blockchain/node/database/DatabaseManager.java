@@ -48,7 +48,7 @@ public class DatabaseManager {
     private boolean containsNode(String address, int port) {
         var result = connection.query("SELECT port FROM nodes WHERE address='" + address + "' AND port=" + port + ";");
         try {
-            return result.first();
+            return result.next();
         } catch (SQLException e) {
             e.printStackTrace();
             return true;
@@ -70,7 +70,7 @@ public class DatabaseManager {
     public boolean isNodeCacheEmpty() {
         var result = connection.query("SELECT address FROM nodes LIMIT 1;");
         try {
-            return result.first();
+            return result.next();
         } catch (SQLException e) {
             e.printStackTrace();
             return true;

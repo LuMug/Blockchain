@@ -1,0 +1,1 @@
+screen -dmS "seeder3" java -jar ../seeder/build/libs/seeder.jar 4672

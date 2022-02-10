@@ -28,6 +28,7 @@ public class Seeder extends Thread {
                 try {
                     // Wait for connection
                     var socket = server.accept();
+                    
                     new Connection(this, socket).start();
                 } catch (IOException e) {}
             }
@@ -96,6 +97,7 @@ public class Seeder extends Thread {
         for (var node : nodes) {
             ps.println("\t" + node);
         }
+        ps.println();
     }
 
     private static boolean contains(int[] arr, int val) {

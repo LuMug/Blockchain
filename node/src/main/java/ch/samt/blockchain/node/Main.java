@@ -1,5 +1,6 @@
 package ch.samt.blockchain.node;
 
+import java.net.Socket;
 import java.util.Scanner;
 
 public class Main {

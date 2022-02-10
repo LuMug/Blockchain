@@ -52,12 +52,14 @@ public class Connection extends Thread {
     private void processPacket(byte[] data) throws IOException {
         switch (data[0]) {
             case Protocol.REGISTER_NODE -> {
+                System.out.println("Node registered");
                 var packet = new RegisterNodePacket(data);
                 int port = packet.getPort();
                 var node = new InetSocketAddress(socket.getInetAddress(), port);
                 seeder.renew(node);
             }
             case Protocol.REQUEST_NODES -> {
+                System.out.println("Node request");
                 var packet = new RequestNodesPacket(data);
                 int amount = packet.getAmount();
                 var nodes = seeder.drawNodes(amount);
