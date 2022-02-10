@@ -21,7 +21,6 @@ public class Node extends Thread {
     public void run() {
         System.out.println("[NODE] :: Connecting to blockchain");
 
-
         try (var seeder = new Socket("127.0.0.1", 7676)) {
             var in = new PacketInputStream(seeder.getInputStream());
             var out = new PacketOutputStream(seeder.getOutputStream());

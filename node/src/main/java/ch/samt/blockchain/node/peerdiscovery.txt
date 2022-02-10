@@ -1,0 +1,85 @@
+timestamp -> last time the node was alive
+
+pool di nodi N = 0;
+
+add_nodes_to_db():
+    for each node
+        if not exists
+            Add to table
+            if size(table) > MAX_TABLE_SIZE
+                remove node with oldest timestamp
+
+connect():
+    if database != empty
+        while (next node in db && N < MIN_CONNECTIONS)
+            if (node is online)
+                N += node;
+
+    if N == 0
+        pool di nodi M = 0
+        while (M < MIN_CONNECTIONS && MAX ITER1 times)
+            M += from_seeders(MIN_CONNECTIONS - N)
+            M -= myself
+            M -= offline
+            M -= duplicates
+        N += M
+        add_nodes_to_db(M)
+    
+    if N == 0
+        FIRST NODE
+    else
+        while (N < MIN_CONNECTIONS && MAX ITER2 times)
+            M = from_neighboars(MIN_CONNECTIONS - N)
+            M -= myself
+            M -= duplicates
+            N += M
+            add_nodes_to_db(M)
+
+ON START:
+    connect()
+
+ON NODE DISCONNECT
+    update_timestamp(disconneted_node)
+    N -= disconnected_node
+    if N == 0
+        connect()
+
+ON SHUTDOWN
+    for every neighbod node
+        update_timestamp(node)
+
+ON INCOMING CONNECTION
+    add_nodes_to_db(node)
+    if N > MAX_CONNECTIONS
+        disconnect from random node
+    if N < MIN_CONNECTIONS
+        M = from_incoming_node(MIN_CONNECTIONS - N)
+        M -= duplicates
+        M -= myself
+        N += M
+        add_nodes_to_db(M)
+
+update():
+    if N < MIN_CONNECTIONS
+        M = from_neighboars(MIN_CONNECTIONS - N)
+        M -= duplicates
+        M -= myself
+        N += M
+        add_nodes_to_db(M)
+    if N < MIN_CONNECTIONS
+        while next node in db && if N < MIN_CONNECTIONS
+            if node != duplicate && is online
+                N += node
+
+
+EVERY UPDATE_INTERVAL
+    update()
+
+EVERY REGISTER_INTERVAL
+    random seeder.register(me)
+
+
+
+
+On broadcast must prevent double send, otherwise the transaction won't ever stop
+travelling
