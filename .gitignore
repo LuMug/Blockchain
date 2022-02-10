@@ -29,3 +29,6 @@ bin
 
 # Databases
 *.db
+
+# Codetogether
+.codetogether.ignore
