@@ -2,6 +2,17 @@ plugins {
     id 'application'
 }
 
+jar {
+    manifest {
+        attributes 'Main-Class': 'ch.samt.blockchain.seeder.Main'
+    }
+
+    from {
+        duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
 repositories {
     mavenCentral()
 }
