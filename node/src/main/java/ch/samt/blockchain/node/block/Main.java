@@ -11,13 +11,13 @@ public class Main {
         String prefixString = new String(new char[prefix]).replace('\0', '0');
 
         Block newBlock = new Block(
-                "Giacinto omo",
+                new byte[]{0,0,0,0,0,0,0},
                 blockchain.get(blockchain.size() - 1).getHash(),
                 new Date().getTime());
         newBlock.mineBlock(prefix);
 
         if(newBlock.getHash().substring(0, prefix).equals((prefixString))){
-            blockchain.add(newBlock)
+            blockchain.add(newBlock);
         }
     }
 }
