@@ -63,7 +63,6 @@ public class Node extends Thread {
                     if (neighbours.size() < Protocol.Node.MIN_CONNECTIONS) {
                         var nodes = connection.requestNodes(Protocol.Node.MIN_CONNECTIONS - neighbours.size());
                         for (var node : nodes) {
-                            // TODO check if is not myself
                             if (!neighboursContain(node)) {
                                 var node_socket = tryConnection(node.getHostString(), node.getPort());
                             
@@ -100,7 +99,6 @@ public class Node extends Thread {
             for (int i = 0; i < Protocol.Node.MAX_TRIES_SEEDER && result.size() < Protocol.Node.MIN_CONNECTIONS; i++) {
                 var nodes = querySeeders(Protocol.Node.MIN_CONNECTIONS);
                 for (var node : nodes) {
-                    // TODO check if is not myself
                     if (!neighboursContain(node)) {
                         var socket = tryConnection(node.getHostString(), node.getPort());
                     
@@ -191,7 +189,6 @@ public class Node extends Thread {
         for (int i = 0; i < Protocol.Node.MAX_TRIES_NEIGHBOUR && neighbours.size() < Protocol.Node.MIN_CONNECTIONS; i++) {
             var nodes = queryNeighbours(Protocol.Node.MIN_CONNECTIONS - neighbours.size());
             for (var node : nodes) {
-                // TODO check if is not myself
                 if (!neighboursContain(node)) {
                     var socket = tryConnection(node.getHostString(), node.getPort());
                 
@@ -229,7 +226,6 @@ public class Node extends Thread {
     }
 
     private void initPeriodicUpdate() {
-        System.out.println("[NODE] :: Initializing periodic connection updates");
         scheduler.scheduleAtFixedRate(
             () -> {
                 System.out.println("[NODE] :: Updating connections from local cache and neighbour nodes");
@@ -248,11 +244,8 @@ public class Node extends Thread {
     }
 
     private void initPeridicRegister() {
-        System.out.println("[NODE] :: Initializing periodic register to a random seeder");
         scheduler.scheduleAtFixedRate(
-            () -> {
-                registerToSeeder();
-            },
+            () -> registerToSeeder(),
             Protocol.Node.REGISTER_INTERVAL,
             Protocol.Node.REGISTER_INTERVAL,
             TimeUnit.MILLISECONDS);
@@ -291,7 +284,7 @@ public class Node extends Thread {
      * 
      * simplify var in, var out with class
      * 
-     * Ask seeder what's my Ip address
+     * Excluse same node from serveNodesPacket
      */
 
 }

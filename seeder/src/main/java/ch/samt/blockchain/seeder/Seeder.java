@@ -1,14 +1,18 @@
 package ch.samt.blockchain.seeder;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.SocketAddress;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
 
 public class Seeder extends Thread {
     
+    // move to Protocol
     public static final int POOL_CAPACITY = 100;
     public static final int MAX_REQUEST = 10;
 
@@ -108,6 +112,36 @@ public class Seeder extends Thread {
         }
 
         return false;
+    }
+
+    public void attachConsole(InputStream in, PrintStream out) {
+        // Interactive console
+        printHelp();
+        try (var scanner = new Scanner(in)) {
+            while (true) {
+                switch (scanner.nextLine().toLowerCase()) {
+                    case "help" -> printHelp();
+                    case "list" -> {
+                        out.println();
+                        printNodes(out);
+                        out.println();
+                    }
+                    case "stop" -> {
+                        System.exit(0);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void printHelp() {
+        System.out.println("""
+            Seeder console - help
+
+            help\t\t Display this message
+            list\t\t List all nodes
+            stop\t\t Stop the service
+        """);
     }
 
 }

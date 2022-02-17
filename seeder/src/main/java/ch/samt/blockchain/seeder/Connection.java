@@ -3,6 +3,7 @@ package ch.samt.blockchain.seeder;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 
 import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.common.protocol.RegisterNodePacket;
@@ -67,6 +68,10 @@ public class Connection extends Thread {
                 out.writePacket(response);
             }
         }
+    }
+
+    public SocketAddress getSocketAddress() {
+        return socket.getRemoteSocketAddress();
     }
 
 }
