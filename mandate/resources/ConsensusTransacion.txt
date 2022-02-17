@@ -1,0 +1,25 @@
+Transaction A to B:
+
+COIN: ABC011
+
+Case senario 1 (first transaction):
+PrivateKeyA: secret
+PublicKeyA: not_secret
+PublicKeyB: dick
+PrivateKeyB: pussy
+
+    A send B: hash(PublicKeyA) (--> hash_transaction) (es: not_secret01)
+    B send A: hash(PublicKeyB) + hash(hash_transaction) (--> new_hash_transaction) (es: pussy01not_secret01)
+    A check: if(new_hash_transaction contains hash(PublicKeyA)) (es: true)
+                hash(new_hash_transaction) + hah(PrivateKeyA) (--> signature) (es: pussy01not_secret0101secret01)
+                COIN += signature (--> ABC011 + hash(new_hash_transaction & PrivateKeyA)) (es: ABC011pussy01not_secret0101secret01)
+---------------------------------------------------------------------------------------------------------------------------------------------
+Case senario 2 (not first transaction)
+COIN: ABC011pussy01not_secret0101secret01
+PrivateKeyA: gay
+PublicKeyA: sesso
+PublicKeyB: peloso
+PrivateKeyB: nani
+
+    A send B: hash(PublicKeyA + last_id_transaction) (--> hash_transaction) (es: (sesso)+(pussy01not_secret0101secret01)+(01) )
+    than all equals to the first senario
