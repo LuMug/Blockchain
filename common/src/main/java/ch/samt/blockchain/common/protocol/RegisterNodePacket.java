@@ -2,24 +2,37 @@ package ch.samt.blockchain.common.protocol;
 
 import static ch.samt.blockchain.common.utils.byteutils.ByteUtils.*;
 
+import java.util.UUID;
+
+import ch.samt.blockchain.common.utils.byteutils.Offset;
+
 public class RegisterNodePacket {
 
     private int port;
+    private UUID uuid;
 
     public RegisterNodePacket(byte[] packet) {
-        this.port = readUShortLE(packet, 1);
+        Offset offset = new Offset(1);
+        this.port = readUShortLE(packet, offset);
+        this.uuid = readUUID(packet, offset);
     }
 
     public int getPort() {
         return port;
     }
 
-    public static byte[] create(int port) {
-        byte[] packet = new byte[3];
+    public UUID getUUID() {
+        return uuid;
+    }
 
-        writeByte(packet, Protocol.REGISTER_NODE, 0);
-        writeShortLE(packet, port, 1);
-        
+    public static byte[] create(int port, UUID uuid) {
+        byte[] packet = new byte[19];
+        Offset offset = new Offset();
+
+        writeByte(packet, Protocol.REGISTER_NODE, offset);
+        writeShortLE(packet, (short) port, offset);
+        writeUUID(packet, uuid, offset);
+
         return packet;
     }
 

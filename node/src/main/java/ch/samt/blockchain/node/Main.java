@@ -1,23 +1,27 @@
 package ch.samt.blockchain.node;
 
-import java.net.Socket;
-import java.util.Scanner;
-
 public class Main {
 
     public static void main(String[] args) throws Exception {
-        var node = new Node(3432);
+        if (args.length != 1) {
+            System.out.println("Arguments: <port>");
+            return;
+        }
+
+        int port = 0;
+        try {
+            port = Integer.parseInt(args[0]);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid port: " + args[0]);
+            return;
+        }
+        
+        var node = new Node(port);
 
         // Start service
         node.start();
 
         // Interactive console
-        try (var scanner = new Scanner(System.in)) {
-            while (true) {
-                switch (scanner.nextLine().toLowerCase()) {
-
-                }
-            }
-        }
+        node.attachConsole(System.in, System.out);
     }
 }

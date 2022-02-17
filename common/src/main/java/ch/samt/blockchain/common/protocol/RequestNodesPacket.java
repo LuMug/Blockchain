@@ -2,23 +2,38 @@ package ch.samt.blockchain.common.protocol;
 
 import static ch.samt.blockchain.common.utils.byteutils.ByteUtils.*;
 
+import java.util.UUID;
+
+import ch.samt.blockchain.common.utils.byteutils.Offset;
+
 public class RequestNodesPacket {
     
     private int amount;
+    private UUID exclude;
 
     public RequestNodesPacket(byte[] packet) {
-        this.amount = readIntLE(packet, 1);
+        Offset offset = new Offset(1);
+
+        this.amount = readIntLE(packet, offset);
+        this.exclude = readUUID(packet, offset);
     }
 
     public int getAmount() {
         return amount;
     }
 
-    public static byte[] create(int amount) {
-        byte[] packet = new byte[5];
+    public UUID getExclude() {
+        return exclude;
+    }
 
-        writeByte(packet, Protocol.REQUEST_NODES, 0);
-        writeIntLE(packet, amount, 1);
+    public static byte[] create(int amount, UUID exclude) {
+        byte[] packet = new byte[21];
+
+        Offset offset = new Offset();
+
+        writeByte(packet, Protocol.REQUEST_NODES, offset);
+        writeIntLE(packet, amount, offset);
+        writeUUID(packet, exclude, offset);
 
         return packet;
     }

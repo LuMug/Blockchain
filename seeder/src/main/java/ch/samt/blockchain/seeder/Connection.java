@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.util.UUID;
 
 import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.common.protocol.RegisterNodePacket;
@@ -12,7 +13,7 @@ import ch.samt.blockchain.common.protocol.ServeNodesPacket;
 import ch.samt.blockchain.common.utils.stream.PacketInputStream;
 import ch.samt.blockchain.common.utils.stream.PacketOutputStream;
 
-public class Connection extends Thread {
+public class Connection implements Runnable {
     
     private Seeder seeder;
     private Socket socket;
@@ -53,17 +54,20 @@ public class Connection extends Thread {
     private void processPacket(byte[] data) throws IOException {
         switch (data[0]) {
             case Protocol.REGISTER_NODE -> {
-                System.out.println("Node registered");
+                System.out.println("Node registered " + socket.getRemoteSocketAddress());
                 var packet = new RegisterNodePacket(data);
                 int port = packet.getPort();
-                var node = new InetSocketAddress(socket.getInetAddress(), port);
+                UUID uuid = packet.getUUID();
+                var addr = new InetSocketAddress(socket.getInetAddress(), port);
+                var node = new Node(addr, uuid);
                 seeder.renew(node);
             }
             case Protocol.REQUEST_NODES -> {
-                System.out.println("Node request");
                 var packet = new RequestNodesPacket(data);
                 int amount = packet.getAmount();
-                var nodes = seeder.drawNodes(amount);
+                UUID exclude = packet.getExclude();
+                System.out.println(amount + " Node request from " + socket.getRemoteSocketAddress());
+                var nodes = seeder.drawNodes(amount, exclude);
                 var response = ServeNodesPacket.create(nodes);
                 out.writePacket(response);
             }
@@ -72,6 +76,11 @@ public class Connection extends Thread {
 
     public SocketAddress getSocketAddress() {
         return socket.getRemoteSocketAddress();
+    }
+
+    @Override
+    public String toString() {
+        return socket.getRemoteSocketAddress().toString();
     }
 
 }

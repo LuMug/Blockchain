@@ -3,6 +3,7 @@ package ch.samt.blockchain.node;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -62,7 +63,7 @@ public class Connection extends Thread {
 
     // should not be called by this thread, otherwise it will halt
     public InetSocketAddress[] requestNodes(int amount) {
-        if (!sendPacket(RequestNodesPacket.create(amount))) {
+        if (!sendPacket(RequestNodesPacket.create(amount, node.uuid))) {
             return new InetSocketAddress[0];
         }
 
@@ -82,7 +83,12 @@ public class Connection extends Thread {
         
         switch (data[0]) {
             case Protocol.REQUEST_NODES -> {
-                // TODO
+                var packet = new RequestNodesPacket(data);
+                int amount = packet.getAmount();
+                UUID exclude = packet.getExclude();
+                var nodes = node.drawNodes(amount, exclude);
+                var response = ServeNodesPacket.create(nodes);
+                sendPacket(response);
             }
         }
     }

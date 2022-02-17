@@ -32,6 +32,7 @@ public class DatabaseManager {
     }
 
     public void cacheNode(String address, int port) {
+        System.out.println("caching node " + address + ":" + port);
         if (!containsNode(address, port)) {
             var statement = connection.prepareStatement("INSERT INTO nodes VALUES (?,?,NOW());");
             try {

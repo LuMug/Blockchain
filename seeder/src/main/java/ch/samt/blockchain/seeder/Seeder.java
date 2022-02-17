@@ -5,10 +5,10 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.net.SocketAddress;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
+import java.util.UUID;
 
 public class Seeder extends Thread {
     
@@ -17,7 +17,7 @@ public class Seeder extends Thread {
     public static final int MAX_REQUEST = 10;
 
     // Top is older nodes
-    private List<InetSocketAddress> nodes = new LinkedList<>();
+    private List<Node> nodes = new LinkedList<>();
 
     private int port;
 
@@ -32,8 +32,9 @@ public class Seeder extends Thread {
                 try {
                     // Wait for connection
                     var socket = server.accept();
-                    
-                    new Connection(this, socket).start();
+                    var connection = new Connection(this, socket);
+                    System.out.println("[LOG] :: incoming " + socket.getRemoteSocketAddress());
+                    new Thread(connection).start();
                 } catch (IOException e) {}
             }
         } catch (IOException e) {
@@ -42,7 +43,7 @@ public class Seeder extends Thread {
         }
     }
 
-    public void renew(InetSocketAddress node) {
+    public void renew(Node node) {
         synchronized (nodes) {
             int index = nodes.indexOf(node);
             if (index != -1) { // renew existing entry
@@ -65,12 +66,16 @@ public class Seeder extends Thread {
      * @param amount the amount of nodes
      * @return
      */
-    public InetSocketAddress[] drawNodes(int amount) {
+    public InetSocketAddress[] drawNodes(int amount, UUID exclude) {
         synchronized (nodes) {
             amount = Math.min(
                 Math.min(amount, nodes.size()),
                 MAX_REQUEST
             );
+
+            if (amount == nodes.size() && containsUUID(exclude)) {
+                --amount;
+            }
             
             var result = new InetSocketAddress[amount];
     
@@ -81,14 +86,24 @@ public class Seeder extends Thread {
     
                 do {
                     index = (int) (Math.random() * nodes.size());
-                } while (contains(indexes, index));
+                } while (contains(indexes, index) || nodes.get(index).uuid().equals(exclude));
     
                 indexes[i] = index;
-                result[i] = nodes.get(index);
+                result[i] = nodes.get(index).address();
             }
     
             return result;
         }
+    }
+
+    private boolean containsUUID(UUID uuid) {
+        for (Node node : nodes) {
+            if (node.uuid().equals(uuid)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

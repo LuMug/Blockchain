@@ -23,13 +23,13 @@ public class Protocol {
         /**
          * Interval in ms for the node to register to a random seeder.
          */
-        public final static int REGISTER_INTERVAL = 180000;
+        public final static int REGISTER_INTERVAL = 30000;//180000;
 
         /**
          * Interval in ms for the node to try to reach MIN_CONNECTIONS
          * of connections if needed.
          */
-        public final static int UPDATE_INTERVAL = 180000;
+        public final static int UPDATE_INTERVAL = 30000;//180000;
 
         /**
          * Maximum size of the persistent node cache.

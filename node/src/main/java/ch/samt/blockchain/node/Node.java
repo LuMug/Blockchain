@@ -1,12 +1,16 @@
 package ch.samt.blockchain.node;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -21,6 +25,8 @@ import ch.samt.blockchain.node.database.DatabaseManager;
 
 public class Node extends Thread {
     
+    public final UUID uuid = UUID.randomUUID();
+
     private int port;
 
     private DatabaseManager database;
@@ -98,12 +104,15 @@ public class Node extends Thread {
             List<Connection> result = new LinkedList<>();
             for (int i = 0; i < Protocol.Node.MAX_TRIES_SEEDER && result.size() < Protocol.Node.MIN_CONNECTIONS; i++) {
                 var nodes = querySeeders(Protocol.Node.MIN_CONNECTIONS);
+                System.out.println("[NODE] :: Received " + nodes.length + " candidate nodes");
                 for (var node : nodes) {
                     if (!neighboursContain(node)) {
+                        System.out.println("Trying connection with " + node);
                         var socket = tryConnection(node.getHostString(), node.getPort());
                     
                         // If has responded
                         if (socket != null) {
+                            System.out.println("Conneted to node: " + socket.getRemoteSocketAddress());
                             var connection = new Connection(this, socket);
                             connection.start();
                             neighbours.add(connection);
@@ -151,15 +160,16 @@ public class Node extends Thread {
             var in = new PacketInputStream(seeder.getInputStream());
             var out = new PacketOutputStream(seeder.getOutputStream());
 
-            var reqPacket = RequestNodesPacket.create(amount);
+            var reqPacket = RequestNodesPacket.create(amount, uuid);
             out.writePacket(reqPacket);
 
             var responseData = in.nextPacket();
-            var responsePacket = new ServeNodesPacket(responseData);
-            return responsePacket.getNodes();
-        } catch (IOException e) {
-            return new InetSocketAddress[0];
-        }
+            if (responseData != null) {
+                var responsePacket = new ServeNodesPacket(responseData);
+                return responsePacket.getNodes();
+            }
+        } catch (IOException e) {}
+        return new InetSocketAddress[0];
     }
 
     private InetSocketAddress[] queryNeighbours(int amount) {
@@ -252,15 +262,15 @@ public class Node extends Thread {
     }
 
     private void registerToSeeder() { // should be exhaustive
-        System.out.println("[NODE] :: Registering to a random seeder");
         var seeder = getRandomSeeder();
+        System.out.println("[NODE] :: Registering to a random seeder " + seeder.getHostString() + ":" + seeder.getPort());
         
         var connection = tryConnection(seeder.getHostString(), seeder.getPort());
         
         if (connection != null) {
             try {
                 var out = new PacketOutputStream(connection.getOutputStream());
-                out.writePacket(RegisterNodePacket.create(port));
+                out.writePacket(RegisterNodePacket.create(port, uuid));
                 Thread.sleep(100);
                 connection.close();
             } catch (IOException | InterruptedException e) {
@@ -275,6 +285,78 @@ public class Node extends Thread {
 
     private InetSocketAddress getRandomSeeder() {
         return Seeders.seeders[(int) (Math.random() * Seeders.seeders.length)];
+    }
+
+    public InetSocketAddress[] drawNodes(int amount, UUID exclude) {
+        synchronized (neighbours) {
+            amount = Math.min(
+                Math.min(amount, neighbours.size()),
+                30//MAX_REQUEST
+            );
+
+            // TODO exclude exclude
+            
+            var result = new InetSocketAddress[amount];
+    
+            // Generate random indexes
+            int[] indexes = new int[amount];
+            for (int i = 0; i < amount; i++) {
+                int index = 0;
+    
+                do {
+                    index = (int) (Math.random() * neighbours.size());
+                } while (contains(indexes, index));
+    
+                indexes[i] = index;
+                var socket = neighbours.get(index).getSocket();
+                result[i] = new InetSocketAddress(socket.getInetAddress(), socket.getPort());
+            }
+    
+            return result;
+        }
+
+    }
+
+    private static boolean contains(int[] arr, int val) {
+        for (int v : arr) {
+            if (v == val) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void attachConsole(InputStream in, PrintStream out) {
+        // Interactive console
+        printHelp();
+        try (var scanner = new Scanner(in)) {
+            while (true) {
+                switch (scanner.nextLine().toLowerCase()) {
+                    case "help" -> printHelp();
+                    case "list" -> {
+                        out.println();
+                        printBeighbours(out);
+                        out.println();
+                    }
+                    case "stop" -> {
+                        System.exit(0);
+                    }
+                }
+            }
+        }
+    }
+
+    private void printBeighbours(PrintStream ps) {
+        ps.println("Total neighbours (" + neighbours.size() + ")");
+        for (var node : neighbours) {
+            ps.println("\t" + node);
+        }
+        ps.println();
+    }
+
+    private void printHelp() {
+        
     }
 
     /**
