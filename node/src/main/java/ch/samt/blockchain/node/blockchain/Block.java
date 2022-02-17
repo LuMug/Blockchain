@@ -26,7 +26,7 @@ public class Block {
     /**
      * The timestamp of the block (creation).
      */
-    private long timeStamp;
+    private long timestamp;
 
     private int nonce;
 
@@ -37,11 +37,15 @@ public class Block {
      * @param data         any information of the block
      * @param timeStamp    the timestamp of the block
      */
-    public Block(byte[] previousHash, byte[] data, long timeStamp) {
+    public Block(byte[] previousHash, byte[] data, long timestamp) {
         this.previousHash = previousHash;
         this.data = data;
-        this.timeStamp = timeStamp;
+        this.timestamp = timestamp;
         this.hash = calculateHash();
+    }
+
+    public Block(byte[] data, long timestamp) {
+        this(null, data, timestamp);
     }
 
     public String getHash() {

@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 public class Main {
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         List<Block> blockchain = new ArrayList<>();
         int prefix = 2;
         String prefixString = new String(new char[prefix]).replace('\0', '0');
@@ -19,5 +19,5 @@ public class Main {
         if(newBlock.getHash().substring(0, prefix).equals((prefixString))){
             blockchain.add(newBlock);
         }
-    }
+    }*/
 }
