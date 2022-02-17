@@ -6,20 +6,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Block {
+    
     /**
      * The hash of the block.
      */
-    private String hash;
+    private byte[] hash;
+    
 
     /**
      * The hash of the previous block.
      */
-    private String previousHash;
+    private byte[] previousHash;
 
     /**
-     * Data of the block, any information having value.
+     * Data of the block.
      */
-    private String data;
+    private byte[] data;
 
     /**
      * The timestamp of the block (creation).
@@ -35,7 +37,7 @@ public class Block {
      * @param data         any information of the block
      * @param timeStamp    the timestamp of the block
      */
-    public Block(String previousHash, String data, long timeStamp) {
+    public Block(byte[] previousHash, byte[] data, long timeStamp) {
         this.previousHash = previousHash;
         this.data = data;
         this.timeStamp = timeStamp;
@@ -45,32 +47,38 @@ public class Block {
     public String getHash() {
         return this.hash;
     }
+    
+    public void calculateHash() {
+        byte[] dataToHash = new byte[previousHash.length + 8 + 4 + data.length];
 
-    public String calculateHash() {
-        String dataToHash = previousHash + Long.toString(timeStamp) + Integer.toString(nonce) + data;
         MessageDigest digest = null;
-        byte[] bytes = null;
 
         try {
             digest = MessageDigest.getInstance("SHA-256");
-            bytes = digest.digest(dataToHash.getBytes(UTF_8));
         } catch (Exception ex) {
-            System.out.println("Error");
+            System.err.println("Error");
         }
 
-        StringBuffer buffer = new StringBuffer();
-        for (byte b : bytes) {
-            buffer.append(String.format("%02x", b));
-        }
-        return buffer.toString();
+        this.hash = digest.digest(dataToHash);
     }
+    
+    public int mineBlock(int difficulty) {
+        var random = new Random();
+        
+        while (true) {
+            nonce = random.nextInt();
+            calculateHash();
 
-    public String mineBlock(int prefix) {
-        String prefixString = new String(new char[prefix]).replace('\0', '0');
-        while (!hash.substring(0, prefix).equals(prefixString)) {
-            nonce++;
-            hash = calculateHash();
+            // Check if nonce is found
+            for (int i = 0; i < difficulty; i++) {
+                if (hash[i] != (byte)0) {
+                    continue;
+                }
+            }
+
+            break;
         }
-        return hash;
+
+        return nonce;
     }
 }
