@@ -1,0 +1,51 @@
+body {
+    position: absolute;
+    display: flex;
+    flex-direction: row;
+
+    align-items: center;
+
+    background-color: #22277A;
+    height: 98%;
+    width: 98%;
+}
+
+nav {
+    margin-left: 0.5%;
+    width: min-content;
+    height: 100%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content:space-around;
+}
+
+nav i {
+    margin-top: 90%;
+
+    color: white;
+    padding: 0.5em;
+    transition: 250ms;
+}
+
+nav i:hover {
+    color: #22277A;
+    background-color: white;
+    border-radius: 20%;
+
+    cursor: pointer;
+}
+
+main {
+    position: relative;
+    background-color: #BFBBFF;
+
+    margin-left: 0.5%;
+    width: 94%;
+    height: 94%;
+    border-radius: 0.75em;
+}
+
+img {
+    background-color: red;
+}
