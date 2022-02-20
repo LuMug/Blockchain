@@ -1,9 +1,10 @@
-package ch.samt.blockchain.node.block;
+package ch.samt.blockchain.node.blockchain;
 
 import java.security.MessageDigest;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class Block {
     
@@ -41,14 +42,14 @@ public class Block {
         this.previousHash = previousHash;
         this.data = data;
         this.timestamp = timestamp;
-        this.hash = calculateHash();
+        calculateHash();
     }
 
     public Block(byte[] data, long timestamp) {
         this(null, data, timestamp);
     }
 
-    public String getHash() {
+    public byte[] getHash() {
         return this.hash;
     }
     

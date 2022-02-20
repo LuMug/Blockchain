@@ -73,7 +73,9 @@ public class Seeder extends Thread {
                 MAX_REQUEST
             );
 
-            if (amount == nodes.size() && containsUUID(exclude)) {
+            int excludeIndex = 0;
+
+            if (amount == nodes.size() && -1 != (excludeIndex = getIndexFromUUID(exclude))) {
                 --amount;
             }
             
@@ -83,10 +85,11 @@ public class Seeder extends Thread {
             int[] indexes = new int[amount];
             for (int i = 0; i < amount; i++) {
                 int index = 0;
+                indexes[i] = -1; // so that index 0 is not contained
     
                 do {
                     index = (int) (Math.random() * nodes.size());
-                } while (contains(indexes, index) || nodes.get(index).uuid().equals(exclude));
+                } while (index == excludeIndex || contains(indexes, index));
     
                 indexes[i] = index;
                 result[i] = nodes.get(index).address();
@@ -96,14 +99,14 @@ public class Seeder extends Thread {
         }
     }
 
-    private boolean containsUUID(UUID uuid) {
-        for (Node node : nodes) {
-            if (node.uuid().equals(uuid)) {
-                return true;
+    private int getIndexFromUUID(UUID uuid) {
+        for (int i = 0; i < nodes.size(); i++) {
+            if (nodes.get(i).uuid().equals(uuid)) {
+                return i;
             }
         }
 
-        return false;
+        return -1;
     }
 
     /**
@@ -131,11 +134,10 @@ public class Seeder extends Thread {
 
     public void attachConsole(InputStream in, PrintStream out) {
         // Interactive console
-        printHelp();
+        printHelp(out);
         try (var scanner = new Scanner(in)) {
             while (true) {
                 switch (scanner.nextLine().toLowerCase()) {
-                    case "help" -> printHelp();
                     case "list" -> {
                         out.println();
                         printNodes(out);
@@ -144,13 +146,15 @@ public class Seeder extends Thread {
                     case "stop" -> {
                         System.exit(0);
                     }
+                    case "help" -> printHelp(out);
+                    default ->  printHelp(out);
                 }
             }
         }
     }
 
-    private static void printHelp() {
-        System.out.println("""
+    private static void printHelp(PrintStream ps) {
+        ps.println("""
             Seeder console - help
 
             help\t\t Display this message

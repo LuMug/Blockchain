@@ -8,6 +8,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 import ch.samt.blockchain.common.protocol.Protocol;
+import ch.samt.blockchain.common.protocol.RegisterNodePacket;
 import ch.samt.blockchain.common.protocol.RequestNodesPacket;
 import ch.samt.blockchain.common.protocol.ServeNodesPacket;
 import ch.samt.blockchain.common.utils.stream.PacketInputStream;
@@ -15,12 +16,15 @@ import ch.samt.blockchain.common.utils.stream.PacketOutputStream;
 
 public class Connection extends Thread {
 
+    private UUID nodeUuid;
+    private InetSocketAddress serviceAddress;
+
     private Node node;
     private Socket socket;
     private PacketInputStream in;
     private PacketOutputStream out;
 
-    private BlockingQueue<byte[]> nodesRequestResponse;
+    private BlockingQueue<InetSocketAddress[]> nodesRequestResponse;
 
     public Connection(Node node, Socket socket) {
         this.node = node;
@@ -33,6 +37,8 @@ public class Connection extends Thread {
         try {
             this.in = new PacketInputStream(socket.getInputStream());
             this.out = new PacketOutputStream(socket.getOutputStream());
+
+            sendPacket(RegisterNodePacket.create(node.port, node.uuid));
             
             while (!in.hasEnded()) {
                 var packet = in.nextPacket();
@@ -46,6 +52,31 @@ public class Connection extends Thread {
             node.disconnect(this);
             return;
         }
+    }
+
+    // Blocks thread caller until the node registers himself
+    public void waitNodeRegistration(int timeout) {
+        if (nodeUuid != null) {
+            return;
+        }
+
+        int update = 100;
+        timeout += update;
+        while ((timeout -= update) > 0) {
+            try {
+                Thread.sleep(update);
+            } catch (InterruptedException e) {
+                return;
+            }
+
+            if (nodeUuid != null) {
+                return;
+            }   
+        }
+    }
+
+    public void waitNodeRegistration() {
+        waitNodeRegistration(-1);
     }
 
     private boolean sendPacket(byte[] packet) {
@@ -69,8 +100,7 @@ public class Connection extends Thread {
 
         try {
             var response = nodesRequestResponse.take();
-            var packet = new ServeNodesPacket(response);
-            return packet.getNodes();
+            return response;
         } catch (InterruptedException e) {
             return new InetSocketAddress[0];
         }
@@ -82,15 +112,57 @@ public class Connection extends Thread {
         }
         
         switch (data[0]) {
-            case Protocol.REQUEST_NODES -> {
-                var packet = new RequestNodesPacket(data);
-                int amount = packet.getAmount();
-                UUID exclude = packet.getExclude();
-                var nodes = node.drawNodes(amount, exclude);
-                var response = ServeNodesPacket.create(nodes);
-                sendPacket(response);
-            }
+            case Protocol.REGISTER_NODE -> processRegisterNodePacket(data);
+            case Protocol.REQUEST_NODES -> processRequestNodesPacket(data);
+            case Protocol.SERVE_NODES -> processServeNodesPacket(data);
         }
+    }
+    
+    private void processRegisterNodePacket(byte[] data) {
+        if (nodeUuid != null) { // already registered
+            return;
+        }
+        
+        var packet = new RegisterNodePacket(data);
+        int port = packet.getPort();
+        this.serviceAddress = new InetSocketAddress(stripPort(socket.getRemoteSocketAddress().toString()), port);
+        this.nodeUuid = packet.getUUID();
+        node.registerNode(this);
+    }
+    
+    private void processRequestNodesPacket(byte[] data) {
+        var packet = new RequestNodesPacket(data);
+        int amount = packet.getAmount();
+        UUID exclude = packet.getExclude();
+        var nodes = node.drawNodes(amount, exclude);
+        var response = ServeNodesPacket.create(nodes);
+        sendPacket(response);
+    }
+
+    private void processServeNodesPacket(byte[] data) {
+        var packet = new ServeNodesPacket(data);
+
+        var nodes = packet.getNodes();
+        nodesRequestResponse.add(nodes);
+    }
+    
+    // /xxx.xxx.xxx.xxx:port -> xxx.xxx.xxx.xxx
+    private static String stripPort(String address) {
+        int v = address.indexOf(":");
+
+        if (v == -1) {
+            return address;
+        }
+
+        return address.substring(1, v);
+    }
+
+    public InetSocketAddress getServiceAddress() {
+        return serviceAddress;
+    }
+
+    public UUID getUuid() {
+        return nodeUuid;
     }
    
 }

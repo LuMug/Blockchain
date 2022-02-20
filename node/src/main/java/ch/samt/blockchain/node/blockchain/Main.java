@@ -1,8 +1,4 @@
-package ch.samt.blockchain.node.block;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+package ch.samt.blockchain.node.blockchain;
 
 public class Main {
     /*public static void main(String[] args) {

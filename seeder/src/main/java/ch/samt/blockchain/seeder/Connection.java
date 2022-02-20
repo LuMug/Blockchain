@@ -68,6 +68,7 @@ public class Connection implements Runnable {
                 UUID exclude = packet.getExclude();
                 System.out.println(amount + " Node request from " + socket.getRemoteSocketAddress());
                 var nodes = seeder.drawNodes(amount, exclude);
+                System.out.println(nodes.length + " drawn");
                 var response = ServeNodesPacket.create(nodes);
                 out.writePacket(response);
             }

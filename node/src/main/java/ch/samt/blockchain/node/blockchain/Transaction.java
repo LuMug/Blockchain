@@ -1,3 +1,5 @@
+package ch.samt.blockchain.node.blockchain;
+
 public record Transaction(byte[] fromAddress, byte[] toAddress, long amount, long timestamp, byte[] signature) {
 
     public boolean isValid() {

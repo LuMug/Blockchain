@@ -27,7 +27,7 @@ public class Node extends Thread {
     
     public final UUID uuid = UUID.randomUUID();
 
-    private int port;
+    public final int port;
 
     private DatabaseManager database;
 
@@ -56,38 +56,27 @@ public class Node extends Thread {
                     var socket = server.accept();
                     var connection = new Connection(this, socket);
                     connection.start();
-                    
-                    // SHOULD BE DONE ASYNC
-                    database.cacheNode(socket.getRemoteSocketAddress().toString(), socket.getPort());
-                    if (neighbours.size() > Protocol.Node.MAX_CONNECTIONS) {
-                        // disconnect from random node
-                        var rnd_connection = getRandomNeighbour();
-                        disconnect(rnd_connection);
-                        database.updateLastSeen(rnd_connection.getSocket().getRemoteSocketAddress().toString(), rnd_connection.getSocket().getPort());
-                    }
-
-                    if (neighbours.size() < Protocol.Node.MIN_CONNECTIONS) {
-                        var nodes = connection.requestNodes(Protocol.Node.MIN_CONNECTIONS - neighbours.size());
-                        for (var node : nodes) {
-                            if (!neighboursContain(node)) {
-                                var node_socket = tryConnection(node.getHostString(), node.getPort());
-                            
-                                // If has responded
-                                if (socket != null) {
-                                    var node_connection = new Connection(this, node_socket);
-                                    node_connection.start();
-                                    neighbours.add(node_connection);
-                                    database.cacheNode(node.getHostString(), node.getPort());
-                                }
-                            }
-                        }
-                    }
+                    System.out.println("Connection incoming");
                 } catch (IOException e) {}
             }
         } catch (IOException e) {
             System.err.println("[ERROR] :: IOException. Shutting down");
             e.printStackTrace();
         }
+    }
+
+    protected void registerNode(Connection connection) {
+        neighbours.add(connection);
+
+        if (neighbours.size() > Protocol.Node.MAX_CONNECTIONS) {
+            // disconnect from random node
+            var rnd_connection = getRandomNeighbour();
+            disconnect(rnd_connection);
+
+            database.updateLastSeen(rnd_connection.getServiceAddress());
+        }
+        
+        database.cacheNode(connection.getServiceAddress());
     }
 
     public void connect() {
@@ -107,16 +96,14 @@ public class Node extends Thread {
                 System.out.println("[NODE] :: Received " + nodes.length + " candidate nodes");
                 for (var node : nodes) {
                     if (!neighboursContain(node)) {
-                        System.out.println("Trying connection with " + node);
+                        System.out.println("[NODE] :: Trying connection with " + node);
                         var socket = tryConnection(node.getHostString(), node.getPort());
                     
                         // If has responded
                         if (socket != null) {
-                            System.out.println("Conneted to node: " + socket.getRemoteSocketAddress());
                             var connection = new Connection(this, socket);
                             connection.start();
-                            neighbours.add(connection);
-                            database.cacheNode(node.getHostString(), node.getPort());
+                            connection.waitNodeRegistration(1000); // TIMEOUT
                         }
                     }
                 }
@@ -124,32 +111,23 @@ public class Node extends Thread {
             }
         }
 
-        if (neighbours.size() == 0) {
-            System.out.println("[NODE] :: No active node found. I am possibly the first node");
-        } else {
-            updateFromNeighbours();
-        }
-
         registerToSeeder();
+        updateFromNeighbours();
     }
 
     private boolean neighboursContain(InetSocketAddress address) {
         for (var neighbour : neighbours) {
             // ???
             System.out.println("XXX Checking " +
-                neighbour.getSocket().getRemoteSocketAddress().toString() +
-                " with " + address.getHostString());
-            if (neighbour.getSocket().getRemoteSocketAddress().toString().contains(address.getHostString())) {
+                address +
+                " with " + neighbour.getServiceAddress());
+                
+            if (neighbour.getServiceAddress().equals(address)) {
                 return true;
             }
         }
 
         return false;
-    }
-
-    public void broadcast(byte[] data) {
-        // TODO:
-
     }
 
     private InetSocketAddress[] querySeeders(int amount) {
@@ -175,6 +153,12 @@ public class Node extends Thread {
     private InetSocketAddress[] queryNeighbours(int amount) {
         // Select random neighbour
         var neighbour = getRandomNeighbour();
+
+        if (neighbour == null) {
+            return new InetSocketAddress[0];
+        }
+
+        System.out.println("requesting nodes");
         return neighbour.requestNodes(amount);
     }
 
@@ -206,8 +190,7 @@ public class Node extends Thread {
                     if (socket != null) {
                         var connection = new Connection(this, socket);
                         connection.start();
-                        neighbours.add(connection);
-                        database.cacheNode(node.getHostString(), node.getPort());
+                        connection.waitNodeRegistration(1000); // TIMEOUT
                     }
                 }
             }
@@ -215,19 +198,23 @@ public class Node extends Thread {
     }
 
     private void updateFromCache() {
-        var nodes = database.getCachedNodes();
+        var nodes = database.getCachedNodes(); // TODO: ritorna [] + interface
         try {
             while (neighbours.size() < Protocol.Node.MIN_CONNECTIONS && nodes.next()) {
-                String address = nodes.getString(0);
-                int port = nodes.getInt(1);
+                String address = nodes.getString(1);
+                int port = nodes.getInt(2);
+                
+                if (neighboursContain(new InetSocketAddress(address, port))) {
+                    continue;
+                }
+                
                 var node = tryConnection(address, port);
 
                 // If has responded
                 if (node != null) {
                     var connection = new Connection(this, node);
                     connection.start();
-                    neighbours.add(connection);
-                    database.updateLastSeen(address, port);
+                    connection.waitNodeRegistration(1000); // TIMEOUT
                 }
             }
         } catch (SQLException e) {
@@ -280,6 +267,10 @@ public class Node extends Thread {
     }
 
     private Connection getRandomNeighbour() {
+        if (neighbours.size() == 0) {
+            return null;
+        }
+
         return neighbours.get((int) (Math.random() * neighbours.size()));
     }
 
@@ -291,10 +282,14 @@ public class Node extends Thread {
         synchronized (neighbours) {
             amount = Math.min(
                 Math.min(amount, neighbours.size()),
-                30//MAX_REQUEST
+                30 //MAX_REQUEST
             );
 
-            // TODO exclude exclude
+            int excludeIndex = 0;
+
+            if (amount == neighbours.size() && -1 != (excludeIndex = getIndexFromUUID(exclude))) {
+                --amount;
+            }
             
             var result = new InetSocketAddress[amount];
     
@@ -302,19 +297,31 @@ public class Node extends Thread {
             int[] indexes = new int[amount];
             for (int i = 0; i < amount; i++) {
                 int index = 0;
+                indexes[i] = -1; // so that index 0 is not contained
     
                 do {
                     index = (int) (Math.random() * neighbours.size());
-                } while (contains(indexes, index));
+                } while (index == excludeIndex || contains(indexes, index));
     
                 indexes[i] = index;
-                var socket = neighbours.get(index).getSocket();
-                result[i] = new InetSocketAddress(socket.getInetAddress(), socket.getPort());
+                result[i] = neighbours.get(index).getServiceAddress();
             }
     
             return result;
         }
 
+    }
+
+    private int getIndexFromUUID(UUID uuid) {
+        int i = 0; // optimized iteration for LinkedList
+        for (var neighbour : neighbours) {
+            if (neighbour.getUuid().equals(uuid)) {
+                return i;
+            }
+            i++;
+        }
+
+        return -1;
     }
 
     private static boolean contains(int[] arr, int val) {
@@ -329,34 +336,41 @@ public class Node extends Thread {
 
     public void attachConsole(InputStream in, PrintStream out) {
         // Interactive console
-        printHelp();
+        printHelp(out);
         try (var scanner = new Scanner(in)) {
             while (true) {
                 switch (scanner.nextLine().toLowerCase()) {
-                    case "help" -> printHelp();
                     case "list" -> {
                         out.println();
-                        printBeighbours(out);
+                        printNeighbours(out);
                         out.println();
                     }
                     case "stop" -> {
                         System.exit(0);
                     }
+                    case "help" -> printHelp(out);
+                    default -> printHelp(out);
                 }
             }
         }
     }
 
-    private void printBeighbours(PrintStream ps) {
+    private void printNeighbours(PrintStream ps) {
         ps.println("Total neighbours (" + neighbours.size() + ")");
         for (var node : neighbours) {
-            ps.println("\t" + node);
+            ps.println("\t" + node.getServiceAddress());
         }
         ps.println();
     }
 
-    private void printHelp() {
-        
+    private void printHelp(PrintStream ps) {
+        ps.println("""
+            Node console - help
+
+            help\t\t Display this message
+            list\t\t List all nodes
+            stop\t\t Stop the service
+        """);
     }
 
     /**
@@ -365,8 +379,7 @@ public class Node extends Thread {
      * when the connection fails
      * 
      * simplify var in, var out with class
-     * 
-     * Excluse same node from serveNodesPacket
+     *
      */
 
 }

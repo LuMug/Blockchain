@@ -1,5 +1,12 @@
 package ch.samt.blockchain.node;
 
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.LinkedList;
+
+import ch.samt.blockchain.common.protocol.ServeNodesPacket;
+
 public class Main {
 
     public static void main(String[] args) throws Exception {

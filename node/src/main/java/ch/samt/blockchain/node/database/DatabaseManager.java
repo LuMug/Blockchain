@@ -3,6 +3,7 @@ package ch.samt.blockchain.node.database;
 import java.net.InetSocketAddress;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 
 public class DatabaseManager {
 
@@ -28,16 +29,18 @@ public class DatabaseManager {
     }
 
     public void cacheNode(InetSocketAddress node) {
-        cacheNode(node.getAddress().toString(), node.getPort());
+        cacheNode(node.getHostString().toString(), node.getPort());
     }
 
     public void cacheNode(String address, int port) {
         System.out.println("caching node " + address + ":" + port);
         if (!containsNode(address, port)) {
-            var statement = connection.prepareStatement("INSERT INTO nodes VALUES (?,?,NOW());");
+            var statement = connection.prepareStatement("INSERT INTO nodes VALUES (?,?,?);");
+            long timestamp = System.currentTimeMillis();
             try {
                 statement.setString(1, address);
                 statement.setInt(2, port);
+                statement.setTimestamp(3, new Timestamp(timestamp));
                 statement.execute();
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -61,7 +64,13 @@ public class DatabaseManager {
     }
 
     public void updateLastSeen(String address, int port) {
-        connection.execute("UPDATE node SET last_seen_alive=NOW();");
+        var statement = connection.prepareStatement("UPDATE nodes SET last_seen_alive=?;");
+        long timestamp = System.currentTimeMillis();
+        try {
+            statement.setTimestamp(1, new Timestamp(timestamp));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     public ResultSet getCachedNodes() {
