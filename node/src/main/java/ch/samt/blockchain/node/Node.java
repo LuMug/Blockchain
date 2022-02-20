@@ -6,7 +6,6 @@ import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
@@ -21,7 +20,8 @@ import ch.samt.blockchain.common.protocol.RequestNodesPacket;
 import ch.samt.blockchain.common.protocol.ServeNodesPacket;
 import ch.samt.blockchain.common.utils.stream.PacketInputStream;
 import ch.samt.blockchain.common.utils.stream.PacketOutputStream;
-import ch.samt.blockchain.node.database.DatabaseManager;
+import ch.samt.blockchain.node.database.NodeCacheDatabase;
+import ch.samt.blockchain.node.database.NodeCacheDatabaseImpl;
 
 public class Node extends Thread {
     
@@ -29,7 +29,7 @@ public class Node extends Thread {
 
     public final int port;
 
-    private DatabaseManager database;
+    private NodeCacheDatabase nodeCache;
 
     private List<Connection> neighbours;
 
@@ -37,7 +37,7 @@ public class Node extends Thread {
 
     public Node(int port) {
         this.port = port;
-        this.database = new DatabaseManager("blockchain.db");
+        this.nodeCache = new NodeCacheDatabaseImpl("nodecache_" + port + ".db");
         this.neighbours = new LinkedList<>();
         this.scheduler = Executors.newScheduledThreadPool(1);
     }
@@ -73,17 +73,17 @@ public class Node extends Thread {
             var rnd_connection = getRandomNeighbour();
             disconnect(rnd_connection);
 
-            database.updateLastSeen(rnd_connection.getServiceAddress());
+            nodeCache.updateLastSeen(rnd_connection.getServiceAddress());
         }
         
-        database.cacheNode(connection.getServiceAddress());
+        nodeCache.cacheNode(connection.getServiceAddress());
     }
 
     public void connect() {
         System.out.println("[NODE] :: Connecting to blockchain");
 
         // Query database nodes cache
-        if (!database.isNodeCacheEmpty()) {
+        if (!nodeCache.isNodeCacheEmpty()) {
             System.out.println("[NODE] :: Fetching database for cached nodes");
             updateFromCache();
         }
@@ -117,11 +117,6 @@ public class Node extends Thread {
 
     private boolean neighboursContain(InetSocketAddress address) {
         for (var neighbour : neighbours) {
-            // ???
-            System.out.println("XXX Checking " +
-                address +
-                " with " + neighbour.getServiceAddress());
-                
             if (neighbour.getServiceAddress().equals(address)) {
                 return true;
             }
@@ -158,7 +153,6 @@ public class Node extends Thread {
             return new InetSocketAddress[0];
         }
 
-        System.out.println("requesting nodes");
         return neighbour.requestNodes(amount);
     }
 
@@ -166,9 +160,12 @@ public class Node extends Thread {
         try {
             return new Socket(address, port);
         } catch (Exception e) {
-            e.printStackTrace();
             return null;
         }
+    }
+
+    private Socket tryConnection(InetSocketAddress address) {
+        return tryConnection(address.getHostString(), address.getPort());
     }
 
     public void disconnect(Connection connection) {
@@ -198,27 +195,22 @@ public class Node extends Thread {
     }
 
     private void updateFromCache() {
-        var nodes = database.getCachedNodes(); // TODO: ritorna [] + interface
-        try {
-            while (neighbours.size() < Protocol.Node.MIN_CONNECTIONS && nodes.next()) {
-                String address = nodes.getString(1);
-                int port = nodes.getInt(2);
-                
-                if (neighboursContain(new InetSocketAddress(address, port))) {
-                    continue;
-                }
-                
-                var node = tryConnection(address, port);
+        var nodes = nodeCache.getCachedNodes(); // TODO: ritorna [] + interface
+        for (int i = 0; i < nodes.length && neighbours.size() < Protocol.Node.MIN_CONNECTIONS; i++) {
+            var address = nodes[i];
 
-                // If has responded
-                if (node != null) {
-                    var connection = new Connection(this, node);
-                    connection.start();
-                    connection.waitNodeRegistration(1000); // TIMEOUT
-                }
+            if (neighboursContain(address)) {
+                continue;
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
+            
+            var node = tryConnection(address);
+
+            // If has responded
+            if (node != null) {
+                var connection = new Connection(this, node);
+                connection.start();
+                connection.waitNodeRegistration(1000); // TIMEOUT
+            }
         }
     }
 
@@ -248,22 +240,30 @@ public class Node extends Thread {
             TimeUnit.MILLISECONDS);
     }
 
-    private void registerToSeeder() { // should be exhaustive
-        var seeder = getRandomSeeder();
-        System.out.println("[NODE] :: Registering to a random seeder " + seeder.getHostString() + ":" + seeder.getPort());
-        
-        var connection = tryConnection(seeder.getHostString(), seeder.getPort());
-        
-        if (connection != null) {
-            try {
-                var out = new PacketOutputStream(connection.getOutputStream());
-                out.writePacket(RegisterNodePacket.create(port, uuid));
-                Thread.sleep(100);
-                connection.close();
-            } catch (IOException | InterruptedException e) {
+    // tries to register to random seeder, if connection cannot be estblished,
+    // it tries every other seeder until one works. If none is found the program dies.
+    private void registerToSeeder() {
+        System.out.println("[NODE] :: Registering to a random seeder");
 
+        int seeders = Seeders.seeders.length;
+        int firstIndex = (int) (Math.random() * seeders); // random starting point
+        int index = firstIndex;
+        do {
+            var connection = tryConnection(Seeders.seeders[index % seeders]);
+
+            if (connection != null) {
+                try (connection) {
+                    var out = new PacketOutputStream(connection.getOutputStream());
+                    out.writePacket(RegisterNodePacket.create(port, uuid));
+                    Thread.sleep(100);
+                } catch (IOException | InterruptedException e) {}
+
+                return;
             }
-        }
+        } while (index++ % seeders != firstIndex); // circle around array until starting point
+
+        System.out.println("[NODE] :: Failed to contact any seeder. Guess i'll just die");
+        System.exit(0);
     }
 
     private Connection getRandomNeighbour() {
@@ -309,7 +309,6 @@ public class Node extends Thread {
     
             return result;
         }
-
     }
 
     private int getIndexFromUUID(UUID uuid) {
@@ -375,10 +374,11 @@ public class Node extends Thread {
 
     /**
      * TODO:
-     * queryNeighbours, querySeeder and registerToSeeder shoul be more exhaustive
-     * when the connection fails
+     * use CircleIterator for iterating over seeders and neighbours
      * 
      * simplify var in, var out with class
+     * 
+     * TODO solve weird sql exception
      *
      */
 

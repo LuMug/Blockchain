@@ -95,6 +95,8 @@ public class Connection extends Thread {
     // should not be called by this thread, otherwise it will halt
     public InetSocketAddress[] requestNodes(int amount) {
         if (!sendPacket(RequestNodesPacket.create(amount, node.uuid))) {
+            System.out.println("[NODE] :: Disconnecting offline node");
+            node.disconnect(this);
             return new InetSocketAddress[0];
         }
 
