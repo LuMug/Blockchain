@@ -138,7 +138,7 @@ public class Seeder extends Thread {
         try (var scanner = new Scanner(in)) {
             while (true) {
                 switch (scanner.nextLine().toLowerCase()) {
-                    case "list" -> {
+                    case "list", "ls" -> {
                         out.println();
                         printNodes(out);
                         out.println();
@@ -158,7 +158,7 @@ public class Seeder extends Thread {
             Seeder console - help
 
             help\t\t Display this message
-            list\t\t List all nodes
+            list, ls\t\t List all nodes
             stop\t\t Stop the service
         """);
     }

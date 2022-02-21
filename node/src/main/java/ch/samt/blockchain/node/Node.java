@@ -22,6 +22,7 @@ import ch.samt.blockchain.common.utils.stream.PacketInputStream;
 import ch.samt.blockchain.common.utils.stream.PacketOutputStream;
 import ch.samt.blockchain.node.database.NodeCacheDatabase;
 import ch.samt.blockchain.node.database.NodeCacheDatabaseImpl;
+import ch.samt.blockchain.node.utils.CircularIterator;
 
 public class Node extends Thread {
     
@@ -125,7 +126,7 @@ public class Node extends Thread {
         return false;
     }
 
-    private InetSocketAddress[] querySeeders(int amount) {
+    private InetSocketAddress[] querySeeders(int amount) { // TODO: Usare circulariterator
         // Select random seeder
         var address = getRandomSeeder();
 
@@ -145,7 +146,7 @@ public class Node extends Thread {
         return new InetSocketAddress[0];
     }
 
-    private InetSocketAddress[] queryNeighbours(int amount) {
+    private InetSocketAddress[] queryNeighbours(int amount) { // TODO: Usare Circulariterator
         // Select random neighbour
         var neighbour = getRandomNeighbour();
 
@@ -246,24 +247,21 @@ public class Node extends Thread {
         System.out.println("[NODE] :: Registering to a random seeder");
 
         int seeders = Seeders.seeders.length;
-        int firstIndex = (int) (Math.random() * seeders); // random starting point
-        int index = firstIndex;
-        do {
-            var connection = tryConnection(Seeders.seeders[index % seeders]);
-
+        int randomIndex = (int) (Math.random() * seeders); // random starting point
+        
+        for (int index : new CircularIterator(seeders, randomIndex)) {
+            var connection = tryConnection(Seeders.seeders[index]);
+    
             if (connection != null) {
                 try (connection) {
                     var out = new PacketOutputStream(connection.getOutputStream());
                     out.writePacket(RegisterNodePacket.create(port, uuid));
                     Thread.sleep(100);
                 } catch (IOException | InterruptedException e) {}
-
+    
                 return;
             }
-        } while (index++ % seeders != firstIndex); // circle around array until starting point
-
-        System.out.println("[NODE] :: Failed to contact any seeder. Guess i'll just die");
-        System.exit(0);
+        }
     }
 
     private Connection getRandomNeighbour() {
@@ -339,7 +337,7 @@ public class Node extends Thread {
         try (var scanner = new Scanner(in)) {
             while (true) {
                 switch (scanner.nextLine().toLowerCase()) {
-                    case "list" -> {
+                    case "list", "ls" -> {
                         out.println();
                         printNeighbours(out);
                         out.println();
@@ -367,7 +365,7 @@ public class Node extends Thread {
             Node console - help
 
             help\t\t Display this message
-            list\t\t List all nodes
+            list, ls\t\t List all nodes
             stop\t\t Stop the service
         """);
     }
@@ -378,7 +376,7 @@ public class Node extends Thread {
      * 
      * simplify var in, var out with class
      * 
-     * TODO solve weird sql exception
+     * 
      *
      */
 

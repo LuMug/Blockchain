@@ -4,11 +4,14 @@ import java.util.Iterator;
 
 /**
  * Iterator used to iterate an index over a circular path.
+ * 
+ * Example: length=5, start=3
+ * 3,4,0,1,2
  
  * @param length the length of the iteration
  * @param start the starting point
  */
-public record CircleIterator(int length, int start) implements Iterable<Integer> {
+public record CircularIterator(int length, int start) implements Iterable<Integer> {
 
     @Override
     public Iterator<Integer> iterator() {

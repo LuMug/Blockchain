@@ -21,7 +21,14 @@ public class NodeCacheDatabaseImpl implements NodeCacheDatabase {
     };
 
     public NodeCacheDatabaseImpl(String database) {
-        this.connection = new DatabaseConnection(database);
+        this.connection = new DatabaseConnectionImpl(database);
+        
+        if (!connection.connect()) {
+            System.out.println("[NODE] :: Failed to connect to database");
+            System.exit(0);
+        } else {
+            System.out.println("[NODE] :: Connected to " + database + " database");
+        }
 
         for (var instruction : SQL) {
             connection.execute(instruction);
@@ -82,14 +89,14 @@ public class NodeCacheDatabaseImpl implements NodeCacheDatabase {
 
     @Override
     public InetSocketAddress[] getCachedNodes() {
-        ResultSet rs = connection.query("SELECT address, port FROM nodes;");
         InetSocketAddress[] nodes = new InetSocketAddress[countCachedNodes()];
+        ResultSet rs = connection.query("SELECT address, port FROM nodes;");
 
         int i = 0;
         try {
             while (rs.next()) {
                 String address = rs.getString(1);
-                int port = rs.getInt(2); // java.sql.SQLException: column 2 out of bounds [1,1]
+                int port = rs.getInt(2);
                 nodes[i++] = new InetSocketAddress(address, port);
             }
         } catch (SQLException e) {
