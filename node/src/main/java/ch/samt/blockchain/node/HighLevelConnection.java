@@ -1,8 +1,10 @@
 package ch.samt.blockchain.node;
 
+import java.net.Socket;
+
 public class HighLevelConnection extends Connection {
 
-    public Connection(Node node, Socket socket) {
+    public HighLevelConnection(Node node, Socket socket) {
         super(node, socket);
     }
 

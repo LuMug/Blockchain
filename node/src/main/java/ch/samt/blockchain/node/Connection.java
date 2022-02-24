@@ -54,7 +54,7 @@ public abstract class Connection extends Thread {
         }
     }
 
-    protected abstract void processHighLevelPacket();
+    protected abstract void processHighLevelPacket(byte[] data);
     protected abstract void onRegistration();
 
     // Blocks thread caller until the node registers himself
