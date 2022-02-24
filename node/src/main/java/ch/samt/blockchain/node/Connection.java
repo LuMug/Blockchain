@@ -14,7 +14,7 @@ import ch.samt.blockchain.common.protocol.ServeNodesPacket;
 import ch.samt.blockchain.common.utils.stream.PacketInputStream;
 import ch.samt.blockchain.common.utils.stream.PacketOutputStream;
 
-public class Connection extends Thread {
+public abstract class Connection extends Thread {
 
     private UUID nodeUuid;
     private InetSocketAddress serviceAddress;
@@ -53,6 +53,9 @@ public class Connection extends Thread {
             return;
         }
     }
+
+    protected abstract void processHighLevelPacket();
+    protected abstract void onRegistration();
 
     // Blocks thread caller until the node registers himself
     public void waitNodeRegistration(int timeout) {
@@ -117,9 +120,10 @@ public class Connection extends Thread {
             case Protocol.REGISTER_NODE -> processRegisterNodePacket(data);
             case Protocol.REQUEST_NODES -> processRequestNodesPacket(data);
             case Protocol.SERVE_NODES -> processServeNodesPacket(data);
+            default -> processHighLevelPacket(data);
         }
     }
-    
+
     private void processRegisterNodePacket(byte[] data) {
         if (nodeUuid != null) { // already registered
             return;
@@ -130,6 +134,7 @@ public class Connection extends Thread {
         this.serviceAddress = new InetSocketAddress(stripPort(socket.getRemoteSocketAddress().toString()), port);
         this.nodeUuid = packet.getUUID();
         node.registerNode(this);
+        onRegistration();
     }
     
     private void processRequestNodesPacket(byte[] data) {

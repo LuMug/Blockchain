@@ -16,7 +16,7 @@ public class Main {
             return;
         }
         
-        var node = new Node(port);
+        var node = new HighLevelNode(port);
 
         // Start service
         node.start();

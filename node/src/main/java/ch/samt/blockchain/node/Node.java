@@ -24,7 +24,7 @@ import ch.samt.blockchain.node.database.NodeCacheDatabase;
 import ch.samt.blockchain.node.database.NodeCacheDatabaseImpl;
 import ch.samt.blockchain.node.utils.CircularIterator;
 
-public class Node extends Thread {
+public abstract class Node extends Thread {
     
     public final UUID uuid = UUID.randomUUID();
 
@@ -55,7 +55,7 @@ public class Node extends Thread {
                 try {
                     // Wait for connection
                     var socket = server.accept();
-                    var connection = new Connection(this, socket);
+                    var connection = new HighLevelConnection(this, socket);
                     connection.start();
                     System.out.println("Connection incoming");
                 } catch (IOException e) {}
@@ -102,7 +102,7 @@ public class Node extends Thread {
                     
                         // If has responded
                         if (socket != null) {
-                            var connection = new Connection(this, socket);
+                            var connection = new HighLevelConnection(this, socket);
                             connection.start();
                             connection.waitNodeRegistration(1000); // TIMEOUT
                         }
@@ -186,7 +186,7 @@ public class Node extends Thread {
                 
                     // If has responded
                     if (socket != null) {
-                        var connection = new Connection(this, socket);
+                        var connection = new HighLevelConnection(this, socket);
                         connection.start();
                         connection.waitNodeRegistration(1000); // TIMEOUT
                     }
@@ -208,7 +208,7 @@ public class Node extends Thread {
 
             // If has responded
             if (node != null) {
-                var connection = new Connection(this, node);
+                var connection = new HighLevelConnection(this, node);
                 connection.start();
                 connection.waitNodeRegistration(1000); // TIMEOUT
             }
