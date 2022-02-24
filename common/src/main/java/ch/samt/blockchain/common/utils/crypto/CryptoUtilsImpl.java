@@ -7,11 +7,13 @@ public class CryptoUtils {
 
     static {
         try {
+            Security.addProvider();
+
             sha256Digest = MessageDigest.getInstance("SHA-256");
 
             KeyPairGenerator ecKeyGen = KeyPairGenerator.getInstance("EC");
             ECGenParameterSpec ecSpec = new ECGenParameterSpec("secp256k1");
-            ecKeyGen.initialize(ecSpec);;
+            ecKeyGen.initialize(ecSpec);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | NoSuchProviderException e) {
             e.printStackTrace();
         }
@@ -22,9 +24,13 @@ public class CryptoUtils {
     }
 
     public static KeyPair generateKeyPair() {
-        KeyPair kp = ecKeyGen.generateKeyPair();
-        PublicKey pub = kp.getPublic();
-        PrivateKey pvt = kp.getPrivate()
+        return ecKeyGen.generateKeyPair();
+    }
+
+    public static PublicKey fromPrivateKey(PrivateKey privateKey) {
+        ECPrivateKey epvt = (ECPrivateKey) privateKey;
+
+        return epvt.getS().toByteArray();
     }
 
 }
