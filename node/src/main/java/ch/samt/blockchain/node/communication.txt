@@ -83,3 +83,13 @@ EVERY REGISTER_INTERVAL
 
 On broadcast must prevent double send, otherwise the transaction won't ever stop
 travelling
+
+
+
+
+NOTES:
+A deployed transaction must have a timestamp in the last 24 hours, orelse
+it is considered invalid.
+
+The genesis block is a block with 0 transaction, it has to be mined.
+The hash of the previous block is 0.

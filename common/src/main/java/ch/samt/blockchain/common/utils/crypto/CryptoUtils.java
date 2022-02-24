@@ -36,7 +36,7 @@ public class CryptoUtils {
             ecdsaKeyFactory = KeyFactory.getInstance("ECDSA", "BC");
 
             KeyPairGenerator ecKeyGen = KeyPairGenerator.getInstance("EC");
-            ECGenParameterSpec ecSpec = new ECGenParameterSpec("secp256k1");
+            ECGenParameterSpec ecSpec = new ECGenParameterSpec("secp256k1"); // Exception
             ecKeyGen.initialize(ecSpec, new SecureRandom());
             ecKeyGen.initialize(ecSpec);
         } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | NoSuchProviderException e) {
@@ -45,7 +45,7 @@ public class CryptoUtils {
     }
 
     /*
-https://metamug.com/article/security/sign-verify-digital-signature-ecdsa-java.html
+    https://metamug.com/article/security/sign-verify-digital-signature-ecdsa-java.html
     */
     
     public static byte[] SHA256(byte[] digest) {
