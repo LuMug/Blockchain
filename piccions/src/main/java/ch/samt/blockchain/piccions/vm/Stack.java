@@ -10,24 +10,8 @@ class Stack {
         this.stackSize = 0;
     }
 
-    public void allocFrame(int size) {
-        stackSize += size;
-    }
-
-    public void deallocFrame(int size) {
-        stackSize -= size;
-    }
-
-    // read from stack (stackframe)
-    // offset should be negative
-    public byte read(int offset) {
-        return stack[stackSize + offset];
-    }
-
-    // read to stack (stackframe)
-    // offset should be negative
-    public void write(byte v, int offset) {
-        stack[stackSize + offset] = v;
+    public byte peek(int offset) {
+        return stack[stackSize - offset];
     }
 
     public void pushI8(byte v) {
@@ -36,6 +20,14 @@ class Stack {
     
     public byte popI8() {
         return stack[--stackSize];
+    }
+
+    public void dealloc(int off) {
+        stackSize -= off;
+    }
+
+    public void write(byte value, int offset) {
+        stack[stackSize - offset] = value;
     }
 
     public void print() {

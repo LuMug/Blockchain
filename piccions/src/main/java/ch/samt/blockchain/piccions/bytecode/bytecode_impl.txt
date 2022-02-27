@@ -10,26 +10,15 @@ fn fun(ptr *i32): i32 {
     ret b;
 }
 
-------------------------
-
-% -> comment
-; -> bytecode position
-: -> stack position
-<function>-start -> function initial stack position
-<function>_<name> -> local variable
-
-GOTO_A -> GOTO NEXT()
-GOTO_B -> if POP() GOTO NEXT()
-GOTO_C -> GOTO POP()
-
-WRITE -> write POP() value at :ptr
-
-DEALLOC_A dealloc [:ptr to END]
-DEALLOC_B dealloc [:ptr to :<function>-ret[ and then collapse :<function>-ret on top of the stack
-
 --------------------------
 
-GOTO_A      ;main
+PUSH        2 i32           :main_a, :main-start
+PUSH        %POS%
+PUSH        :main_a         :fun_ptr, :fun-start
+GOTO_A      ;fun
+POP                         % remove unused return
+DEALLOC_A   :main_start
+EXIT
 
 PUSH        2 i32           ;fun, :fun_a
 READ        :fun_ptr        :fun_b
@@ -41,9 +30,31 @@ DEALLOC_B   :fun_start,
 SWAP
 GOTO_C
 
-PUSH        2 i32           ;main, :main_a, :main-start
-PUSH        %POS%
-PUSH        :main_a         :fun_ptr, :fun-start
-GOTO_A      ;fun
-POP                         % remove unused return
-DEALLOC_A   :main_start
+------------------------
+
+% -> comment
+; -> bytecode position
+: -> stack position
+<function>-start -> function initial stack position
+<function>_<name> -> local variable
+
+GOTO_A -> GOTO NEXT()
+GOTO_B -> if POP() GOTO NEXT()
+GOTO_C -> GOTO POP()
+WRITE -> write POP() value at :ptr
+DEALLOC_A -> dealloc [:ptr to END]
+DEALLOC_B -> dealloc [:ptr to :<function>-ret[ and then collapse :<function>-ret on top of the stack
+
+
+
+
+
+
+
+Primitive types are allocated onto the stack.
+The compiler automatically computes the position of variables
+in the stack when they are needed.
+Stack is deallocated when a scope ends, so the stack offset of a scope is always 0.
+Functions CANNOT return pointers.
+Arrays and structs are allocated on the heap.
+Arrays are allocated on the stack as length|pointer
