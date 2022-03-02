@@ -30,6 +30,10 @@ class Stack {
         stack[stackSize - offset] = value;
     }
 
+    public int size() {
+        return stackSize;
+    }
+
     public void print() {
         System.out.println("------");
         for (int i = stackSize - 1; i >= 0; i--) {

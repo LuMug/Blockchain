@@ -1,21 +1,10 @@
 package ch.samt.blockchain.piccions.compiler.assembler;
 
-/**
- * This class provides metadata for a bytecode instruction.
- * 
- * Master checkpoint -> this instruction is a checkpoint for other instructions
- * 
- * Slave checkpoint -> this instruction will acquire the value of the index of the master checkpoint
- * 
- * Increment -> this instruction will be incremented by 1
- *      Used when the slave checkpoint should point to the instruction after a master checkpoint,
- *      but that instruction is still unknown.
- */
 public class Instruction {
 
     private byte instruction;
 
-    private MetaData options;
+    private MetaData options; // store in separate object to avoid useless allocation
 
     public Instruction(byte instruction) {
         this.instruction = instruction;
@@ -106,6 +95,19 @@ public class Instruction {
         return options.getSlaveStackOffset();
     }
 
+    public void setAlterStackOffset(int offset) {
+        initIfNull();
+        options.setAlterStackOffset(offset);
+    }
+
+    public boolean hasAlterStackOffset() {
+        return options != null && options.hasAlterStackOffset();
+    }
+
+    public int getAlterStackOffset() {
+        return options.getAlterStackOffset();
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
@@ -140,6 +142,12 @@ public class Instruction {
         if (hasSlaveStackOffset()) {
             builder.append("SlaveStackOffset: ");
             builder.append(getSlaveStackOffset());
+            builder.append(" ");
+        }
+
+        if (hasAlterStackOffset()) {
+            builder.append("AlterStackOffset: ");
+            builder.append(getAlterStackOffset());
             builder.append(" ");
         }
 
@@ -178,6 +186,12 @@ public class Instruction {
          * by the stack offset of the specified variable.
          */
         private int slaveStackOffset = -1;
+
+        /**
+         * This opcode alters the current stack offset
+         * by its value.
+         */
+        private int alterStackOffset = 0;
 
         public void setIncrementOption(int increment) {
             this.increment = increment;
@@ -237,6 +251,18 @@ public class Instruction {
 
         public int getSlaveStackOffset() {
             return slaveStackOffset;
+        }
+
+        public void setAlterStackOffset(int offset) {
+            this.alterStackOffset = offset;
+        }
+
+        public boolean hasAlterStackOffset() {
+            return alterStackOffset != 0;
+        }
+
+        public int getAlterStackOffset() {
+            return alterStackOffset;
         }
 
     }

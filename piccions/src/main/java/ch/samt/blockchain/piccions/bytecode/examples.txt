@@ -78,40 +78,7 @@ assembler.add(
 );
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ------------------------------------------------------
-
-function func() {
-    print(42)
-}
 
 function main() {
     variable = 10
@@ -119,56 +86,39 @@ function main() {
     while (variable / 10 == 1) {
         print(variable)
         variable = variable + 1
-        func()
     }
 }
 
-var builder = new ByteCodeBuilder();
-
-builder.add(
-    builder.declareFunc(
-        "func",
-        PUSH_I8, // print 42
-        (byte) 42,
-        PRINT_I8
-    )
-);
-
-builder.add(
-    builder.mainFunc(
+assembler.add(
+    assembler.mainFunc(
         buildInstructions(
-            ALLOC,
-            (byte) 1,
-            PUSH_I8,
-            (byte) 10,
-            STORE,
-            (byte) -1
-        ),
-        builder.whileLoop(
             buildInstructions(
-                LOAD, // push var
-                (byte) -1,
-                PUSH_I8,   // push 10
-                (byte) 10,
-                DIV_I8,    // div
-                PUSH_I8,   // push 5
-                (byte) 1,
-                EQUALS_I8 // compare
+                buildInstruction(PUSH_I8),
+                assembler.variable("variable", (byte) 10)
             ),
-            buildInstructions(
+            assembler.whileLoop(
                 buildInstructions(
-                    LOAD, // push var
-                    (byte) -1,
-                    PRINT_I8,
-                    LOAD, // push var
-                    (byte) -1,
-                    PUSH_I8,
-                    (byte) 1,
-                    ADD_I8,
-                    STORE, // write var
-                    (byte) -1
+                    buildInstruction(LOAD), // push var
+                    assembler.variable("variable"),
+                    buildInstruction(PUSH_I8),   // push 10
+                    buildInstruction((byte) 10),
+                    buildInstruction(DIV_I8),    // div
+                    buildInstruction(PUSH_I8),   // push 1
+                    buildInstruction((byte) 1),
+                    buildInstruction(EQUALS_I8) // compare
                 ),
-                builder.invokeFunc("func")
+                buildInstructions(
+                    buildInstruction(LOAD), // push var
+                    assembler.variable("variable"),
+                    buildInstruction(PRINT_I8),
+                    buildInstruction(LOAD), // push var
+                    assembler.variable("variable"),
+                    buildInstruction(PUSH_I8),
+                    buildInstruction((byte) 1),
+                    buildInstruction(ADD_I8),
+                    buildInstruction(STORE), // write var
+                    assembler.variable("variable")
+                )
             )
         )
     )

@@ -1,10 +1,10 @@
 package ch.samt.blockchain.piccions.compiler.parser;
 
-import ch.samt.blockchain.piccions.compiler.assembler.Instruction;
+import ch.samt.blockchain.piccions.compiler.parser.instructions.InstructionSet;
 
 public class Parser {
     
-    public static Instruction getAbtractSyntaxTree(String code) {
+    public static InstructionSet getAbtractSyntaxTree(String code) {
         return null;
     }
 

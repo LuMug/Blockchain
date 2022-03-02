@@ -90,7 +90,8 @@ public class VirtualMachine {
                 case ByteCode.STORE -> {
                     byte value = stack.popI8();
                     byte off = cursor.next();
-                    stack.write(value, off);
+                    // -1 because pop() has already reduced the stack size
+                    stack.write(value, off - 1);
                 }
                 case ByteCode.DEALLOC -> {
                     byte off = cursor.next();

@@ -118,6 +118,7 @@ public class Assembler {
         
         Instruction temp = new Instruction();
         temp.setSlaveCheckpoint(endCheckpoint);
+        temp.setIncrementOption(1); //////////////////// ?????????????????
         result[pos++] = temp;
 
         for (var code : bodyCode) {
@@ -268,11 +269,11 @@ public class Assembler {
         }
         result[0].setMasterCheckpoint(funcCheckpoint);
 
-        // Process offset stack IDs
-        processStackOffsetIDs(result);
-
         // Go back to whatever the code was executing
         result[pos++] = new Instruction(ByteCode.GOTO_C);
+        
+        // Process offset stack IDs
+        processStackOffsetIDs(result);
 
         return result;
     }
@@ -282,7 +283,9 @@ public class Assembler {
         Map<Integer, Integer> offsets = new HashMap<>();
         int instructionIndex = 0;
 
-        Instruction lastIntruction = null;
+        // weird spaghetti logic
+
+        Instruction lastInstruction = null;
         for (int i = 0; i < result.length; i++) {
             Instruction instruction = result[i];
             byte opcode = instruction.getInstruction();
@@ -290,24 +293,33 @@ public class Assembler {
             if (instruction.hasMasterStackOffset()) {
                 offsets.put(instruction.getMasterStackOffset(), stackOffset);
             }
-            
+
             if (instruction.hasSlaveStackOffset()) {
                 instruction.setInstruction(
                     (byte) (stackOffset -
                     offsets.get(instruction.getSlaveStackOffset())));
             }
 
-            // if opcode is instruction
-            if (instructionIndex == i) {
-                stackOffset += ByteCode.getStackOffset(opcode);
-                instructionIndex += ByteCode.getNextInstructionOffset(opcode);
+            if (instruction.hasAlterStackOffset()) {
+                stackOffset += instruction.getAlterStackOffset();
+            }
 
-                if (lastIntruction != null && lastIntruction.getInstruction() == ByteCode.DEALLOC) {
-                    stackOffset -= offsets.get(lastIntruction.getSlaveStackOffset());
+            if (instructionIndex == i) {
+                int next = ByteCode.getNextInstructionOffset(opcode);
+                if (next == 1) {
+                    stackOffset += ByteCode.getStackOffset(opcode);    
+                }
+                instructionIndex += next;
+            } else if (lastInstruction != null) {
+                stackOffset += ByteCode.getStackOffset(lastInstruction.getInstruction());
+                if (lastInstruction.getInstruction() == ByteCode.DEALLOC) {
+                    stackOffset -= offsets.get(instruction.getSlaveStackOffset());
                 }
             }
 
-            lastIntruction = instruction;
+            lastInstruction = instruction;
+            // TODO support opcodes with more than two next()
+            // modify stacksize only once per instruction
         }
     }
 
@@ -324,9 +336,11 @@ public class Assembler {
         }
         
         // Push index to GOTO after func is done
-        result[0] = new Instruction(ByteCode.PUSH_I8);
+        Instruction temp = new Instruction(ByteCode.PUSH_I8);
+        temp.setAlterStackOffset(-1);
+        result[0] = temp;
 
-        Instruction temp = new Instruction();
+        temp = new Instruction();
         int indexCheckpoint = nextID();
         temp.setSlaveCheckpoint(indexCheckpoint);
         temp.setMasterCheckpoint(indexCheckpoint);
@@ -405,6 +419,10 @@ public class Assembler {
         }
 
         return result;
+    }
+
+    public static Instruction[] buildInstructions(Instruction... bytecode) {
+        return bytecode;
     }
 
     public static Instruction buildInstruction(byte instruction) {
