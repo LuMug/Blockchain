@@ -13,36 +13,43 @@ public class Test {
 
         assembler.add(
             assembler.mainFunc(
-                buildInstructions(
+                assembler.ifElseStatement(
                     buildInstructions(
-                        buildInstruction(PUSH_I8),
-                        assembler.variable("variable", (byte) 10)
+                        PUSH_BOOL,
+                        FALSE
                     ),
-                    assembler.whileLoop(
-                        buildInstructions(
-                            buildInstruction(LOAD), // push var
-                            assembler.variable("variable"),
-                            buildInstruction(PUSH_I8),   // push 10
-                            buildInstruction((byte) 10),
-                            buildInstruction(DIV_I8),    // div
-                            buildInstruction(PUSH_I8),   // push 1
-                            buildInstruction((byte) 1),
-                            buildInstruction(EQUALS_I8) // compare
-                        ),
-                        buildInstructions(
-                            buildInstruction(LOAD), // push var
-                            assembler.variable("variable"),
-                            buildInstruction(PRINT_I8),
-                            buildInstruction(LOAD), // push var
-                            assembler.variable("variable"),
-                            buildInstruction(PUSH_I8),
-                            buildInstruction((byte) 1),
-                            buildInstruction(ADD_I8),
-                            buildInstruction(STORE), // write var
-                            assembler.variable("variable")
-                        )
+                    assembler.invokeFunc("func2"),
+                    buildInstructions(
+                        assembler.invokeFunc("func1"),
+                        assembler.invokeFunc("func1"),
+                        assembler.invokeFunc("func1"),
+                        assembler.invokeFunc("func1"),
+                        assembler.invokeFunc("func1"),
+                        assembler.invokeFunc("func1")
                     )
                 )
+            )
+        );
+        
+        assembler.add(
+            assembler.declareFunc(
+                "func1",
+                buildInstructions(
+                    buildInstruction(PUSH_I8),
+                    buildInstruction((byte) 42),
+                    buildInstruction(PRINT_I8),
+                    buildInstruction(PUSH_I8),
+                    buildInstruction((byte) 33)
+                )
+            )
+        );
+        
+        assembler.add(
+            assembler.declareFunc(
+                "func2",
+                PUSH_I8,
+                (byte) 24,
+                PRINT_I8
             )
         );
         
@@ -50,7 +57,7 @@ public class Test {
         
         // TODO il push dei parametri dovrebbe avere -(PARAM SIZE) STACK
 
-        // TODO l'inizio della funzione dovrebbe avere un +(PARAM SIZE) STACK
+        // TODO l'inizio del body della funzione dovrebbe avere un +(PARAM SIZE) STACK
         
         // TODO l'inizio della funzione dovrebbe essere il stackMaster di tutti i parametri
 
@@ -60,7 +67,7 @@ public class Test {
         var bytecode = assembler.compile(); // assemble
 
         System.out.println(assembler);
-        print(bytecode);
+        //print(bytecode);
 
         var vm = new VirtualMachine(bytecode);
         vm.execute();

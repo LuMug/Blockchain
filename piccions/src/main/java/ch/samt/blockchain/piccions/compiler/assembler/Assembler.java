@@ -11,8 +11,9 @@ public class Assembler {
     
     private List<Instruction> bytecode;
 
-    private Map<String, Integer> functionCheckpointIDs;
     private Map<String, Integer> variableStackOffsetIDs;
+    private Map<String, Integer> functionCheckpointIDs;
+    private Map<String, int[]> functionParamSizes;
 
     /**
      * IDs used to mark function checkpoints
@@ -249,17 +250,24 @@ public class Assembler {
         return declareFunc(name, buildInstructions(code));
     }
 
-    public Instruction[] declareFunc(String name, Instruction[]... code) {
-        var bytecode = buildInstructions(code);
+    public Instruction[] declareFunc(String name, Instruction[] code) {
+        return declareFuncWithParams(name, new int[]{0}, code);
+    }
 
-        var result = new Instruction[bytecode.length + 1];
+    public Instruction[] declareFuncWithParams(String name, int[] paramSizes, Instruction[] body) {
+        body = scope(body);
+
+        var result = new Instruction[body.length + 1];
         int pos = 0;
 
-        // Function code
-        for (var instruction : bytecode) {
+        // body
+        for (var instruction : body) {
             result[pos++] = instruction;
         }
 
+        // Go back to whatever the code was executing
+        result[pos++] = new Instruction(ByteCode.GOTO_C);
+        
         // Set master checkpoint for this function
         int funcCheckpoint = 0;
         if (functionCheckpointIDs.containsKey(name)) {
@@ -269,8 +277,16 @@ public class Assembler {
         }
         result[0].setMasterCheckpoint(funcCheckpoint);
 
-        // Go back to whatever the code was executing
-        result[pos++] = new Instruction(ByteCode.GOTO_C);
+        // Total parameter size
+        int paramTotalSize = 0;
+        for (int paramSize : paramSizes) {
+            paramTotalSize += paramSize;
+        }
+
+        // Increase stack offset such that scope erases params
+        body[0].setAlterStackOffset(+paramTotalSize);
+
+        functionParamSizes.put(name, paramSizes);
         
         // Process offset stack IDs
         processStackOffsetIDs(result);
@@ -278,49 +294,17 @@ public class Assembler {
         return result;
     }
 
-    private void processStackOffsetIDs(Instruction... result) {
-        int stackOffset = 0;
-        Map<Integer, Integer> offsets = new HashMap<>();
-        int instructionIndex = 0;
+    public Instruction[] pushParams(String funcName, Instruction[] code) {
+        //code[0].setParamSizeAsAlterStack(funcName)
+        //
+        // on compile: setAlterStackOffset(-paramTotalSize); 
+        // TODO
+        return code;
+    }
 
-        // weird spaghetti logic
-
-        Instruction lastInstruction = null;
-        for (int i = 0; i < result.length; i++) {
-            Instruction instruction = result[i];
-            byte opcode = instruction.getInstruction();
-            
-            if (instruction.hasMasterStackOffset()) {
-                offsets.put(instruction.getMasterStackOffset(), stackOffset);
-            }
-
-            if (instruction.hasSlaveStackOffset()) {
-                instruction.setInstruction(
-                    (byte) (stackOffset -
-                    offsets.get(instruction.getSlaveStackOffset())));
-            }
-
-            if (instruction.hasAlterStackOffset()) {
-                stackOffset += instruction.getAlterStackOffset();
-            }
-
-            if (instructionIndex == i) {
-                int next = ByteCode.getNextInstructionOffset(opcode);
-                if (next == 1) {
-                    stackOffset += ByteCode.getStackOffset(opcode);    
-                }
-                instructionIndex += next;
-            } else if (lastInstruction != null) {
-                stackOffset += ByteCode.getStackOffset(lastInstruction.getInstruction());
-                if (lastInstruction.getInstruction() == ByteCode.DEALLOC) {
-                    stackOffset -= offsets.get(instruction.getSlaveStackOffset());
-                }
-            }
-
-            lastInstruction = instruction;
-            // TODO support opcodes with more than two next()
-            // modify stacksize only once per instruction
-        }
+    public Instruction param(String funcName, int index) {
+        // TODO
+        return null;
     }
 
     public Instruction[] invokeFunc(String name) {
@@ -396,12 +380,12 @@ public class Assembler {
         return result;
     }
 
-    // should be called first
+    // should be added first
     public Instruction[] mainFunc(byte... code) {
         return mainFunc(buildInstructions(code));
     }
 
-    // should be called first
+    // should be added first
     public Instruction[] mainFunc(Instruction... code) {
         var result = buildInstructions(code,
             new Instruction[]{new Instruction(ByteCode.EXIT)});
@@ -409,6 +393,51 @@ public class Assembler {
         processStackOffsetIDs(result);
 
         return result;
+    }
+
+    private void processStackOffsetIDs(Instruction... result) {
+        int stackOffset = 0;
+        Map<Integer, Integer> offsets = new HashMap<>();
+        int instructionIndex = 0;
+
+        // weird spaghetti logic
+
+        Instruction lastInstruction = null;
+        for (int i = 0; i < result.length; i++) {
+            Instruction instruction = result[i];
+            byte opcode = instruction.getInstruction();
+            
+            if (instruction.hasMasterStackOffset()) {
+                offsets.put(instruction.getMasterStackOffset(), stackOffset);
+            }
+
+            if (instruction.hasSlaveStackOffset()) {
+                instruction.setInstruction(
+                    (byte) (stackOffset -
+                    offsets.get(instruction.getSlaveStackOffset())));
+            }
+
+            if (instruction.hasAlterStackOffset()) {
+                stackOffset += instruction.getAlterStackOffset();
+            }
+
+            if (instructionIndex == i) {
+                int next = ByteCode.getNextInstructionOffset(opcode);
+                if (next == 1) {
+                    stackOffset += ByteCode.getStackOffset(opcode);    
+                }
+                instructionIndex += next;
+            } else if (lastInstruction != null) {
+                stackOffset += ByteCode.getStackOffset(lastInstruction.getInstruction());
+                if (lastInstruction.getInstruction() == ByteCode.DEALLOC) {
+                    stackOffset -= offsets.get(instruction.getSlaveStackOffset());
+                }
+            }
+
+            lastInstruction = instruction;
+            // TODO support opcodes with more than two next()
+            // modify stacksize only once per instruction
+        }
     }
 
     public static Instruction[] buildInstructions(byte... bytecode) {
@@ -484,12 +513,5 @@ public class Assembler {
 
         return result;
     }*/
-
-    // nextCheckpoint() -> nextUniqueValue() / counter somthing
-
-    // Problem: call to a fuction doesn't allocate on stack
-    // for the stack offset ids.
-    // Implement scope for functions
-    // Functions with parameters and retruns
 
 }
