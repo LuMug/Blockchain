@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import ch.samt.blockchain.piccions.bytecode.ByteCode;
+import static ch.samt.blockchain.piccions.compiler.assembler.Instruction.MetaDataType.*;
 
 public class Assembler {
     
@@ -25,6 +26,7 @@ public class Assembler {
         this.bytecode = new LinkedList<>();
         this.functionCheckpointIDs = new HashMap<>();
         this.variableStackOffsetIDs = new HashMap<>();
+        this.functionParamSizes = new HashMap<>();
     }
 
     public void add(byte code) {
@@ -55,7 +57,8 @@ public class Assembler {
         for (int i = 0; i < bytecode.size(); i++) {
             Instruction instruction = bytecode.get(i);
 
-            if (instruction.hasMasterCheckpoint() && instruction.getMasterCheckpoint() == checkpoint) {
+            if (instruction.hasMetaData(MASTER_CHECKPOINT)
+                    && ((MASTER_CHECKPOINT) instruction.getMetaData(MASTER_CHECKPOINT)).getValue() == checkpoint) {
                 return i;
             }
         }
@@ -68,12 +71,12 @@ public class Assembler {
         int pos = 0;
 
         for (var instruction : bytecode) {
-            if (instruction.hasSlaveCheckpoint()) {
-                int checkpoint = instruction.getSlaveCheckpoint();
+            if (instruction.hasMetaData(SLAVE_CHECKPOINT)) {
+                int checkpoint = ((SLAVE_CHECKPOINT) instruction.getMetaData(SLAVE_CHECKPOINT)).getValue();
                 int index = getMasterCheckpointIndex(checkpoint);
 
-                if (instruction.hasIncrementOption()) {
-                    index += instruction.getIncrementOption();
+                if (instruction.hasMetaData(INCREMENT)) {
+                    index += ((INCREMENT) instruction.getMetaData(INCREMENT)).getValue();
                 }
 
                 instruction.setInstruction((byte) index);
@@ -111,15 +114,16 @@ public class Assembler {
         int startCheckpoint = nextID();
         int endCheckpoint = nextID();
 
-        result[0].setMasterCheckpoint(startCheckpoint);
-        result[0].setIncrementOption();
+        result[0].addMetaData(new MASTER_CHECKPOINT(startCheckpoint));
+        result[0].addMetaData(new INCREMENT(1));
 
 
         result[pos++] = new Instruction(ByteCode.GOTO_B);
         
         Instruction temp = new Instruction();
-        temp.setSlaveCheckpoint(endCheckpoint);
-        temp.setIncrementOption(1); //////////////////// ?????????????????
+
+        temp.addMetaData(new SLAVE_CHECKPOINT(endCheckpoint));
+        temp.addMetaData(new INCREMENT(1));
         result[pos++] = temp;
 
         for (var code : bodyCode) {
@@ -129,8 +133,9 @@ public class Assembler {
         result[pos++] = new Instruction(ByteCode.GOTO_A);
         
         temp = new Instruction();
-        temp.setMasterCheckpoint(endCheckpoint);
-        temp.setSlaveCheckpoint(startCheckpoint);
+
+        temp.addMetaData(new MASTER_CHECKPOINT(endCheckpoint));
+        temp.addMetaData(new SLAVE_CHECKPOINT(startCheckpoint));
         result[pos++] = temp;
 
         return result;
@@ -163,15 +168,18 @@ public class Assembler {
         result[pos++] = new Instruction(ByteCode.GOTO_B);
         
         Instruction temp = new Instruction();
-        temp.setSlaveCheckpoint(endCheckpoint);
-        temp.setIncrementOption();
+        
+
+        temp.addMetaData(new SLAVE_CHECKPOINT(endCheckpoint));
+        temp.addMetaData(new INCREMENT(1));
         result[pos++] = temp;
 
         for (var code : bodyCode) {
             result[pos++] = code;
         }
 
-        result[result.length - 1].setMasterCheckpoint(endCheckpoint);
+
+        result[result.length - 1].addMetaData(new MASTER_CHECKPOINT(endCheckpoint));
 
         return result;
     }
@@ -221,8 +229,8 @@ public class Assembler {
         result[pos++] = new Instruction(ByteCode.GOTO_B);
 
         Instruction temp = new Instruction();
-        temp.setSlaveCheckpoint(ifEndCheckpoint);
-        temp.setIncrementOption();
+        temp.addMetaData(new SLAVE_CHECKPOINT(ifEndCheckpoint));
+        temp.addMetaData(new INCREMENT(1));
         result[pos++] = temp;
 
         for (var code : ifCode) {
@@ -232,16 +240,16 @@ public class Assembler {
         result[pos++] = new Instruction(ByteCode.GOTO_A);
 
         temp = new Instruction();
-        temp.setMasterCheckpoint(ifEndCheckpoint);
-        temp.setSlaveCheckpoint(elseEndCheckpoint);
-        temp.setIncrementOption();
+        temp.addMetaData(new MASTER_CHECKPOINT(ifEndCheckpoint));
+        temp.addMetaData(new SLAVE_CHECKPOINT(elseEndCheckpoint));
+        temp.addMetaData(new INCREMENT(1));
         result[pos++] = temp;
 
         for (var code : elseCode) {
             result[pos++] = code;
         }
 
-        result[result.length - 1].setMasterCheckpoint(elseEndCheckpoint);
+        result[result.length - 1].addMetaData(new MASTER_CHECKPOINT(elseEndCheckpoint));
 
         return result;
     }
@@ -275,7 +283,8 @@ public class Assembler {
         } else {
             functionCheckpointIDs.put(name, funcCheckpoint = nextID());
         }
-        result[0].setMasterCheckpoint(funcCheckpoint);
+
+        result[0].addMetaData(new MASTER_CHECKPOINT(funcCheckpoint));
 
         // Total parameter size
         int paramTotalSize = 0;
@@ -284,7 +293,7 @@ public class Assembler {
         }
 
         // Increase stack offset such that scope erases params
-        body[0].setAlterStackOffset(+paramTotalSize);
+        body[0].addMetaData(new ALTER_STACK_OFFSET(+paramTotalSize));
 
         functionParamSizes.put(name, paramSizes);
         
@@ -321,21 +330,25 @@ public class Assembler {
         
         // Push index to GOTO after func is done
         Instruction temp = new Instruction(ByteCode.PUSH_I8);
-        temp.setAlterStackOffset(-1);
+
+        temp.addMetaData(new ALTER_STACK_OFFSET(-1));
         result[0] = temp;
 
         temp = new Instruction();
         int indexCheckpoint = nextID();
-        temp.setSlaveCheckpoint(indexCheckpoint);
-        temp.setMasterCheckpoint(indexCheckpoint);
-        temp.setIncrementOption(3); // skip this and the next two instructions
+
+        temp.addMetaData(new SLAVE_CHECKPOINT(indexCheckpoint));
+        temp.addMetaData(new MASTER_CHECKPOINT(indexCheckpoint));
+        temp.addMetaData(new INCREMENT(3)); // skip this and the next two instructions
         result[1] = temp;
 
         // GOTO func
         result[2] = new Instruction(ByteCode.GOTO_A);
 
         temp = new Instruction();
-        temp.setSlaveCheckpoint(funcCheckpoint);
+
+
+        temp.addMetaData(new SLAVE_CHECKPOINT(funcCheckpoint));
         result[3] = temp;
 
         return result;
@@ -351,12 +364,13 @@ public class Assembler {
 
     public Instruction variable(String name, Instruction instruction) {
         if (variableStackOffsetIDs.containsKey(name)) {
-            instruction.setSlaveStackOffset(variableStackOffsetIDs.get(name));
+
+            instruction.addMetaData(new SLAVE_STACK_OFFSET(variableStackOffsetIDs.get(name)));
         } else {
             // create if doesn't exist
             int id = nextID();
             variableStackOffsetIDs.put(name, id);
-            instruction.setMasterStackOffset(id);
+            instruction.addMetaData(new MASTER_STACK_OFFSET(id));
         }
 
         return instruction;
@@ -364,7 +378,8 @@ public class Assembler {
 
     public Instruction[] scope(Instruction... instructions) {
         int id = nextID();
-        instructions[0].setMasterStackOffset(id);
+
+        instructions[0].addMetaData(new MASTER_STACK_OFFSET(id));
 
         var result = new Instruction[instructions.length + 2];
         int i = 0;
@@ -374,7 +389,7 @@ public class Assembler {
 
         result[i++] = new Instruction(ByteCode.DEALLOC);
         var temp = new Instruction();
-        temp.setSlaveStackOffset(id);
+        temp.addMetaData(new SLAVE_STACK_OFFSET(id));
         result[i++] = temp;
 
         return result;
@@ -407,18 +422,19 @@ public class Assembler {
             Instruction instruction = result[i];
             byte opcode = instruction.getInstruction();
             
-            if (instruction.hasMasterStackOffset()) {
-                offsets.put(instruction.getMasterStackOffset(), stackOffset);
+
+            if (instruction.hasMetaData(MASTER_STACK_OFFSET)) {
+                offsets.put(((MASTER_STACK_OFFSET) instruction.getMetaData(MASTER_STACK_OFFSET)).getValue(), stackOffset);
             }
 
-            if (instruction.hasSlaveStackOffset()) {
+            if (instruction.hasMetaData(SLAVE_STACK_OFFSET)) {
                 instruction.setInstruction(
                     (byte) (stackOffset -
-                    offsets.get(instruction.getSlaveStackOffset())));
+                    offsets.get(((SLAVE_STACK_OFFSET) instruction.getMetaData(SLAVE_STACK_OFFSET)).getValue())));
             }
 
-            if (instruction.hasAlterStackOffset()) {
-                stackOffset += instruction.getAlterStackOffset();
+            if (instruction.hasMetaData(ALTER_STACK_OFFSET)) {
+                stackOffset += ((ALTER_STACK_OFFSET) instruction.getMetaData(ALTER_STACK_OFFSET)).getValue();
             }
 
             if (instructionIndex == i) {
@@ -430,7 +446,7 @@ public class Assembler {
             } else if (lastInstruction != null) {
                 stackOffset += ByteCode.getStackOffset(lastInstruction.getInstruction());
                 if (lastInstruction.getInstruction() == ByteCode.DEALLOC) {
-                    stackOffset -= offsets.get(instruction.getSlaveStackOffset());
+                    stackOffset -= offsets.get(((SLAVE_STACK_OFFSET) instruction.getMetaData(SLAVE_STACK_OFFSET)).getValue());
                 }
             }
 

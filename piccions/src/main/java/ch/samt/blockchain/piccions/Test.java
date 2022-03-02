@@ -11,45 +11,25 @@ public class Test {
     public static void main(String[] args) {
         var assembler = new Assembler();
 
+        
         assembler.add(
             assembler.mainFunc(
-                assembler.ifElseStatement(
-                    buildInstructions(
-                        PUSH_BOOL,
-                        FALSE
-                    ),
-                    assembler.invokeFunc("func2"),
-                    buildInstructions(
-                        assembler.invokeFunc("func1"),
-                        assembler.invokeFunc("func1"),
-                        assembler.invokeFunc("func1"),
-                        assembler.invokeFunc("func1"),
-                        assembler.invokeFunc("func1"),
-                        assembler.invokeFunc("func1")
-                    )
-                )
-            )
-        );
-        
-        assembler.add(
-            assembler.declareFunc(
-                "func1",
-                buildInstructions(
-                    buildInstruction(PUSH_I8),
-                    buildInstruction((byte) 42),
-                    buildInstruction(PRINT_I8),
-                    buildInstruction(PUSH_I8),
-                    buildInstruction((byte) 33)
-                )
-            )
-        );
-        
-        assembler.add(
-            assembler.declareFunc(
-                "func2",
-                PUSH_I8,
-                (byte) 24,
-                PRINT_I8
+                buildInstruction(PUSH_I8),
+                assembler.variable("var1", (byte) 66),
+                buildInstruction(PUSH_I8),
+                assembler.variable("var2", (byte) 67),
+                buildInstruction(PUSH_I8),
+                assembler.variable("var3", (byte) 68),
+                
+                buildInstruction(LOAD),
+                assembler.variable("var3"),
+                buildInstruction(PRINT_I8),
+                buildInstruction(LOAD),
+                assembler.variable("var2"),
+                buildInstruction(PRINT_I8),
+                buildInstruction(LOAD),
+                assembler.variable("var1"),
+                buildInstruction(PRINT_I8)
             )
         );
         

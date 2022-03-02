@@ -1,16 +1,39 @@
 package ch.samt.blockchain.piccions.compiler.assembler;
 
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Represents a bytecode instruction with metadata.
+ * 
+ * <pre>{@code 
+ * // Create instruction
+ * var instruction = new Instruction2((byte) SOME_VALUE);
+ *
+ * // Add metadata
+ * instruction.addMetaData(new MetaDataType.INCREMENT(SOME_VALUE));
+ *
+ * // Check if metadata is present
+ * instruction.hasMetaData(MetaDataType.INCREMENT);
+ *
+ * // Get metadata value
+ * ((MetaDataType.INCREMENT) instruction.getMetaData(MetaDataType.INCREMENT)).getValue();
+ *
+ * // Change metadata value
+ * ((MetaDataType.INCREMENT) instruction.getMetaData(MetaDataType.INCREMENT)).setValue(SOME_VALUE); 
+ * }</pre>
+ */
 public class Instruction {
 
     private byte instruction;
+    
+    private Map<MetaDataType, MetaData> options;
 
-    private MetaData options; // store in separate object to avoid useless allocation
+    public Instruction() {}
 
     public Instruction(byte instruction) {
         this.instruction = instruction;
     }
-
-    public Instruction() {}
 
     public byte getInstruction() {
         return instruction;
@@ -20,251 +43,172 @@ public class Instruction {
         this.instruction = instruction;
     }
 
-    private void initIfNull() {
+    public void addMetaData(MetaData option) {
         if (options == null) {
-            options = new MetaData();
+            options = new HashMap<>();
         }
+
+        options.put(option.getType(), option);
     }
 
-    public void setIncrementOption(int increment) {
-        initIfNull();
-        options.setIncrementOption(increment);
+    public boolean hasMetaData(MetaDataType type) {
+        return options != null && options.containsKey(type);
     }
 
-    public void setIncrementOption() {
-        setIncrementOption(1);
+    public MetaData getMetaData(MetaDataType type) {
+        return options.get(type);
     }
 
-    public boolean hasIncrementOption() {
-        return options != null && options.hasIncrementOption();
+    public abstract static class MetaData {
+
+        abstract MetaDataType getType();
+
     }
 
-    public int getIncrementOption() {
-        return options.getIncrementOption();
+    public abstract static class GenericMetaData<E> extends MetaData {
+
+        private E value;
+
+        public GenericMetaData(E value) {
+            this.value = value;
+        }
+
+        public E getValue() {
+            return value;
+        }
+
+        public void setValue(E value) {
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            return value.toString();
+        }
+
     }
 
-    public void setMasterCheckpoint(int checkpoint) {
-        initIfNull();
-        options.setMasterCheckpoint(checkpoint);
-    }
+    public static enum MetaDataType {
+        INCREMENT,
+        MASTER_CHECKPOINT,
+        SLAVE_CHECKPOINT,
+        MASTER_STACK_OFFSET,
+        SLAVE_STACK_OFFSET,
+        ALTER_STACK_OFFSET,
+        INCREASE_STACK_BY_PARAM_SIZE,
+        DECREASE_STACK_BY_PARAM_SIZE;
 
-    public boolean hasMasterCheckpoint() {
-        return options != null && options.hasMasterCheckpoint();
-    }
+        public static class INCREMENT extends GenericMetaData<Integer> {
 
-    public int getMasterCheckpoint() {
-        return options.getMasterCheckpoint();
-    }
+            public INCREMENT(int value) {
+                super(value);
+            }
 
-    public void setSlaveCheckpoint(int checkpoint) {
-        initIfNull();
-        options.setSlaveCheckpoint(checkpoint);
-    }
+            MetaDataType getType() {
+                return INCREMENT;
+            }
 
-    public boolean hasSlaveCheckpoint() {
-        return options != null && options.hasSlaveCheckpoint();
-    }
+        }
 
-    public int getSlaveCheckpoint() {
-        return options.getSlaveCheckpoint();
-    }
+        public static class MASTER_CHECKPOINT extends GenericMetaData<Integer> {
 
-    public void setMasterStackOffset(int offset) {
-        initIfNull();
-        options.setMasterStackOffset(offset);
-    }
+            public MASTER_CHECKPOINT(int value) {
+                super(value);
+            }
 
-    public boolean hasMasterStackOffset() {
-        return options != null && options.hasMasterStackOffset();
-    }
+            MetaDataType getType() {
+                return MASTER_CHECKPOINT;
+            }
 
-    public int getMasterStackOffset() {
-        return options.getMasterStackOffset();
-    }
+        }
 
-    public void setSlaveStackOffset(int offset) {
-        initIfNull();
-        options.setSlaveStackOffset(offset);
-    }
+        public static class SLAVE_CHECKPOINT extends GenericMetaData<Integer> {
 
-    public boolean hasSlaveStackOffset() {
-        return options != null && options.hasSlaveStackOffset();
-    }
+            public SLAVE_CHECKPOINT(int value) {
+                super(value);
+            }
 
-    public int getSlaveStackOffset() {
-        return options.getSlaveStackOffset();
-    }
+            MetaDataType getType() {
+                return SLAVE_CHECKPOINT;
+            }
 
-    public void setAlterStackOffset(int offset) {
-        initIfNull();
-        options.setAlterStackOffset(offset);
-    }
+        }
 
-    public boolean hasAlterStackOffset() {
-        return options != null && options.hasAlterStackOffset();
-    }
+        public static class MASTER_STACK_OFFSET extends GenericMetaData<Integer> {
 
-    public int getAlterStackOffset() {
-        return options.getAlterStackOffset();
+            public MASTER_STACK_OFFSET(int value) {
+                super(value);
+            }
+
+            MetaDataType getType() {
+                return MASTER_STACK_OFFSET;
+            }
+
+        }
+
+        public static class SLAVE_STACK_OFFSET extends GenericMetaData<Integer> {
+
+            public SLAVE_STACK_OFFSET(int value) {
+                super(value);
+            }
+
+            MetaDataType getType() {
+                return SLAVE_STACK_OFFSET;
+            }
+
+        }
+
+        public static class ALTER_STACK_OFFSET extends GenericMetaData<Integer> {
+
+            public ALTER_STACK_OFFSET(int value) {
+                super(value);
+            }
+
+            MetaDataType getType() {
+                return ALTER_STACK_OFFSET;
+            }
+
+        }
+
+        public static class INCREASE_STACK_BY_PARAM_SIZE extends GenericMetaData<String> {
+
+            public INCREASE_STACK_BY_PARAM_SIZE(String funcName) {
+                super(funcName);
+            }
+
+            MetaDataType getType() {
+                return INCREASE_STACK_BY_PARAM_SIZE;
+            }
+
+        }
+
+        public static class DECREASE_STACK_BY_PARAM_SIZE extends GenericMetaData<String> {
+
+            public DECREASE_STACK_BY_PARAM_SIZE(String funcName) {
+                super(funcName);
+            }
+
+            MetaDataType getType() {
+                return DECREASE_STACK_BY_PARAM_SIZE;
+            }
+
+        }
     }
 
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
 
-        builder.append(instruction);
-        builder.append(" ");
+        builder.append(instruction + " ");
 
-        if (hasIncrementOption()) {
-            builder.append("IncrementOptiont: ");
-            builder.append(getIncrementOption());
-            builder.append(" ");
-        }
-
-        if (hasMasterCheckpoint()) {
-            builder.append("MasterCheckpoint: ");
-            builder.append(getMasterCheckpoint());
-            builder.append(" ");
-        }
-
-        if (hasSlaveCheckpoint()) {
-            builder.append("SlaveCheckpoint: ");
-            builder.append(getSlaveCheckpoint());
-            builder.append(" ");
-        }
-
-        if (hasMasterStackOffset()) {
-            builder.append("MasterStackOffset: ");
-            builder.append(getMasterStackOffset());
-            builder.append(" ");
-        }
-
-        if (hasSlaveStackOffset()) {
-            builder.append("SlaveStackOffset: ");
-            builder.append(getSlaveStackOffset());
-            builder.append(" ");
-        }
-
-        if (hasAlterStackOffset()) {
-            builder.append("AlterStackOffset: ");
-            builder.append(getAlterStackOffset());
-            builder.append(" ");
+        if (options != null) {
+            for (var type : options.keySet()) {
+                var value = options.get(type);
+                builder.append("[" + type + ": " + value + "]");
+            }
         }
 
         return builder.toString();
-    }
-    /**
-     * A separate class is used so that if the instruction doesn't have metadata
-     * only the <code>null</code> is stored.
-     */
-    private class MetaData {
-
-        /**
-         * The value of this opcode will be
-         * incremented by the specified amount.
-         */
-        private int increment = 0;
-
-        /**
-         * The position of this opcode can be requested by other opcodes.
-         */
-        private int masterCheckpoint = -1;
-
-        /**
-         * The value of this opcode will be replaced
-         * by the position of the specified master checkpoint.
-         */
-        private int slaveCheckpoint = -1;
-
-        /**
-         * The stack offset at this opcode can be requested by other opcodes.
-         */
-        private int masterStackOffset = -1;
-        
-        /**
-         * The value of this opcode will be replaced
-         * by the stack offset of the specified variable.
-         */
-        private int slaveStackOffset = -1;
-
-        /**
-         * This opcode alters the current stack offset
-         * by its value.
-         */
-        private int alterStackOffset = 0;
-
-        public void setIncrementOption(int increment) {
-            this.increment = increment;
-        }
-
-        public boolean hasIncrementOption() {
-            return increment != 0;
-        }
-
-        public int getIncrementOption() {
-            return increment;
-        }
-
-        public void setMasterCheckpoint(int checkpoint) {
-            this.masterCheckpoint = checkpoint;
-        }
-
-        public boolean hasMasterCheckpoint() {
-            return masterCheckpoint != -1;
-        }
-
-        public int getMasterCheckpoint() {
-            return masterCheckpoint;
-        }
-
-        public void setSlaveCheckpoint(int checkpoint) {
-            this.slaveCheckpoint = checkpoint;
-        }
-
-        public boolean hasSlaveCheckpoint() {
-            return slaveCheckpoint != -1;
-        }
-
-        public int getSlaveCheckpoint() {
-            return slaveCheckpoint;
-        }
-
-        public void setMasterStackOffset(int offset) {
-            this.masterStackOffset = offset;
-        }
-
-        public boolean hasMasterStackOffset() {
-            return masterStackOffset != -1;
-        }
-
-        public int getMasterStackOffset() {
-            return masterStackOffset;
-        }
-
-        public void setSlaveStackOffset(int offset) {
-            this.slaveStackOffset = offset;
-        }
-
-        public boolean hasSlaveStackOffset() {
-            return slaveStackOffset != -1;
-        }
-
-        public int getSlaveStackOffset() {
-            return slaveStackOffset;
-        }
-
-        public void setAlterStackOffset(int offset) {
-            this.alterStackOffset = offset;
-        }
-
-        public boolean hasAlterStackOffset() {
-            return alterStackOffset != 0;
-        }
-
-        public int getAlterStackOffset() {
-            return alterStackOffset;
-        }
-
     }
 
 }
