@@ -19,7 +19,7 @@ public class Test {
                         assembler.variable("variable", (byte) 10)
                     ),
                     assembler.whileLoop(
-                        buildInstructions( // CONDITION
+                        buildInstructions(
                             buildInstruction(LOAD), // push var
                             assembler.variable("variable"),
                             buildInstruction(PUSH_I8),   // push 10
@@ -29,34 +29,21 @@ public class Test {
                             buildInstruction((byte) 1),
                             buildInstruction(EQUALS_I8) // compare
                         ),
-                        buildInstructions( // BODY
-                            buildInstructions(
-                                buildInstruction(LOAD), // push var
-                                assembler.variable("variable"),
-                                buildInstruction(PRINT_I8),
-                                buildInstruction(LOAD), // push var
-                                assembler.variable("variable"),
-                                buildInstruction(PUSH_I8),
-                                buildInstruction((byte) 1),
-                                buildInstruction(ADD_I8),
-                                buildInstruction(STORE), // write var
-                                assembler.variable("variable")
-                            ),
-                            buildInstructions(
-                                assembler.invokeFunc("print42") // print42
-                            )
+                        buildInstructions(
+                            buildInstruction(LOAD), // push var
+                            assembler.variable("variable"),
+                            buildInstruction(PRINT_I8),
+                            buildInstruction(LOAD), // push var
+                            assembler.variable("variable"),
+                            buildInstruction(PUSH_I8),
+                            buildInstruction((byte) 1),
+                            buildInstruction(ADD_I8),
+                            buildInstruction(STORE), // write var
+                            assembler.variable("variable")
                         )
                     )
                 )
             )
-        );
-
-        assembler.add(
-                assembler.declareFunc("print42", buildInstructions(
-                buildInstruction(PUSH_I8),
-                buildInstruction((byte) 42),
-                buildInstruction(PRINT_I8)
-            ))
         );
         
         // PUSH %POS% dovrebbe avere un -1 STACK
@@ -73,9 +60,20 @@ public class Test {
         var bytecode = assembler.compile(); // assemble
 
         System.out.println(assembler);
+        print(bytecode);
 
         var vm = new VirtualMachine(bytecode);
         vm.execute();
+    }
+
+    private static void print(byte[] arr) {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("new byte[]{");
+        for (int i = 0; i < arr.length; i++) {
+            builder.append(arr[i] + (i == arr.length - 1 ? "};" : ","));
+        }
+        System.out.println(builder.toString());
     }
 
 }
