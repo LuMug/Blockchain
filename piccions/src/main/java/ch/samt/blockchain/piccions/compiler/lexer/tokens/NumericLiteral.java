@@ -1,5 +1,7 @@
 package ch.samt.blockchain.piccions.compiler.lexer.tokens;
 
+import ch.samt.blockchain.piccions.compiler.SyntaxException;
+
 /**
  * Represents a numeric literal.
  */
@@ -20,4 +22,11 @@ public class NumericLiteral implements Token {
         return c >= '0' && c <= '9';
     }
     
+    public static void assertType(Token t, String errorMessage)
+            throws SyntaxException {
+        if (!(t instanceof NumericLiteral)) {
+            throw new SyntaxException(errorMessage);
+        }
+    }
+
 }

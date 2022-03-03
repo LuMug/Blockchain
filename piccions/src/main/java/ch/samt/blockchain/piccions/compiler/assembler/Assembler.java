@@ -6,13 +6,12 @@ import java.util.List;
 import java.util.Map;
 
 import ch.samt.blockchain.piccions.bytecode.ByteCode;
-import ch.samt.blockchain.piccions.compiler.parser.instructions.pushable.Pushable;
 
-import static ch.samt.blockchain.piccions.compiler.assembler.Instruction.MetaDataType.*;
+import static ch.samt.blockchain.piccions.compiler.assembler.Opcode.MetaDataType.*;
 
 public class Assembler {
     
-    private List<Instruction> bytecode;
+    private List<Opcode> bytecode;
 
     private Map<String, Integer> variableStackOffsetIDs;
     private Map<String, Integer> functionCheckpointIDs;
@@ -32,7 +31,7 @@ public class Assembler {
     }
 
     public void add(byte code) {
-        add(new Instruction(code));
+        add(new Opcode(code));
     }
 
     public void add(byte... codes) {
@@ -41,11 +40,11 @@ public class Assembler {
         }
     }
 
-    public void add(Instruction code) {
+    public void add(Opcode code) {
         bytecode.add(code);
     }
 
-    public void add(Instruction... codes) {
+    public void add(Opcode... codes) {
         for (var code : codes) {
             add(code);
         }
@@ -57,7 +56,7 @@ public class Assembler {
 
     public int getMasterCheckpointIndex(int checkpoint) {
         for (int i = 0; i < bytecode.size(); i++) {
-            Instruction instruction = bytecode.get(i);
+            Opcode instruction = bytecode.get(i);
 
             if (instruction.hasMetaData(MASTER_CHECKPOINT)
                     && ((MASTER_CHECKPOINT) instruction.getMetaData(MASTER_CHECKPOINT)).getValue() == checkpoint) {
@@ -68,22 +67,22 @@ public class Assembler {
         throw new IllegalArgumentException("Invalid checkpoint");
     }
 
-    public Instruction[] whileLoop(byte[] conditionCode, byte[] bodyCode) {
+    public Opcode[] whileLoop(byte[] conditionCode, byte[] bodyCode) {
         return whileLoop(buildInstructions(conditionCode), buildInstructions(bodyCode));
     }
 
-    public Instruction[] whileLoop(byte[] conditionCode, Instruction[] bodyCode) {
+    public Opcode[] whileLoop(byte[] conditionCode, Opcode[] bodyCode) {
         return whileLoop(buildInstructions(conditionCode), bodyCode);
     }
 
-    public Instruction[] whileLoop(Instruction[] conditionCode, byte[] bodyCode) {
+    public Opcode[] whileLoop(Opcode[] conditionCode, byte[] bodyCode) {
         return whileLoop(conditionCode, buildInstructions(bodyCode));
     }
 
-    public Instruction[] whileLoop(Instruction[] conditionCode, Instruction[] bodyCode) {
+    public Opcode[] whileLoop(Opcode[] conditionCode, Opcode[] bodyCode) {
         bodyCode = scope(bodyCode);
 
-        var result = new Instruction[conditionCode.length + bodyCode.length + 4];
+        var result = new Opcode[conditionCode.length + bodyCode.length + 4];
         int pos = 0;
 
         for (var code : conditionCode) {
@@ -97,9 +96,9 @@ public class Assembler {
         result[0].addMetaData(new INCREMENT(1));
 
 
-        result[pos++] = new Instruction(ByteCode.GOTO_B);
+        result[pos++] = new Opcode(ByteCode.GOTO_B);
         
-        Instruction temp = new Instruction();
+        Opcode temp = new Opcode();
 
         temp.addMetaData(new SLAVE_CHECKPOINT(endCheckpoint));
         temp.addMetaData(new INCREMENT(1));
@@ -109,9 +108,9 @@ public class Assembler {
             result[pos++] = code;
         }
 
-        result[pos++] = new Instruction(ByteCode.GOTO_A);
+        result[pos++] = new Opcode(ByteCode.GOTO_A);
         
-        temp = new Instruction();
+        temp = new Opcode();
 
         temp.addMetaData(new MASTER_CHECKPOINT(endCheckpoint));
         temp.addMetaData(new SLAVE_CHECKPOINT(startCheckpoint));
@@ -120,22 +119,22 @@ public class Assembler {
         return result;
     }
 
-    public Instruction[] ifStatement(byte[] conditionCode, byte[] bodyCode) {
+    public Opcode[] ifStatement(byte[] conditionCode, byte[] bodyCode) {
         return ifStatement(buildInstructions(conditionCode), buildInstructions(bodyCode));
     }
 
-    public Instruction[] ifStatement(byte[] conditionCode, Instruction[] bodyCode) {
+    public Opcode[] ifStatement(byte[] conditionCode, Opcode[] bodyCode) {
         return ifStatement(buildInstructions(conditionCode), bodyCode);
     }
 
-    public Instruction[] ifStatement(Instruction[] conditionCode, byte[] bodyCode) {
+    public Opcode[] ifStatement(Opcode[] conditionCode, byte[] bodyCode) {
         return ifStatement(conditionCode, buildInstructions(bodyCode));
     }
 
-    public Instruction[] ifStatement(Instruction[] conditionCode, Instruction[] bodyCode) {
+    public Opcode[] ifStatement(Opcode[] conditionCode, Opcode[] bodyCode) {
         bodyCode = scope(bodyCode);
 
-        var result = new Instruction[conditionCode.length + bodyCode.length + 2];
+        var result = new Opcode[conditionCode.length + bodyCode.length + 2];
         int pos = 0;
 
         for (var code : conditionCode) {
@@ -144,9 +143,9 @@ public class Assembler {
 
         int endCheckpoint = nextID();
 
-        result[pos++] = new Instruction(ByteCode.GOTO_B);
+        result[pos++] = new Opcode(ByteCode.GOTO_B);
         
-        Instruction temp = new Instruction();
+        Opcode temp = new Opcode();
         
 
         temp.addMetaData(new SLAVE_CHECKPOINT(endCheckpoint));
@@ -163,39 +162,39 @@ public class Assembler {
         return result;
     }
 
-    public Instruction[] ifElseStatement(byte[] conditionCode, byte[] ifCode, byte[] elseCode) {
+    public Opcode[] ifElseStatement(byte[] conditionCode, byte[] ifCode, byte[] elseCode) {
         return ifElseStatement(buildInstructions(conditionCode), buildInstructions(ifCode), buildInstructions(elseCode));
     }
 
-    public Instruction[] ifElseStatement(byte[] conditionCode, byte[] ifCode, Instruction[] elseCode) {
+    public Opcode[] ifElseStatement(byte[] conditionCode, byte[] ifCode, Opcode[] elseCode) {
         return ifElseStatement(buildInstructions(conditionCode), buildInstructions(ifCode), elseCode);
     }
 
-    public Instruction[] ifElseStatement(byte[] conditionCode, Instruction[] ifCode, byte[] elseCode) {
+    public Opcode[] ifElseStatement(byte[] conditionCode, Opcode[] ifCode, byte[] elseCode) {
         return ifElseStatement(buildInstructions(conditionCode), ifCode, buildInstructions(elseCode));
     }
 
-    public Instruction[] ifElseStatement(byte[] conditionCode, Instruction[] ifCode, Instruction[] elseCode) {
+    public Opcode[] ifElseStatement(byte[] conditionCode, Opcode[] ifCode, Opcode[] elseCode) {
         return ifElseStatement(buildInstructions(conditionCode), ifCode, elseCode);
     }
 
-    public Instruction[] ifElseStatement(Instruction[] conditionCode, byte[] ifCode, byte[] elseCode) {
+    public Opcode[] ifElseStatement(Opcode[] conditionCode, byte[] ifCode, byte[] elseCode) {
         return ifElseStatement(conditionCode, buildInstructions(ifCode), buildInstructions(elseCode));
     }
 
-    public Instruction[] ifElseStatement(Instruction[] conditionCode, byte[] ifCode, Instruction[] elseCode) {
+    public Opcode[] ifElseStatement(Opcode[] conditionCode, byte[] ifCode, Opcode[] elseCode) {
         return ifElseStatement(conditionCode, buildInstructions(ifCode), elseCode);
     }
 
-    public Instruction[] ifElseStatement(Instruction[] conditionCode, Instruction[] ifCode, byte[] elseCode) {
+    public Opcode[] ifElseStatement(Opcode[] conditionCode, Opcode[] ifCode, byte[] elseCode) {
         return ifElseStatement(conditionCode, ifCode, buildInstructions(elseCode));
     }
 
-    public Instruction[] ifElseStatement(Instruction[] conditionCode, Instruction[] ifCode, Instruction[] elseCode) {
+    public Opcode[] ifElseStatement(Opcode[] conditionCode, Opcode[] ifCode, Opcode[] elseCode) {
         ifCode = scope(ifCode);
         elseCode = scope(elseCode);
         
-        var result = new Instruction[ifCode.length + elseCode.length + conditionCode.length + 4];
+        var result = new Opcode[ifCode.length + elseCode.length + conditionCode.length + 4];
         int pos = 0;
 
         for (var code : conditionCode) {
@@ -205,9 +204,9 @@ public class Assembler {
         int ifEndCheckpoint = nextID();
         int elseEndCheckpoint = nextID();
 
-        result[pos++] = new Instruction(ByteCode.GOTO_B);
+        result[pos++] = new Opcode(ByteCode.GOTO_B);
 
-        Instruction temp = new Instruction();
+        Opcode temp = new Opcode();
         temp.addMetaData(new SLAVE_CHECKPOINT(ifEndCheckpoint));
         temp.addMetaData(new INCREMENT(1));
         result[pos++] = temp;
@@ -216,9 +215,9 @@ public class Assembler {
             result[pos++] = code;
         }
 
-        result[pos++] = new Instruction(ByteCode.GOTO_A);
+        result[pos++] = new Opcode(ByteCode.GOTO_A);
 
-        temp = new Instruction();
+        temp = new Opcode();
         temp.addMetaData(new MASTER_CHECKPOINT(ifEndCheckpoint));
         temp.addMetaData(new SLAVE_CHECKPOINT(elseEndCheckpoint));
         temp.addMetaData(new INCREMENT(1));
@@ -233,18 +232,18 @@ public class Assembler {
         return result;
     }
 
-    public Instruction[] declareFunc(String name, byte... code) {
+    public Opcode[] declareFunc(String name, byte... code) {
         return declareFunc(name, buildInstructions(code));
     }
 
-    public Instruction[] declareFunc(String name, Instruction[] code) {
+    public Opcode[] declareFunc(String name, Opcode[] code) {
         return declareFuncWithParams(name, new int[]{0}, code);
     }
 
-    public Instruction[] declareFuncWithParams(String name, int[] paramSizes, Instruction[] body) {
+    public Opcode[] declareFuncWithParams(String name, int[] paramSizes, Opcode[] body) {
         body = scope(body);
 
-        var result = new Instruction[body.length + 1];
+        var result = new Opcode[body.length + 1];
         int pos = 0;
 
         // body
@@ -253,7 +252,7 @@ public class Assembler {
         }
 
         // Go back to whatever the code was executing
-        result[pos++] = new Instruction(ByteCode.GOTO_C);
+        result[pos++] = new Opcode(ByteCode.GOTO_C);
         
         // Set master checkpoint for this function
         int funcCheckpoint = 0;
@@ -284,18 +283,18 @@ public class Assembler {
         return result;
     }
 
-    public Instruction[] invokeFunc(String name) {
+    public Opcode[] invokeFunc(String name) {
         return invokeFuncWithParams(name, null);
     }
 
-    public Instruction param(String funcName, int index) {
-        Instruction temp = new Instruction();
+    public Opcode param(String funcName, int index) {
+        Opcode temp = new Opcode();
         temp.addMetaData(new PARAMETER(funcName + "_" + index));
         return temp;
     }
 
-    public Instruction[] invokeFuncWithParams(String name, Instruction[] pushParams) {
-        var result = new Instruction[4 + (pushParams == null ? 0 : pushParams.length)];
+    public Opcode[] invokeFuncWithParams(String name, Opcode[] pushParams) {
+        var result = new Opcode[4 + (pushParams == null ? 0 : pushParams.length)];
 
         int funcCheckpoint = 0;
         
@@ -309,12 +308,12 @@ public class Assembler {
         int pos = 0;
 
         // Push index to GOTO after func is done
-        Instruction temp = new Instruction(ByteCode.PUSH_I8);
+        Opcode temp = new Opcode(ByteCode.PUSH_I8);
 
         // XXXX temp.addMetaData(new ALTER_STACK_OFFSET(-1));
         result[pos++] = temp;
 
-        temp = new Instruction();
+        temp = new Opcode();
         int indexCheckpoint = nextID();
 
         temp.addMetaData(new SLAVE_CHECKPOINT(indexCheckpoint));
@@ -331,29 +330,29 @@ public class Assembler {
         }
         
         // GOTO func
-        temp = new Instruction(ByteCode.GOTO_A);
+        temp = new Opcode(ByteCode.GOTO_A);
         if (pushParams != null) {
             temp.addMetaData(new DECREASE_STACK_BY_PARAM_SIZE(name));
             temp.addMetaData(new ALTER_STACK_OFFSET(-1)); // - PUSH %POS%
         }
         result[pos++] = temp;
 
-        temp = new Instruction();
+        temp = new Opcode();
         temp.addMetaData(new SLAVE_CHECKPOINT(funcCheckpoint));
         result[pos++] = temp;
 
         return result;
     }
 
-    public Instruction variable(String name) {
-        return variable(name, new Instruction());
+    public Opcode variable(String name) {
+        return variable(name, new Opcode());
     }
 
-    public Instruction variable(String name, byte instruction) {
-        return variable(name, new Instruction(instruction));
+    public Opcode variable(String name, byte instruction) {
+        return variable(name, new Opcode(instruction));
     }
 
-    public Instruction variable(String name, Instruction instruction) {
+    public Opcode variable(String name, Opcode instruction) {
         if (variableStackOffsetIDs.containsKey(name)) {
 
             instruction.addMetaData(new SLAVE_STACK_OFFSET(variableStackOffsetIDs.get(name)));
@@ -367,19 +366,19 @@ public class Assembler {
         return instruction;
     }
 
-    public Instruction[] scope(Instruction... instructions) {
+    public Opcode[] scope(Opcode... instructions) {
         int id = nextID();
 
         instructions[0].addMetaData(new MASTER_STACK_OFFSET(id));
 
-        var result = new Instruction[instructions.length + 2];
+        var result = new Opcode[instructions.length + 2];
         int i = 0;
         for (; i < instructions.length; i++) {
             result[i] = instructions[i];
         }
 
-        result[i++] = new Instruction(ByteCode.DEALLOC);
-        var temp = new Instruction();
+        result[i++] = new Opcode(ByteCode.DEALLOC);
+        var temp = new Opcode();
         temp.addMetaData(new SLAVE_STACK_OFFSET(id));
         result[i++] = temp;
 
@@ -387,14 +386,14 @@ public class Assembler {
     }
 
     // should be added first
-    public Instruction[] mainFunc(byte... code) {
+    public Opcode[] mainFunc(byte... code) {
         return mainFunc(buildInstructions(code));
     }
 
     // should be added first
-    public Instruction[] mainFunc(Instruction... code) {
+    public Opcode[] mainFunc(Opcode... code) {
         var result = buildInstructions(code,
-            new Instruction[]{new Instruction(ByteCode.EXIT)});
+            new Opcode[]{new Opcode(ByteCode.EXIT)});
 
         return result;
     }
@@ -473,16 +472,16 @@ public class Assembler {
         return result;
     }
 
-    private void processStackOffsets(List<Instruction> result) {
+    private void processStackOffsets(List<Opcode> result) {
         int stackOffset = 0;
         Map<Integer, Integer> offsets = new HashMap<>();
         int instructionIndex = 0;
 
         // weird spaghetti logic
 
-        Instruction lastInstruction = null;
+        Opcode lastInstruction = null;
         for (int i = 0; i < result.size(); i++) {
-            Instruction instruction = result.get(i);
+            Opcode instruction = result.get(i);
             byte opcode = instruction.getInstruction();
             
 
@@ -519,25 +518,25 @@ public class Assembler {
         }
     }
 
-    public static Instruction[] buildInstructions(byte... bytecode) {
-        var result = new Instruction[bytecode.length];
+    public static Opcode[] buildInstructions(byte... bytecode) {
+        var result = new Opcode[bytecode.length];
 
         for (int i = 0; i < result.length; i++) {
-            result[i] = new Instruction(bytecode[i]);
+            result[i] = new Opcode(bytecode[i]);
         }
 
         return result;
     }
 
-    public static Instruction[] buildInstructions(Instruction... bytecode) {
+    public static Opcode[] buildInstructions(Opcode... bytecode) {
         return bytecode;
     }
 
-    public static Instruction buildInstruction(byte instruction) {
-        return new Instruction(instruction);
+    public static Opcode buildInstruction(byte instruction) {
+        return new Opcode(instruction);
     }
 
-    public static Instruction[] buildInstructions(Instruction[]... chunks) {
+    public static Opcode[] buildInstructions(Opcode[]... chunks) {
         if (chunks.length == 1) {
             return chunks[0];
         }
@@ -548,7 +547,7 @@ public class Assembler {
             size += chunk.length;
         }
 
-        var result = new Instruction[size];
+        var result = new Opcode[size];
 
         int pos = 0;
         for (var chunk : chunks) {

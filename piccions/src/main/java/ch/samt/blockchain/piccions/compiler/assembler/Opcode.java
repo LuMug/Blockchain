@@ -3,8 +3,6 @@ package ch.samt.blockchain.piccions.compiler.assembler;
 import java.util.HashMap;
 import java.util.Map;
 
-import ch.samt.blockchain.piccions.bytecode.ByteCode;
-
 /**
  * Represents a bytecode instruction with metadata.
  * 
@@ -25,15 +23,15 @@ import ch.samt.blockchain.piccions.bytecode.ByteCode;
  * ((MetaDataType.INCREMENT) instruction.getMetaData(MetaDataType.INCREMENT)).setValue(SOME_VALUE); 
  * }</pre>
  */
-public class Instruction {
+public class Opcode {
 
     private byte instruction; // TODO: opcode
     
     private Map<MetaDataType, MetaData> options;
 
-    public Instruction() {}
+    public Opcode() {}
 
-    public Instruction(byte instruction) {
+    public Opcode(byte instruction) {
         this.instruction = instruction;
     }
 

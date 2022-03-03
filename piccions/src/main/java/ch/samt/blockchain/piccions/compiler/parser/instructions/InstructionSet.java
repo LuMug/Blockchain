@@ -4,18 +4,20 @@ import java.util.LinkedList;
 import java.util.List;
 
 import ch.samt.blockchain.piccions.compiler.assembler.Assembler;
-import ch.samt.blockchain.piccions.compiler.parser.Compilable;
+import ch.samt.blockchain.piccions.compiler.assembler.Opcode;
 
 
 public class InstructionSet implements Compilable {
 
     private List<Compilable> instructions = new LinkedList<>();
 
+    public void addInstruction(Compilable instruction) {
+        instructions.add(instruction);
+    }
+
     @Override
-    public void compile(Assembler assembler) {
-        for (var instruction : instructions) {
-            instruction.compile(assembler);
-        }
+    public Opcode[] getOpcodes(Assembler assembler) {
+        return null;
     }
     
 }
