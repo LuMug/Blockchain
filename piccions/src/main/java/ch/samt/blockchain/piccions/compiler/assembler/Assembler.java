@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import ch.samt.blockchain.piccions.bytecode.ByteCode;
+import ch.samt.blockchain.piccions.compiler.parser.instructions.pushable.Pushable;
+
 import static ch.samt.blockchain.piccions.compiler.assembler.Instruction.MetaDataType.*;
 
 public class Assembler {
@@ -64,29 +66,6 @@ public class Assembler {
         }
 
         throw new IllegalArgumentException("Invalid checkpoint");
-    }
-
-    public byte[] compile() {
-        byte[] result = new byte[bytecode.size() + 2];
-        int pos = 0;
-
-        for (var instruction : bytecode) {
-            if (instruction.hasMetaData(SLAVE_CHECKPOINT)) {
-                int checkpoint = ((SLAVE_CHECKPOINT) instruction.getMetaData(SLAVE_CHECKPOINT)).getValue();
-                int index = getMasterCheckpointIndex(checkpoint);
-
-                if (instruction.hasMetaData(INCREMENT)) {
-                    index += ((INCREMENT) instruction.getMetaData(INCREMENT)).getValue();
-                }
-
-                instruction.setInstruction((byte) index);
-            }
-
-            // remove annotations
-            result[pos++] = instruction.getInstruction();
-        }
-
-        return result;
     }
 
     public Instruction[] whileLoop(byte[] conditionCode, byte[] bodyCode) {
@@ -287,37 +266,36 @@ public class Assembler {
         result[0].addMetaData(new MASTER_CHECKPOINT(funcCheckpoint));
 
         // Total parameter size
-        int paramTotalSize = 0;
-        for (int paramSize : paramSizes) {
-            paramTotalSize += paramSize;
-        }
+        int paramTotalSize = sum(paramSizes);
 
         // Increase stack offset such that scope erases params
         body[0].addMetaData(new ALTER_STACK_OFFSET(+paramTotalSize));
 
         functionParamSizes.put(name, paramSizes);
-        
-        // Process offset stack IDs
-        processStackOffsetIDs(result);
+
+        // body[0] of the function should be masterStack of every parameter
+        // it already has a MASTER_STACK_OFFSET id
+        // The stack offset <name>_params represents the ending point
+        // for all the parameters.
+        variableStackOffsetIDs.put(name + "_params",
+            ((MASTER_STACK_OFFSET) body[0].getMetaData(MASTER_STACK_OFFSET)).getValue());
+        // TODO add another MASTER_STACK_OFFSET
 
         return result;
     }
 
-    public Instruction[] pushParams(String funcName, Instruction[] code) {
-        //code[0].setParamSizeAsAlterStack(funcName)
-        //
-        // on compile: setAlterStackOffset(-paramTotalSize); 
-        // TODO
-        return code;
+    public Instruction[] invokeFunc(String name) {
+        return invokeFuncWithParams(name, null);
     }
 
     public Instruction param(String funcName, int index) {
-        // TODO
-        return null;
+        Instruction temp = new Instruction();
+        temp.addMetaData(new PARAMETER(funcName + "_" + index));
+        return temp;
     }
 
-    public Instruction[] invokeFunc(String name) {
-        var result = new Instruction[4];
+    public Instruction[] invokeFuncWithParams(String name, Instruction[] pushParams) {
+        var result = new Instruction[4 + (pushParams == null ? 0 : pushParams.length)];
 
         int funcCheckpoint = 0;
         
@@ -328,28 +306,41 @@ public class Assembler {
             functionCheckpointIDs.put(name, funcCheckpoint = nextID());
         }
         
+        int pos = 0;
+
         // Push index to GOTO after func is done
         Instruction temp = new Instruction(ByteCode.PUSH_I8);
 
-        temp.addMetaData(new ALTER_STACK_OFFSET(-1));
-        result[0] = temp;
+        // XXXX temp.addMetaData(new ALTER_STACK_OFFSET(-1));
+        result[pos++] = temp;
 
         temp = new Instruction();
         int indexCheckpoint = nextID();
 
         temp.addMetaData(new SLAVE_CHECKPOINT(indexCheckpoint));
         temp.addMetaData(new MASTER_CHECKPOINT(indexCheckpoint));
-        temp.addMetaData(new INCREMENT(3)); // skip this and the next two instructions
-        result[1] = temp;
+         // skip this, the next two instructions (and pushParams if any)
+        temp.addMetaData(new INCREMENT(3 + (pushParams == null ? 0 : pushParams.length)));
+        result[pos++] = temp;
 
+        if (pushParams != null) {
+            // Push params
+            for (var instruction : pushParams) {
+                result[pos++] = instruction;
+            }
+        }
+        
         // GOTO func
-        result[2] = new Instruction(ByteCode.GOTO_A);
+        temp = new Instruction(ByteCode.GOTO_A);
+        if (pushParams != null) {
+            temp.addMetaData(new DECREASE_STACK_BY_PARAM_SIZE(name));
+            temp.addMetaData(new ALTER_STACK_OFFSET(-1)); // - PUSH %POS%
+        }
+        result[pos++] = temp;
 
         temp = new Instruction();
-
-
         temp.addMetaData(new SLAVE_CHECKPOINT(funcCheckpoint));
-        result[3] = temp;
+        result[pos++] = temp;
 
         return result;
     }
@@ -405,12 +396,84 @@ public class Assembler {
         var result = buildInstructions(code,
             new Instruction[]{new Instruction(ByteCode.EXIT)});
 
-        processStackOffsetIDs(result);
+        return result;
+    }
+
+    public byte[] assemble() {
+        byte[] result = new byte[bytecode.size()];
+        int pos = 0;
+
+        for (var instruction : bytecode) {
+
+            // process DECREASE_STACK_BY_PARAM_SIZE
+            if (instruction.hasMetaData(DECREASE_STACK_BY_PARAM_SIZE)) {
+                String funcName = ((DECREASE_STACK_BY_PARAM_SIZE) instruction.getMetaData(DECREASE_STACK_BY_PARAM_SIZE)).getValue();
+                int totalParamSize = sum(functionParamSizes.get(funcName));
+                
+                // Modify ALTER_STACK_OFFSET
+                if (instruction.hasMetaData(ALTER_STACK_OFFSET)) {
+                    // Sum if there's already
+                    int v = ((ALTER_STACK_OFFSET) instruction.getMetaData(ALTER_STACK_OFFSET)).getValue();
+                    ((ALTER_STACK_OFFSET) instruction.getMetaData(ALTER_STACK_OFFSET)).setValue(v - totalParamSize);
+                } else {
+                    // Add metadata there isn't
+                    instruction.addMetaData(new ALTER_STACK_OFFSET(-totalParamSize));
+                }
+            }
+
+            // process PARAMETER
+            if (instruction.hasMetaData(PARAMETER)) {
+                String funcNameAndParameterIndex = ((PARAMETER) instruction.getMetaData(PARAMETER)).getValue();
+                
+                String funcName = "";
+                int offset = 0;
+                {
+                    int separatorIndex = funcNameAndParameterIndex.lastIndexOf("_");
+                    funcName = funcNameAndParameterIndex.substring(0, separatorIndex);
+                    int paramIndex = Integer.parseInt(funcNameAndParameterIndex
+                    .substring(separatorIndex + 1, funcNameAndParameterIndex.length()));
+                    int[] paramSizes = functionParamSizes.get(funcName);
+                    for (; paramIndex < paramSizes.length; ++paramIndex) {
+                        offset += paramSizes[paramIndex];
+                    }
+                }
+                
+                int masterStackOffsetID = variableStackOffsetIDs.get(funcName + "_params");
+                
+                // Add SLAVE_STACK_OFFSET
+                instruction.addMetaData(new SLAVE_STACK_OFFSET(masterStackOffsetID));
+
+                // Add INCREMENT
+                instruction.addMetaData(new INCREMENT(offset));
+
+            }
+
+            // Process position checkpoints
+            if (instruction.hasMetaData(SLAVE_CHECKPOINT)) {
+                int checkpoint = ((SLAVE_CHECKPOINT) instruction.getMetaData(SLAVE_CHECKPOINT)).getValue();
+                int index = getMasterCheckpointIndex(checkpoint);
+
+                if (instruction.hasMetaData(INCREMENT)) {
+                    index += ((INCREMENT) instruction.getMetaData(INCREMENT)).getValue();
+                }
+
+                instruction.setInstruction((byte) index);
+            }
+        }
+
+        // Process offset stack IDs
+        processStackOffsets(bytecode);
+
+
+        for (var instruction : bytecode) {
+            // remove annotations
+            result[pos++] = instruction.getInstruction();
+        }
 
         return result;
     }
 
-    private void processStackOffsetIDs(Instruction... result) {
+    private void processStackOffsets(List<Instruction> result) {
         int stackOffset = 0;
         Map<Integer, Integer> offsets = new HashMap<>();
         int instructionIndex = 0;
@@ -418,8 +481,8 @@ public class Assembler {
         // weird spaghetti logic
 
         Instruction lastInstruction = null;
-        for (int i = 0; i < result.length; i++) {
-            Instruction instruction = result[i];
+        for (int i = 0; i < result.size(); i++) {
+            Instruction instruction = result.get(i);
             byte opcode = instruction.getInstruction();
             
 
@@ -497,18 +560,50 @@ public class Assembler {
         return result;
     }
 
+    private static int sum(int[] arr) {
+        int sum = 0;
+
+        for (int i : arr) {
+            sum += i;
+        }
+
+        return sum;
+    }
+
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
 
-        for (var instruction : bytecode) {
-            builder.append(instruction.toString());
-            builder.append("\n");
+        int digits = (int) Math.log10(bytecode.size()) + 1;
+
+        int nextInstructionIndex = 0;
+        for (int i = 0; i < bytecode.size(); i++) {
+            builder.append(pad(i, digits) + ".\t");
+
+            byte opcode = bytecode.get(i).getInstruction();
+            if (i == nextInstructionIndex) {
+                nextInstructionIndex += ByteCode.getNextInstructionOffset(opcode);
+                builder.append(ByteCode.format(opcode) + " ");
+                builder.append(bytecode.get(i).toString());
+            } else {
+                builder.append(opcode);
+            }
+
+            builder.append("\n\r");
         }
 
         return builder.toString();
     }
-    
+
+    private static String pad(int v, int digits) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(Integer.toString(v));
+        while (builder.length() < digits) {
+            builder.insert(0,"0");
+        }
+        return builder.toString();
+    }
+
     /*
     @SuppressWarnings("unchecked")
     private static <T> T[] merge(T[]... chunks) {

@@ -80,7 +80,7 @@ assembler.add(
 
 ------------------------------------------------------
 
-function main() {
+func main() {
     variable = 10
 
     while (variable / 10 == 1) {
@@ -122,4 +122,43 @@ assembler.add(
             )
         )
     )
+);
+
+---------------------------------------------------------------
+
+func main() {
+    variable = 51
+    print_sum(variable, variable)
+}
+
+func print_sum(var1, var2) {
+    print(var1, var2);
+}
+
+assembler.add(
+    assembler.mainFunc(
+        buildInstructions(
+            buildInstructions(
+                buildInstruction(PUSH_I8),
+                assembler.variable("variable", (byte) 51)
+            ),
+            assembler.invokeFuncWithParams("print_sum", buildInstructions(
+                buildInstruction(LOAD),
+                assembler.variable("variable"),
+                buildInstruction(LOAD),
+                assembler.variable("variable")
+            ))
+        )
+    )
+);
+
+assembler.add(
+    assembler.declareFuncWithParams("print_sum", new int[]{1,1}, buildInstructions(
+        buildInstruction(LOAD),
+        assembler.param("print_sum", 0),
+        buildInstruction(LOAD),
+        assembler.param("print_sum", 1),
+        buildInstruction(ADD_I8),
+        buildInstruction(PRINT_I8)
+    ))
 );

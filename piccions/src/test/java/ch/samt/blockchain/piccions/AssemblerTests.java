@@ -25,7 +25,7 @@ public class AssemblerTests {
         }
     """)
     void whileLoop() {
-        byte[] expected = new byte[]{0,10,6,1,0,10,4,0,1,5,21,26,6,1,30,6,1,0,1,1,7,2,8,0,20,2,32,0,0};
+        byte[] expected = new byte[]{0,10,6,1,0,10,4,0,1,5,21,26,6,1,30,6,1,0,1,1,7,2,8,0,20,2,32};
 
         var assembler = new Assembler();
 
@@ -64,7 +64,7 @@ public class AssemblerTests {
             )
         );
 
-        byte[] actual = assembler.compile();
+        byte[] actual = assembler.assemble();
 
         assertArrayEquals(expected, actual);
     }
@@ -88,7 +88,7 @@ public class AssemblerTests {
         }
     """)
     void ifElseStatement() {
-        byte[] expected = new byte[]{0,0,21,12,0,8,20,19,8,0,20,18,0,16,20,23,8,0,32,0,42,30,22,0,24,30,22,0,0};
+        byte[] expected = new byte[]{0,0,21,12,0,8,20,19,8,1,20,18,0,16,20,25,8,1,32,0,42,30,8,0,22,0,24,30,8,0,22};
 
         var assembler = new Assembler();
 
@@ -123,7 +123,7 @@ public class AssemblerTests {
             )
         );
 
-        byte[] actual = assembler.compile();
+        byte[] actual = assembler.assemble();
 
         assertArrayEquals(expected, actual);
     }
@@ -140,7 +140,7 @@ public class AssemblerTests {
         }
     """)
     void variables() {
-        byte[] expected = new byte[]{0,66,0,67,0,68,6,1,30,6,2,30,6,3,30,32,0,0};
+        byte[] expected = new byte[]{0,66,0,67,0,68,6,1,30,6,2,30,6,3,30,32};
 
         var assembler = new Assembler();
 
@@ -165,7 +165,56 @@ public class AssemblerTests {
             )
         );
 
-        byte[] actual = assembler.compile();
+        byte[] actual = assembler.assemble();
+
+        assertArrayEquals(expected, actual);
+    }
+
+    @Test
+    @DisplayName("""
+        func main() {
+            variable = 51
+            print_sum(variable, variable)
+        }
+        
+        func print_sum(var1, var2) {
+            print(var1, var2);
+        }
+    """)
+    void parameterizedFunction() {
+        byte[] expected = new byte[]{0,51,0,10,6,2,6,3,20,11,32,6,2,6,3,1,30,8,2,22};
+
+        var assembler = new Assembler();
+
+        assembler.add(
+            assembler.mainFunc(
+                buildInstructions(
+                    buildInstructions(
+                        buildInstruction(PUSH_I8),
+                        assembler.variable("variable", (byte) 51)
+                    ),
+                    assembler.invokeFuncWithParams("print_sum", buildInstructions(
+                        buildInstruction(LOAD),
+                        assembler.variable("variable"),
+                        buildInstruction(LOAD),
+                        assembler.variable("variable")
+                    ))
+                )
+            )
+        );
+        
+        assembler.add(
+            assembler.declareFuncWithParams("print_sum", new int[]{1,1}, buildInstructions(
+                buildInstruction(LOAD),
+                assembler.param("print_sum", 0),
+                buildInstruction(LOAD),
+                assembler.param("print_sum", 1),
+                buildInstruction(ADD_I8),
+                buildInstruction(PRINT_I8)
+            ))
+        );
+
+        byte[] actual = assembler.assemble();
 
         assertArrayEquals(expected, actual);
     }

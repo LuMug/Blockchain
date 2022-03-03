@@ -67,8 +67,8 @@ public class ByteCode {
      * @param code the instruction
      * @return the size offset
      */
-    public static int getStackOffset(byte code) {
-        return switch (code) {
+    public static int getStackOffset(byte instruction) {
+        return switch (instruction) {
             case PUSH_I8,
                  LOAD           -> +1;
             case EQUALS_I8,
@@ -98,8 +98,8 @@ public class ByteCode {
      * @param code the instruction
      * @return the offset to the next bytecode instruction
      */
-    public static int getNextInstructionOffset(byte code) {
-        return switch (code) {
+    public static int getNextInstructionOffset(byte instruction) {
+        return switch (instruction) {
             case PUSH_I8,
                  GOTO_A,
                  GOTO_B,
@@ -120,5 +120,29 @@ public class ByteCode {
             default             -> 1;
         };
     }
+
+     public static String format(byte instruction) {
+          return switch (instruction) {
+               case PUSH_I8 -> "PUSH_I8";
+               case EQUALS_I8 -> "EQUALS_I8";
+               case OR_I8 -> "OR_I8";
+               case AND_I8 -> "AND_I8";
+               case XOR_I8 -> "XOR_I8";
+               case ADD_I8 -> "ADD_I8";
+               case SUB_I8 -> "SUB_I8";
+               case MUL_I8 -> "MUL_I8";
+               case DIV_I8 -> "DIV_I8";
+               case LOAD -> "LOAD";
+               case STORE -> "STORE";
+               case DEALLOC -> "DEALLOC";
+               case PRINT_I8 -> "PRINT_I8";
+               case PRINT_BOOL -> "PRINT_BOOL";
+               case EXIT -> "EXIT";
+               case GOTO_A -> "GOTO_A";
+               case GOTO_B -> "GOTO_B";
+               case GOTO_C -> "GOTO_C";
+               default -> "";
+          };
+     }
 
 }

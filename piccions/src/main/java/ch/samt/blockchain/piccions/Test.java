@@ -11,43 +11,45 @@ public class Test {
     public static void main(String[] args) {
         var assembler = new Assembler();
 
-        
         assembler.add(
             assembler.mainFunc(
-                buildInstruction(PUSH_I8),
-                assembler.variable("var1", (byte) 66),
-                buildInstruction(PUSH_I8),
-                assembler.variable("var2", (byte) 67),
-                buildInstruction(PUSH_I8),
-                assembler.variable("var3", (byte) 68),
-                
-                buildInstruction(LOAD),
-                assembler.variable("var3"),
-                buildInstruction(PRINT_I8),
-                buildInstruction(LOAD),
-                assembler.variable("var2"),
-                buildInstruction(PRINT_I8),
-                buildInstruction(LOAD),
-                assembler.variable("var1"),
-                buildInstruction(PRINT_I8)
+                buildInstructions(
+                    buildInstructions(
+                        buildInstruction(PUSH_I8),
+                        assembler.variable("variable", (byte) 10)
+                    ),
+                    assembler.whileLoop(
+                        buildInstructions(
+                            buildInstruction(LOAD), // push var
+                            assembler.variable("variable"),
+                            buildInstruction(PUSH_I8),   // push 10
+                            buildInstruction((byte) 10),
+                            buildInstruction(DIV_I8),    // div
+                            buildInstruction(PUSH_I8),   // push 1
+                            buildInstruction((byte) 1),
+                            buildInstruction(EQUALS_I8) // compare
+                        ),
+                        buildInstructions(
+                            buildInstruction(LOAD), // push var
+                            assembler.variable("variable"),
+                            buildInstruction(PRINT_I8),
+                            buildInstruction(LOAD), // push var
+                            assembler.variable("variable"),
+                            buildInstruction(PUSH_I8),
+                            buildInstruction((byte) 1),
+                            buildInstruction(ADD_I8),
+                            buildInstruction(STORE), // write var
+                            assembler.variable("variable")
+                        )
+                    )
+                )
             )
         );
-        
-        // PUSH %POS% dovrebbe avere un -1 STACK
-        
-        // TODO il push dei parametri dovrebbe avere -(PARAM SIZE) STACK
 
-        // TODO l'inizio del body della funzione dovrebbe avere un +(PARAM SIZE) STACK
-        
-        // TODO l'inizio della funzione dovrebbe essere il stackMaster di tutti i parametri
-
-        // TODO I parametri vanno chiamati con .param(index) -> uguale a .variable
-        // ma hanno un incrementOption
-
-        var bytecode = assembler.compile(); // assemble
+        var bytecode = assembler.assemble(); // assemble
 
         System.out.println(assembler);
-        //print(bytecode);
+        print(bytecode);
 
         var vm = new VirtualMachine(bytecode);
         vm.execute();

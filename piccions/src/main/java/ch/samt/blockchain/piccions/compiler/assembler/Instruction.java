@@ -3,6 +3,8 @@ package ch.samt.blockchain.piccions.compiler.assembler;
 import java.util.HashMap;
 import java.util.Map;
 
+import ch.samt.blockchain.piccions.bytecode.ByteCode;
+
 /**
  * Represents a bytecode instruction with metadata.
  * 
@@ -25,7 +27,7 @@ import java.util.Map;
  */
 public class Instruction {
 
-    private byte instruction;
+    private byte instruction; // TODO: opcode
     
     private Map<MetaDataType, MetaData> options;
 
@@ -89,14 +91,20 @@ public class Instruction {
     }
 
     public static enum MetaDataType {
-        INCREMENT,
-        MASTER_CHECKPOINT,
-        SLAVE_CHECKPOINT,
-        MASTER_STACK_OFFSET,
-        SLAVE_STACK_OFFSET,
-        ALTER_STACK_OFFSET,
-        INCREASE_STACK_BY_PARAM_SIZE,
-        DECREASE_STACK_BY_PARAM_SIZE;
+        /* Higher priority -> execute first
+        
+                                 PRIORITY: */
+        INCREMENT,                    // 1
+        MASTER_CHECKPOINT,            // 2
+        SLAVE_CHECKPOINT,             // 2
+        MASTER_STACK_OFFSET,          // 2
+        SLAVE_STACK_OFFSET,           // 2
+        ALTER_STACK_OFFSET,           // 2
+        DECREASE_STACK_BY_PARAM_SIZE, // 3
+        PARAMETER,                    // 3
+        DEBUG;                        // -
+
+        // TODO: multiple metadata for MASTER_*
 
         public static class INCREMENT extends GenericMetaData<Integer> {
 
@@ -170,18 +178,6 @@ public class Instruction {
 
         }
 
-        public static class INCREASE_STACK_BY_PARAM_SIZE extends GenericMetaData<String> {
-
-            public INCREASE_STACK_BY_PARAM_SIZE(String funcName) {
-                super(funcName);
-            }
-
-            MetaDataType getType() {
-                return INCREASE_STACK_BY_PARAM_SIZE;
-            }
-
-        }
-
         public static class DECREASE_STACK_BY_PARAM_SIZE extends GenericMetaData<String> {
 
             public DECREASE_STACK_BY_PARAM_SIZE(String funcName) {
@@ -193,13 +189,36 @@ public class Instruction {
             }
 
         }
+
+        public static class PARAMETER extends GenericMetaData<String> {
+
+            public PARAMETER(String funcNameAndIndex) {
+                super(funcNameAndIndex);
+            }
+
+            MetaDataType getType() {
+                return PARAMETER;
+            }
+
+        }
+
+        public static class DEBUG extends GenericMetaData<String> {
+
+            public DEBUG(String funcNameAndIndex) {
+                super(funcNameAndIndex);
+            }
+
+            MetaDataType getType() {
+                return DEBUG;
+            }
+
+        }
     }
 
     @Override
     public String toString() {
+        // format metadata
         StringBuilder builder = new StringBuilder();
-
-        builder.append(instruction + " ");
 
         if (options != null) {
             for (var type : options.keySet()) {
