@@ -1,2 +1,2 @@
 rootProject.name = 'blockchain'
-include('node', 'common', 'seeder', 'piccions')
+include('node', 'common', 'seeder', 'piccions', 'website-backend')

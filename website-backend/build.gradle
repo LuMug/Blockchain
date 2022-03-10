@@ -1,0 +1,27 @@
+plugins {
+    id 'application'
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'ch.samt.blockchain.website_backend.Main'
+    }
+
+    from {
+        duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':node')
+    implementation 'com.sparkjava:spark-core:2.9.3'
+}
+
+application {
+    mainClass = 'ch.samt.blockchain.website_backend.Main'
+}
