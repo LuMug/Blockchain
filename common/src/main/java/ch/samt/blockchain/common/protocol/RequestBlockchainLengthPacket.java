@@ -4,9 +4,7 @@ import ch.samt.blockchain.common.utils.byteutils.Offset;
 
 public class RequestBlockchainLengthPacket{
 
-    private RequestBlockchainLengthPacket() {
-    }
-
+    private RequestBlockchainLengthPacket() {}
 
     public static byte[] create(int length) {
         byte[] packet = new byte[1];

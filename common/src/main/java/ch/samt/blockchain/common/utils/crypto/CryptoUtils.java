@@ -1,6 +1,7 @@
 package ch.samt.blockchain.common.utils.crypto;
 
 import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -11,6 +12,8 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 
@@ -24,12 +27,13 @@ import org.bouncycastle.math.ec.ECPoint;
 
 public class CryptoUtils {
     
-    private static MessageDigest sha256Digest;
-    private static KeyPairGenerator ecKeyGen;
-    private static KeyFactory ecdsaKeyFactory;
-    private static SecureRandom secureRandom;
+    private MessageDigest sha256Digest;
+    private KeyPairGenerator ecKeyGen;
+    private KeyFactory ecdsaKeyFactory;
+    private SecureRandom secureRandom;
+    private Signature ecdsaSign;
 
-    static {
+    public CryptoUtils() {
         try {
             Security.addProvider(new BouncyCastleProvider());
 
@@ -46,20 +50,22 @@ public class CryptoUtils {
             
             ecKeyGen.initialize(ecSpec, secureRandom);
             ecKeyGen.initialize(ecSpec);
+
+            ecdsaSign = Signature.getInstance("SHA256withECDSA");
         } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | NoSuchProviderException e) {
             e.printStackTrace();
         }
     }
     
-    public static byte[] SHA256(byte[] digest) {
+    public byte[] SHA256(byte[] digest) {
         return sha256Digest.digest(digest);
     }
 
-    public static KeyPair generateKeyPair() {
+    public KeyPair generateECDSAKeyPair() {
         return ecKeyGen.generateKeyPair();
     }
 
-    public static PublicKey publicKeyFromPrivateKey(PrivateKey privateKey)
+    public PublicKey publicECDSAKeyFromPrivateKey(PrivateKey privateKey)
         throws InvalidKeySpecException {
 
         ECPrivateKey ecPrivateKey = (ECPrivateKey) privateKey;
@@ -72,29 +78,42 @@ public class CryptoUtils {
         return ecdsaKeyFactory.generatePublic(publicKeySpec);
     }
 
+    public byte[] signSHA256withECDSA(byte[] data, PrivateKey privateKey) {
+        try {
+            ecdsaSign.initSign(privateKey);
+            ecdsaSign.update(data);
+            return ecdsaSign.sign();
+        } catch (InvalidKeyException | SignatureException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public boolean verifySHA256withECDSA(byte[] data, byte[] signature, PublicKey publicKey) {
+        try {
+            ecdsaSign.initVerify(publicKey);
+            ecdsaSign.update(data);
+            return ecdsaSign.verify(signature);
+        } catch (InvalidKeyException | SignatureException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     /*public static void main(String[] args) {
-        var keypair = generateKeyPair();
+        var cu = new CryptoUtils();
+
+        var keypair = cu.generateECDSAKeyPair();
         var pub = keypair.getPublic();
         var priv = keypair.getPrivate();
         
-        System.out.println(toBase64(pub.getEncoded()));
-        System.out.println();
-        System.out.println();
-        System.out.println();
-        System.out.println();
-        System.out.println(toBase64(priv.getEncoded()));
-    
-        try {
-            var pub2 = publicKeyFromPrivateKey(priv);
+        byte[] sig = cu.signSHA256withECDSA("CIAO".getBytes(), priv);
+        // java.security.SignatureException: Curve not supported: java.security.spec.ECParameterSpec@6069db5
 
-            System.out.println();
-            System.out.println();
-            System.out.println();
-        System.out.println(toBase64(pub2.getEncoded()));
-        } catch (InvalidKeySpecException e) {
-            e.printStackTrace();
-        }
+        //System.out.println(cu.verifySHA256withECDSA("CIAO".getBytes(), sig, pub));
     }
+
+    // https://github.com/starkbank/ecdsa-java
 
     private static String toBase64(byte[] data) {
         return Base64.getEncoder().encodeToString(data);

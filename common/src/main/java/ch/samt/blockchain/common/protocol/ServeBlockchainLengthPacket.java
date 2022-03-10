@@ -4,7 +4,6 @@ import ch.samt.blockchain.common.utils.byteutils.Offset;
 
 public class ServeBlockchainLengthPacket {
     
-    
     private int length;
 
     public ServeBlockchainLengthPacket(byte[] packet) {

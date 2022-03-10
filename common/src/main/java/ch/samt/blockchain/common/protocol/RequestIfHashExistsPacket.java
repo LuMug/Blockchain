@@ -15,8 +15,8 @@ public class RequestIfHashExistsPacket {
         return hash;
     }
 
-    public static byte[] create(int length) {
-        byte[] packet = new byte[];
+    public static byte[] create(byte[] hash) {
+        byte[] packet = new byte[1 + hash.length];
 
         Offset offset = new Offset();
 
