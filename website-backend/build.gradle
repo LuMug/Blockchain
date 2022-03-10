@@ -19,7 +19,8 @@ repositories {
 
 dependencies {
     implementation project(':node')
-    implementation 'com.sparkjava:spark-core:2.9.3'
+    implementation 'com.sparkjava:spark-core:2.9.3' // rest api
+    implementation 'com.google.code.gson:gson:2.7' // json
 }
 
 application {
