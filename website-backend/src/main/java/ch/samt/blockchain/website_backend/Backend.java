@@ -23,15 +23,17 @@ public class Backend {
 
             res.type("application/json");
 
+            // Result example
+            long timestamp = System.currentTimeMillis();
             return """
                 {
                     "blocks": [
-                        { "id": 0, "hash": "aGFzaGRlbGJsb2Njb2hhc2hkZWxibG9jY28K", "nTx": 59 },
-                        { "id": 1, "hash": "ZWFzdGVyZWdnZWFzdGVyZWdnZWFzdGVyQUFB", "nTx": 32 },
-                        { "id": 2, "hash": "ZWRzdGVycmdnZWFmdGVyZWdzZWFzdmVyUkFB", "nTx": 3 }
+                        { "id": 0, "timestamp": %TIMESTAMP%, "hash": "aGFzaGRlbGJsb2Njb2hhc2hkZWxibG9jY28K", "nTx": 59 },
+                        { "id": 1, "timestamp": %TIMESTAMP%, "hash": "ZWFzdGVyZWdnZWFzdGVyZWdnZWFzdGVyQUFB", "nTx": 32 },
+                        { "id": 2, "timestamp": %TIMESTAMP%, "hash": "ZWRzdGVycmdnZWFmdGVyZWdzZWFzdmVyUkFB", "nTx": 3 }
                     ]
                 }
-            """;
+            """.replaceAll("%TIMESTAMP%", Long.toString(timestamp));
         });
     }
 
@@ -56,7 +58,7 @@ public class Backend {
         }
 
         postData('/post/path', { })
-        .then(data => {
+        .then(json => {
             
         });
     */
