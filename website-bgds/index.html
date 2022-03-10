@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BGDS</title>
+
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="icon" href="media/Logo.ico" type="image/icon type">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+
+
+<body>
+    <nav>
+        <!-- <img src="media/32.png" alt="Logo"> -->
+        <section>
+            <button id="buttonOverview" class="material-icons" onclick="redirect('overview.html')">widgets</button>
+            <button id="buttonWallet" class="material-icons"
+                onclick="redirect('wallet.html')">account_balance_wallet</button>
+            <button id="buttonBlock" class="material-icons" onclick="redirect('block.html')">view_in_ar</button>
+            <button id="buttonStats" class=" material-icons" onclick="redirect('stats.html')">leaderboard</button>
+            <button id="buttonTransaction" class=" material-icons"
+                onclick="redirect('transaction.html')">swap_vertical_circle</button>
+        </section>
+    </nav>
+
+    <main>
+        <iframe id="frame" src="home.html"></iframe>
+    </main>
+
+    <script src="js/func.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $("button").focusin(function () {
+                $("button").css("margin-top", "40%");
+                $("button").css("background-color", "#22277A");
+                $("button").css("color", "white");
+                $("button").css("border", "0");
+                $("button").css("padding", "0.5em");
+                $("button").css("transition", "250ms");
+
+                $(this).css("color", "#22277A");
+                $(this).css("background-color", "white");
+                $(this).css("border-radius", "20%");
+                $(this).css("cursor", "pointer");
+            });
+        });
+    </script>
+</body>
+
+
+</html>
