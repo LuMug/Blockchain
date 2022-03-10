@@ -87,6 +87,21 @@ travelling
 
 
 
+
+
+
+
+
+
+
+PRIORITIZE LONGEST BLOCKCHAIN
+Periodically ask your neighbours the length of their blockchain
+
+
+
+
+
+
 NOTES:
 A deployed transaction must have a timestamp in the last 24 hours, orelse
 it is considered invalid.

@@ -11,10 +11,11 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
-import java.security.spec.ECGenParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 
+import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.crypto.ec.CustomNamedCurves;
 import org.bouncycastle.jce.interfaces.ECPrivateKey;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.spec.ECParameterSpec;
@@ -26,6 +27,7 @@ public class CryptoUtils {
     private static MessageDigest sha256Digest;
     private static KeyPairGenerator ecKeyGen;
     private static KeyFactory ecdsaKeyFactory;
+    private static SecureRandom secureRandom;
 
     static {
         try {
@@ -35,18 +37,19 @@ public class CryptoUtils {
 
             ecdsaKeyFactory = KeyFactory.getInstance("ECDSA", "BC");
 
-            KeyPairGenerator ecKeyGen = KeyPairGenerator.getInstance("EC");
-            ECGenParameterSpec ecSpec = new ECGenParameterSpec("secp256k1"); // Exception
-            ecKeyGen.initialize(ecSpec, new SecureRandom());
+            secureRandom = new SecureRandom();
+
+            X9ECParameters curveParams = CustomNamedCurves.getByName("Curve25519");
+            ECParameterSpec ecSpec = new ECParameterSpec(curveParams.getCurve(), curveParams.getG(), curveParams.getN(), curveParams.getH(), curveParams.getSeed());
+            ecKeyGen = KeyPairGenerator.getInstance("EC", "BC");
+            ecKeyGen.initialize(ecSpec);
+            
+            ecKeyGen.initialize(ecSpec, secureRandom);
             ecKeyGen.initialize(ecSpec);
         } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | NoSuchProviderException e) {
             e.printStackTrace();
         }
     }
-
-    /*
-    https://metamug.com/article/security/sign-verify-digital-signature-ecdsa-java.html
-    */
     
     public static byte[] SHA256(byte[] digest) {
         return sha256Digest.digest(digest);
@@ -69,18 +72,24 @@ public class CryptoUtils {
         return ecdsaKeyFactory.generatePublic(publicKeySpec);
     }
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         var keypair = generateKeyPair();
         var pub = keypair.getPublic();
         var priv = keypair.getPrivate();
         
         System.out.println(toBase64(pub.getEncoded()));
+        System.out.println();
+        System.out.println();
+        System.out.println();
+        System.out.println();
         System.out.println(toBase64(priv.getEncoded()));
     
         try {
             var pub2 = publicKeyFromPrivateKey(priv);
 
-
+            System.out.println();
+            System.out.println();
+            System.out.println();
         System.out.println(toBase64(pub2.getEncoded()));
         } catch (InvalidKeySpecException e) {
             e.printStackTrace();
@@ -89,6 +98,6 @@ public class CryptoUtils {
 
     private static String toBase64(byte[] data) {
         return Base64.getEncoder().encodeToString(data);
-    }
+    }*/
 
 }
