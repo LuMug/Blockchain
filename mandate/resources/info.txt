@@ -1,3 +1,5 @@
+PEER DISCOVERY
+
 timestamp -> last time the node was alive
 
 pool di nodi N = 0;
@@ -93,10 +95,36 @@ travelling
 
 
 
+HASH TRANSACTIONS
+hash((hash(t1) XOR hash(t2) XOR hash(t3) XOR hash(t3) XOR ...)
+
+
+
+
 
 PRIORITIZE LONGEST BLOCKCHAIN
-Periodically ask your neighbours the length of their blockchain
 
+EVERY N SECONDS
+ask your neighbours the length of their blockchain
+max = longest response
+neighbour = longest response neighbour
+
+if (max > my length) {
+    for i = 0 < MAX_DEPTH {
+        hash = my last i-th block hash
+        if (neighbour.doYouHaveThisHash(hash)) {
+            temp = neighbour.giveMeTheBlockchainFrom(my lenght + 1);
+            temp (isValid(temp)) {
+                blockchain = blockchain[0, len - i] + temp;
+                break;
+            }
+        }
+    }
+
+    // my blockchain might be completly broken
+    // ask full blockchain again
+    // if valid change
+}
 
 
 
