@@ -2,12 +2,20 @@ package ch.samt.blockchain.website_backend;
 
 import static spark.Spark.*;
 
+import spark.Route;
+
 public class Backend {
 
     public static void init(int port) {
         port(port);
         
-        post("/getLatestBlocks/:from/:to", (req, res) -> {
+        post("/getLatestBlocks/:from/:to", getLatestBlocks());
+        post("/getLatestTransactions/:from/:to", getLatestTransactions());
+        post("/getBlockchainSize", getBlockchainSize());
+    }
+
+    private static Route getLatestBlocks() {
+        return (req, res) -> {
             // Get the latest 10 blocks
             // /getLatestBlocks/0/10
         
@@ -34,7 +42,45 @@ public class Backend {
                     ]
                 }
             """.replaceAll("%TIMESTAMP%", Long.toString(timestamp));
-        });
+        };
+    }
+
+    private static Route getLatestTransactions() {
+        return (req, res) -> {
+            int from = 0;
+            int to = 0;
+            
+            try {
+                from = Integer.parseInt(req.params(":from"));
+                to = Integer.parseInt(req.params(":to"));
+            } catch (NumberFormatException e) {
+                return "{}";
+            }
+
+            res.type("application/json");
+
+            // Result example
+            long timestamp = System.currentTimeMillis();
+            return """
+                {
+                    "transactions": [
+                        { "from": "ZWFzdGVyZWdnZWFzdGVyZWdnZWFzdGVyQUFB", "to": "ZWRzdGVycmdnZWFmdGVyZWdzZWFzdmVyUkFB", "amount": 15000, "timestamp": %TIMESTAMP% },
+                        { "from": "ZWFzdGVyZWdnZWFzdGVyZWdnZWFzdGVyQUFB", "to": "ZWRzdGVycmdnZWFmdGVyZWdzZWFzdmVyUkFB", "amount": 15000, "timestamp": %TIMESTAMP% },
+                        { "from": "ZWFzdGVyZWdnZWFzdGVyZWdnZWFzdGVyQUFB", "to": "ZWRzdGVycmdnZWFmdGVyZWdzZWFzdmVyUkFB", "amount": 15000, "timestamp": %TIMESTAMP% }
+                    ]
+                }
+            """.replaceAll("%TIMESTAMP%", Long.toString(timestamp));
+        };
+    }
+
+    private static Route getBlockchainSize() {
+        return (req, res) -> {
+            return """
+                {
+                    "size": "20 Mib"
+                }        
+            """;
+        };
     }
 
     public static void stop() {
