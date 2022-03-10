@@ -2,10 +2,16 @@ package ch.samt.blockchain.common.protocol;
 
 public class Protocol {
     
-    public final static byte REQUEST_NODES      = 0;
-    public final static byte SERVE_NODES        = 1;
-    public final static byte REGISTER_NODE      = 2;
-    public final static byte SEND_TRANSACTION   = 3;
+    public final static byte REQUEST_NODES                      = 0;
+    public final static byte SERVE_NODES                        = 1;
+    public final static byte REGISTER_NODE                      = 2;
+    public final static byte SEND_TRANSACTION                   = 3;
+    public final static byte REQUEST_BLOCKCHAIN_LENGTH          = 4;
+    public final static byte SERVE_REQUEST_BLOCKCHAIN_LENGTH    = 5;
+    public final static byte REQUEST_IF_HASH_EXISTS             = 6;
+    public final static byte SERVE_REQUEST_IF_HASH_EXISTS      = 7;
+    
+    
 
     public static class Node {
 
