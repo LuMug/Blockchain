@@ -39,13 +39,6 @@ nav button:hover {
     cursor: pointer;
 }
 
-nav button:focus {
-    color: #22277A;
-    background-color: white;
-    border-radius: 20%;
-    cursor: pointer;
-}
-
 main {
     position: relative;
     background-color: #BFBBFF;
