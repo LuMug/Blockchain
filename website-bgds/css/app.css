@@ -6,18 +6,24 @@ body {
     align-items: center;
 
     background-color: #22277A;
-    height: 98%;
+    height: 97%;
     width: 98%;
 }
 
 nav {
     margin-left: 0.5%;
     width: min-content;
+    height: 88%;
+}
+
+section {
+    margin-left: 0.5%;
+    width: min-content;
     height: 100%;
 
     display: flex;
     flex-direction: column;
-    justify-content:space-evenly;
+    justify-content:center;
 }
 
 
@@ -56,3 +62,8 @@ iframe {
     border-radius: 0.75em;
 }
 
+img {
+    width: 3em; 
+    height: 3em;
+    cursor: pointer;
+}
