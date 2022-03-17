@@ -23,7 +23,7 @@ public class FunctionCall implements Compilable {
 
     @Override
     public Opcode[] getOpcodes(Assembler assembler) {
-        return null;
+        return assembler.invokeFunc(name);
     }
     
 }

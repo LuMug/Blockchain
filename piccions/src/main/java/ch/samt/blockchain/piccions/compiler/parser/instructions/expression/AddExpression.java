@@ -1,5 +1,8 @@
 package ch.samt.blockchain.piccions.compiler.parser.instructions.expression;
 
+import java.util.Arrays;
+
+import ch.samt.blockchain.piccions.bytecode.ByteCode;
 import ch.samt.blockchain.piccions.compiler.assembler.Assembler;
 import ch.samt.blockchain.piccions.compiler.assembler.Opcode;
 
@@ -15,13 +18,25 @@ public class AddExpression extends Expression {
 
     @Override
     public Opcode[] getOpcodes(Assembler assembler) {
-        System.out.print("(");
-        left.getOpcodes(assembler);
-        System.out.print(")+(");
-        right.getOpcodes(assembler);
-        System.out.print(")");
-        
-        return null;
+        //System.out.print("(");
+        //left.getOpcodes(assembler);
+        //System.out.print(")+(");
+        //right.getOpcodes(assembler);
+        //System.out.print(")");
+
+        var pushLeft = left.getOpcodes(assembler);
+        var pushRight = right.getOpcodes(assembler);
+        var result = new Opcode[pushLeft.length + pushRight.length + 1];
+        int i = 0;
+        for (int j = 0; j < pushLeft.length; j++) {
+            result[i++] = pushLeft[j];
+        }
+        for (int j = 0; j < pushRight.length; j++) {
+            result[i++] = pushRight[j];
+        }
+        result[i] = Assembler.buildInstruction(ByteCode.ADD_I8);
+
+        return result;
     }
     
 }

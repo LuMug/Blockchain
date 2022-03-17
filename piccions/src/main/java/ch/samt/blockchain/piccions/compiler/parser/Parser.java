@@ -3,6 +3,7 @@ package ch.samt.blockchain.piccions.compiler.parser;
 import java.util.LinkedList;
 import java.util.List;
 
+import ch.samt.blockchain.piccions.compiler.CompileException;
 import ch.samt.blockchain.piccions.compiler.SyntaxException;
 import ch.samt.blockchain.piccions.compiler.lexer.Lexer;
 import ch.samt.blockchain.piccions.compiler.lexer.tokens.Identifier;
@@ -12,7 +13,9 @@ import ch.samt.blockchain.piccions.compiler.parser.instructions.Assignment;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.Compilable;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.Declaration;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.Function;
+import ch.samt.blockchain.piccions.compiler.parser.instructions.FunctionCall;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.InstructionSet;
+import ch.samt.blockchain.piccions.compiler.parser.instructions.MainFunction;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.Parameter;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.Pushable;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.expression.AddExpression;
@@ -25,6 +28,7 @@ import ch.samt.blockchain.piccions.compiler.parser.instructions.expression.Varia
 
 public class Parser {
     
+    public static final String FUNCTION_DEFINITION = "func";
     public static final String FUNCTION_PARAM_OPENER = "(";
     public static final String FUNCTION_PARAM_CLOSER = ")";
     public static final String FUNCTION_BODY_OPENER = "{";
@@ -44,14 +48,14 @@ public class Parser {
     public static final String DIV_OPERATOR = "/";
     public static final String IF_STATEMENT = "if";
     public static final String IF_BODY_CLOSER = "}";
-    public static final String EQUALS_OPERATOR = "==";
     public static final String ASSIGN_OPERATOR = "=";
+    public static final String EQUALS_OPERATOR = "==";
+    public static final String MAIN_FUNCTION = "main";
     public static final String GREATER_OPERATOR = ">";
     public static final String ELSE_STATEMENT = "else";
-    public static final String WHILE_STATEMENT = "while";
     public static final String DECLARE_VARIABLE = "let";
     public static final String INSTRUCTION_CLOSER = ";";
-    public static final String FUNCTION_DEFINITION = "func";
+    public static final String WHILE_STATEMENT = "while";
 
     public static InstructionSet getAbtractSyntaxTree(String code) throws SyntaxException {
         
@@ -173,12 +177,11 @@ public class Parser {
                         x = new AddExpression(x, parseExpression2());
                         // ? x = new AddExpression(x, parseExpression1());
                     } else if (currentToken.getValue().equals(SUB_OPERATOR)) {
-                        System.out.println("ENGAGED THE sub");
                         nextToken();
                         x = new SubExpression(x, parseExpression2());
                         // ? x = new AddExpression(x, parseExpression1());
                     } else {
-                        if (!currentToken.getValue().equals(PRECEDENCE_CLOSER)) {
+                        if (!(currentToken.getValue().equals(PRECEDENCE_CLOSER) || currentToken.getValue().equals(PARAMETER_SEPARATOR))) {
                             currentToken.assertValue(INSTRUCTION_CLOSER, "Expected: '" + INSTRUCTION_CLOSER + "'");
                         }
                         return x;
@@ -201,22 +204,37 @@ public class Parser {
                     
                     nextToken();
                     while (!currentToken.getValue().equals(FUNCTION_PARAM_CLOSER)) {
+                        // FunctionCallWithParam instead od FunctionCall
                         parameters.add(parseExpression());
                         nextToken();
-                        currentToken.assertValue(PARAMETER_SEPARATOR, "Expected: " + PARAMETER_SEPARATOR);
-                        nextToken();
+
+                        if (!currentToken.getValue().equals(FUNCTION_PARAM_CLOSER)) {
+                            currentToken.assertValue(PARAMETER_SEPARATOR, "Expected: " + PARAMETER_SEPARATOR);
+                            nextToken();
+                        }
                     }
 
-                    return null;
+                    nextToken();
+                    currentToken.assertValue(INSTRUCTION_CLOSER, "Expected: '" + INSTRUCTION_CLOSER + "'");
+                    nextToken();
+
+                    return new FunctionCall(identifier, parameters);
                 }
                 
                 if (currentToken.getValue().equals(ASSIGN_OPERATOR)) {
                     // is assignment
                     nextToken();
-                    return new Assignment(identifier, parseExpression());
+                    var expr = parseExpression();
+                    
+                    nextToken(); // ?
+                    currentToken.assertValue(INSTRUCTION_CLOSER, "Expected: '" + INSTRUCTION_CLOSER + "'");
+                    nextToken();
+                    
+                    return new Assignment(identifier, expr);
                 }
 
-                throw new SyntaxException("Unexpected toekn: " + currentToken.getValue());
+
+                throw new SyntaxException("Unexpected token: " + currentToken.getValue());
             }
 
             private Compilable parseInstruction() throws SyntaxException {
@@ -262,6 +280,14 @@ public class Parser {
                 while (!currentToken.getValue().equals(FUNCTION_BODY_CLOSER)) {
                     body.addInstruction(parseInstruction());
                     nextToken();
+                }
+
+                if (functionName.equals(MAIN_FUNCTION)) {
+                    if (params.size() != 0) {
+                        throw new SyntaxException("Main function must not have parameters");
+                    }
+
+                    return new MainFunction(body);
                 }
 
                 function.setBody(body);

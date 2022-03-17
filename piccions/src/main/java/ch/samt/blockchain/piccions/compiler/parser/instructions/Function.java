@@ -38,14 +38,13 @@ public class Function implements Compilable {
 
     @Override
     public Opcode[] getOpcodes(Assembler assembler) {
-        System.out.println();
-        System.out.println(name + ":");
+        //System.out.println();
+        //System.out.println(name + ":");
+        //body.getOpcodes(assembler);
+        //System.out.println();
 
-        body.getOpcodes(assembler);
 
-        System.out.println();
-
-        return new Opcode[0];
+        return assembler.declareFunc(name, body.getOpcodes(assembler));
     }
     
 }
