@@ -6,6 +6,8 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.UUID;
 
+import org.tinylog.Logger;
+
 import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.common.protocol.RegisterNodePacket;
 import ch.samt.blockchain.common.protocol.RequestNodesPacket;
@@ -54,7 +56,7 @@ public class Connection implements Runnable {
     private void processPacket(byte[] data) throws IOException {
         switch (data[0]) {
             case Protocol.REGISTER_NODE -> {
-                System.out.println("Node registered " + socket.getRemoteSocketAddress());
+                Logger.info("Node registered " + socket.getRemoteSocketAddress());
                 var packet = new RegisterNodePacket(data);
                 int port = packet.getPort();
                 UUID uuid = packet.getUUID();
@@ -66,9 +68,9 @@ public class Connection implements Runnable {
                 var packet = new RequestNodesPacket(data);
                 int amount = packet.getAmount();
                 UUID exclude = packet.getExclude();
-                System.out.println(amount + " Node request from " + socket.getRemoteSocketAddress());
+                Logger.info(amount + " Node request from " + socket.getRemoteSocketAddress());
                 var nodes = seeder.drawNodes(amount, exclude);
-                System.out.println(nodes.length + " drawn");
+                Logger.info(nodes.length + " drawn");
                 var response = ServeNodesPacket.create(nodes);
                 out.writePacket(response);
             }

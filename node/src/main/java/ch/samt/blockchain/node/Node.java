@@ -14,6 +14,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import org.tinylog.Logger;
+
 import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.common.protocol.RegisterNodePacket;
 import ch.samt.blockchain.common.protocol.RequestNodesPacket;
@@ -57,7 +59,7 @@ public abstract class Node extends Thread {
                     var socket = server.accept();
                     var connection = new HighLevelConnection(this, socket);
                     connection.start();
-                    System.out.println("Connection incoming");
+                    Logger.info("Connection incoming");
                 } catch (IOException e) {}
             }
         } catch (IOException e) {
@@ -81,23 +83,23 @@ public abstract class Node extends Thread {
     }
 
     public void connect() {
-        System.out.println("[NODE] :: Connecting to blockchain");
+        Logger.info("Connecting to blockchain");
 
         // Query database nodes cache
         if (!nodeCache.isNodeCacheEmpty()) {
-            System.out.println("[NODE] :: Fetching database for cached nodes");
+            Logger.info("Fetching database for cached nodes");
             updateFromCache();
         }
 
         if (neighbours.size() == 0) {
-            System.out.println("[NODE] :: No active node found. Connecting to seeder");
+            Logger.info("No active node found. Connecting to seeder");
             List<Connection> result = new LinkedList<>();
             for (int i = 0; i < Protocol.Node.MAX_TRIES_SEEDER && result.size() < Protocol.Node.MIN_CONNECTIONS; i++) {
                 var nodes = querySeeders(Protocol.Node.MIN_CONNECTIONS);
-                System.out.println("[NODE] :: Received " + nodes.length + " candidate nodes");
+                Logger.info("Received " + nodes.length + " candidate nodes");
                 for (var node : nodes) {
                     if (!neighboursContain(node)) {
-                        System.out.println("[NODE] :: Trying connection with " + node);
+                        Logger.info("Trying connection with " + node);
                         var socket = tryConnection(node.getHostString(), node.getPort());
                     
                         // If has responded
@@ -172,7 +174,7 @@ public abstract class Node extends Thread {
     public void disconnect(Connection connection) {
         neighbours.remove(connection);
         if (neighbours.size() == 0) {
-            System.out.println("[NODE] :: This node isn't connected to any node. Reconneting...");
+            Logger.warn("This node isn't connected to any node. Reconneting...");
             connect();
         }
     }
@@ -218,7 +220,7 @@ public abstract class Node extends Thread {
     private void initPeriodicUpdate() {
         scheduler.scheduleAtFixedRate(
             () -> {
-                System.out.println("[NODE] :: Updating connections from local cache and neighbour nodes");
+                Logger.info("Updating connections from local cache and neighbour nodes");
                 
                 if (neighbours.size() < Protocol.Node.MIN_CONNECTIONS) {
                     updateFromNeighbours();
@@ -244,7 +246,7 @@ public abstract class Node extends Thread {
     // tries to register to random seeder, if connection cannot be estblished,
     // it tries every other seeder until one works. If none is found the program dies.
     private void registerToSeeder() {
-        System.out.println("[NODE] :: Registering to a random seeder");
+        Logger.info("Registering to a random seeder");
 
         int seeders = Seeders.seeders.length;
         int randomIndex = (int) (Math.random() * seeders); // random starting point

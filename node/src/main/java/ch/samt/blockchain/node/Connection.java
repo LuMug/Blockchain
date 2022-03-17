@@ -7,6 +7,8 @@ import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import org.tinylog.Logger;
+
 import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.common.protocol.RegisterNodePacket;
 import ch.samt.blockchain.common.protocol.RequestNodesPacket;
@@ -98,7 +100,7 @@ public abstract class Connection extends Thread {
     // should not be called by this thread, otherwise it will halt
     public InetSocketAddress[] requestNodes(int amount) {
         if (!sendPacket(RequestNodesPacket.create(amount, node.uuid))) {
-            System.out.println("[NODE] :: Disconnecting offline node");
+            Logger.info("[NODE] :: Disconnecting offline node");
             node.disconnect(this);
             return new InetSocketAddress[0];
         }

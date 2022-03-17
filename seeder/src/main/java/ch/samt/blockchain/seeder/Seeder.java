@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.UUID;
 
+import org.tinylog.Logger;
+
 public class Seeder extends Thread {
     
     // move to Protocol
@@ -33,12 +35,12 @@ public class Seeder extends Thread {
                     // Wait for connection
                     var socket = server.accept();
                     var connection = new Connection(this, socket);
-                    System.out.println("[LOG] :: incoming " + socket.getRemoteSocketAddress());
+                    Logger.info("incoming " + socket.getRemoteSocketAddress());
                     new Thread(connection).start();
                 } catch (IOException e) {}
             }
         } catch (IOException e) {
-            System.err.println("[ERROR] :: IOException. Shutting down");
+            Logger.error("IOException. Shutting down");
             e.printStackTrace();
         }
     }

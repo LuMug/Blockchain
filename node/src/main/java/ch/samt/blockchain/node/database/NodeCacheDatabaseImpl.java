@@ -5,6 +5,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
+import org.tinylog.Logger;
+
 public class NodeCacheDatabaseImpl implements NodeCacheDatabase {
 
     private DatabaseConnection connection;
@@ -24,10 +26,10 @@ public class NodeCacheDatabaseImpl implements NodeCacheDatabase {
         this.connection = new DatabaseConnectionImpl(database);
         
         if (!connection.connect()) {
-            System.out.println("[NODE] :: Failed to connect to database");
+            Logger.error("Failed to connect to database");
             System.exit(0);
         } else {
-            System.out.println("[NODE] :: Connected to " + database + " database");
+            Logger.info("Connected to " + database + " database");
         }
 
         for (var instruction : SQL) {
