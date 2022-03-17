@@ -32,3 +32,6 @@ bin
 
 # Codetogether
 .codetogether.ignore
+
+# Tinylog
+logs

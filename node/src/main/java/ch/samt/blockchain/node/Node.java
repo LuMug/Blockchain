@@ -92,26 +92,7 @@ public abstract class Node extends Thread {
         }
 
         if (neighbours.size() == 0) {
-            Logger.info("No active node found. Connecting to seeder");
-            List<Connection> result = new LinkedList<>();
-            for (int i = 0; i < Protocol.Node.MAX_TRIES_SEEDER && result.size() < Protocol.Node.MIN_CONNECTIONS; i++) {
-                var nodes = querySeeders(Protocol.Node.MIN_CONNECTIONS);
-                Logger.info("Received " + nodes.length + " candidate nodes");
-                for (var node : nodes) {
-                    if (!neighboursContain(node)) {
-                        Logger.info("Trying connection with " + node);
-                        var socket = tryConnection(node.getHostString(), node.getPort());
-                    
-                        // If has responded
-                        if (socket != null) {
-                            var connection = new HighLevelConnection(this, socket);
-                            connection.start();
-                            connection.waitNodeRegistration(1000); // TIMEOUT
-                        }
-                    }
-                }
-
-            }
+            updateFromSeeder();
         }
 
         registerToSeeder();
@@ -221,14 +202,18 @@ public abstract class Node extends Thread {
         scheduler.scheduleAtFixedRate(
             () -> {
                 Logger.info("Updating connections from local cache and neighbour nodes");
-                
+
                 if (neighbours.size() < Protocol.Node.MIN_CONNECTIONS) {
                     updateFromNeighbours();
                 }
                 
                 if (neighbours.size() < Protocol.Node.MIN_CONNECTIONS) {
                     updateFromCache();
-                }  
+                }
+
+                if (neighbours.size() == 0) {
+                    updateFromSeeder();
+                }
             },
             Protocol.Node.UPDATE_INTERVAL,
             Protocol.Node.UPDATE_INTERVAL,
@@ -263,6 +248,29 @@ public abstract class Node extends Thread {
     
                 return;
             }
+        }
+    }
+
+    private void updateFromSeeder() {
+        Logger.info("No active node found. Connecting to seeder");
+        List<Connection> result = new LinkedList<>();
+        for (int i = 0; i < Protocol.Node.MAX_TRIES_SEEDER && result.size() < Protocol.Node.MIN_CONNECTIONS; i++) {
+            var nodes = querySeeders(Protocol.Node.MIN_CONNECTIONS);
+            Logger.info("Received " + nodes.length + " candidate nodes");
+            for (var node : nodes) {
+                if (!neighboursContain(node)) {
+                    Logger.info("Trying connection with " + node);
+                    var socket = tryConnection(node.getHostString(), node.getPort());
+                
+                    // If has responded
+                    if (socket != null) {
+                        var connection = new HighLevelConnection(this, socket);
+                        connection.start();
+                        connection.waitNodeRegistration(1000); // TIMEOUT
+                    }
+                }
+            }
+
         }
     }
 
