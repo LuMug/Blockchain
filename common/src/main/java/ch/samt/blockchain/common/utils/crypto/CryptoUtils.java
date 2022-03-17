@@ -100,17 +100,37 @@ public class CryptoUtils {
         }
     }
 
-    /*public static void main(String[] args) {
-        var cu = new CryptoUtils();
+    /*public static void main(String[] args) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchProviderException, InvalidKeyException, SignatureException {
+        // Bouncy Castle Provider
+        Security.addProvider(new BouncyCastleProvider());
+        
+        // Secure random
+        SecureRandom secureRandom = new SecureRandom();
 
-        var keypair = cu.generateECDSAKeyPair();
+        // Key generator
+        X9ECParameters curveParams = CustomNamedCurves.getByName("Curve25519");
+        ECParameterSpec ecSpec = new ECParameterSpec(curveParams.getCurve(), curveParams.getG(), curveParams.getN(), curveParams.getH(), curveParams.getSeed());
+        KeyPairGenerator ecKeyGen = KeyPairGenerator.getInstance("EC", "BC");
+        ecKeyGen.initialize(ecSpec);
+        ecKeyGen.initialize(ecSpec, secureRandom);
+        ecKeyGen.initialize(ecSpec);
+
+        // Signer
+        Signature ecdsaSign = Signature.getInstance("SHA256withECDSA");
+
+        // Generate Key pair
+        var keypair = ecKeyGen.generateKeyPair();
         var pub = keypair.getPublic();
         var priv = keypair.getPrivate();
-        
-        byte[] sig = cu.signSHA256withECDSA("CIAO".getBytes(), priv);
-        // java.security.SignatureException: Curve not supported: java.security.spec.ECParameterSpec@6069db5
 
-        //System.out.println(cu.verifySHA256withECDSA("CIAO".getBytes(), sig, pub));
+        // Signature
+        byte[] data = "Some data".getBytes();
+        ecdsaSign.initSign(priv);
+        ecdsaSign.update(data);
+        // java.security.SignatureException: Curve not supported: java.security.spec.ECParameterSpec@6069db5
+        byte[] sig = ecdsaSign.sign();
+
+
     }
 
     // https://github.com/starkbank/ecdsa-java

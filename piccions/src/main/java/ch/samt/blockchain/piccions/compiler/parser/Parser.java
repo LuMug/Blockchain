@@ -83,16 +83,19 @@ public class Parser {
             private List<Parameter> parseParameters() throws SyntaxException {
                 List<Parameter> parameters = new LinkedList<>();
 
-                while (!currentToken.getValue().equals(FUNCTION_PARAM_OPENER)) {
-                    nextToken();
+                nextToken();
+                while (!currentToken.getValue().equals(FUNCTION_PARAM_CLOSER)) {
                     String name = currentToken.getValue();
                     nextToken();
                     String type = currentToken.getValue();
                     nextToken();
-                    currentToken.assertValue(PARAMETER_SEPARATOR, "Expected '" + PARAMETER_SEPARATOR + "'");
-                    nextToken();
 
                     parameters.add(new Parameter(name, type));
+
+                    if (!currentToken.getValue().equals(FUNCTION_PARAM_CLOSER)) {
+                        currentToken.assertValue(PARAMETER_SEPARATOR, "Expected '" + PARAMETER_SEPARATOR + "'");
+                        nextToken();
+                    }
                 }
 
                 return parameters;
@@ -100,6 +103,8 @@ public class Parser {
 
             private Compilable parseDeclaration() throws SyntaxException {
                 String name = currentToken.getValue();
+                nextToken();
+                currentToken.assertValue(ASSIGN_OPERATOR, "Expected '" + ASSIGN_OPERATOR + "'");
                 nextToken();
                 Pushable value = parseExpression();
                 return new Declaration(name, value);
@@ -127,6 +132,7 @@ public class Parser {
                 Expression x = null;
 
                 if (currentToken.getValue().equals(PRECEDENCE_OPENER)) {
+                    nextToken();
                     x = parseExpression1();
                 } else if (currentToken instanceof NumericLiteral) {
                     x = new LiteralExpression(Integer.parseInt(currentToken.getValue()));
@@ -135,8 +141,8 @@ public class Parser {
                     // or function
                 }
                 
-                nextToken();
-                currentToken.assertValue(PRECEDENCE_CLOSER, "Expected: '" + PRECEDENCE_CLOSER + "'");
+                //nextToken();
+                //currentToken.assertValue(PRECEDENCE_CLOSER, "Expected: '" + PRECEDENCE_CLOSER + "'");
 
                 return x;
             }
@@ -153,7 +159,6 @@ public class Parser {
                         nextToken();
                         x = new DivExpression(x, parseExpression3());
                     } else {
-                        currentToken.assertValue(INSTRUCTION_CLOSER, "Expected: '" + INSTRUCTION_CLOSER + "'");
                         return x;
                     }
                 }
@@ -163,15 +168,19 @@ public class Parser {
                 Expression x = parseExpression2();
                 
                 while (true) {
-                    nextToken();
                     if (currentToken.getValue().equals(ADD_OPERATOR)) {
                         nextToken();
                         x = new AddExpression(x, parseExpression2());
+                        // ? x = new AddExpression(x, parseExpression1());
                     } else if (currentToken.getValue().equals(SUB_OPERATOR)) {
+                        System.out.println("ENGAGED THE sub");
                         nextToken();
                         x = new SubExpression(x, parseExpression2());
+                        // ? x = new AddExpression(x, parseExpression1());
                     } else {
-                        currentToken.assertValue(INSTRUCTION_CLOSER, "Expected: '" + INSTRUCTION_CLOSER + "'");
+                        if (!currentToken.getValue().equals(PRECEDENCE_CLOSER)) {
+                            currentToken.assertValue(INSTRUCTION_CLOSER, "Expected: '" + INSTRUCTION_CLOSER + "'");
+                        }
                         return x;
                     }
                 }
@@ -240,12 +249,11 @@ public class Parser {
                 Function function = new Function(functionName);
 
                 List<Parameter> params = parseParameters();
-                nextToken();
-
                 for (var param : params) {
                     function.addParameter(param);
                 }
 
+                nextToken();
                 currentToken.assertValue(FUNCTION_BODY_OPENER, "Expected '" + FUNCTION_BODY_OPENER + "'");
                 nextToken();
 

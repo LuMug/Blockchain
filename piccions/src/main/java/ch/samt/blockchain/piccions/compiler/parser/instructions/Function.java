@@ -38,8 +38,14 @@ public class Function implements Compilable {
 
     @Override
     public Opcode[] getOpcodes(Assembler assembler) {
-        // TODO Auto-generated method stub
-        return null;
+        System.out.println();
+        System.out.println(name + ":");
+
+        body.getOpcodes(assembler);
+
+        System.out.println();
+
+        return new Opcode[0];
     }
     
 }

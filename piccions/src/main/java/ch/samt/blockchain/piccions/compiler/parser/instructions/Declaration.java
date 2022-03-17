@@ -7,8 +7,10 @@ public record Declaration(String variable, Pushable value) implements Compilable
 
     @Override
     public Opcode[] getOpcodes(Assembler assembler) {
-        // TODO Auto-generated method stub
+        System.out.print("LET " + variable + " ");
+        value.getOpcodes(assembler);
+        System.out.println();
         return null;
     }
-    
+
 }

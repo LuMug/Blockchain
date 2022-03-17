@@ -13,7 +13,7 @@ public class LiteralExpression extends Expression {
 
     @Override
     public Opcode[] getOpcodes(Assembler assembler) {
-        // TODO Auto-generated method stub
+        System.out.print(value);
         return null;
     }
     

@@ -15,7 +15,11 @@ public class DivExpression extends Expression {
 
     @Override
     public Opcode[] getOpcodes(Assembler assembler) {
-        // TODO Auto-generated method stub
+        System.out.print("(");
+        left.getOpcodes(assembler);
+        System.out.print(")/(");
+        right.getOpcodes(assembler);
+        System.out.print(")");
         return null;
     }
     
