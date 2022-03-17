@@ -8,14 +8,15 @@
     <title>BGDS</title>
 
     <link rel="stylesheet" href="css/app.css">
-    <link rel="icon" href="media/Logo.ico" type="image/icon type">
+    <link rel="icon" href="media/logo.ico" type="image/icon type">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
 </head>
 
 
 <body>
     <nav>
-        <!-- <img src="media/32.png" alt="Logo"> -->
+        <img alt="Logo" src="media/logo.png" onmouseover="this.src='media/logoHover.png';"
+            onmouseout="this.src='media/logo.png';" onclick="redirect('home.html')">
         <section>
             <button id="buttonOverview" class="material-icons" onclick="redirect('overview.html')">widgets</button>
             <button id="buttonWallet" class="material-icons"
@@ -52,6 +53,5 @@
         });
     </script>
 </body>
-
 
 </html>
