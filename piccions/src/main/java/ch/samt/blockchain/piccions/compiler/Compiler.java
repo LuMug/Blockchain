@@ -5,11 +5,13 @@ import java.util.List;
 
 import ch.samt.blockchain.piccions.compiler.assembler.Assembler;
 import ch.samt.blockchain.piccions.compiler.parser.Parser;
+import ch.samt.blockchain.piccions.compiler.parser.instructions.Declaration;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.Function;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.FunctionCall;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.FunctionDeclaration;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.InstructionSet;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.MainFunction;
+import ch.samt.blockchain.piccions.compiler.parser.instructions.std.StdLibrary;
 import ch.samt.blockchain.piccions.vm.VirtualMachine;
 
 public class Compiler {
@@ -37,20 +39,20 @@ public class Compiler {
                         var name = call.getName();
 
                         // Check if function exists
-                        /*if (!contains(functions, f -> f.getName().equals(name))) {
+                        if (!contains(functions, f -> f.getName().equals(name))) {
                             if (name.equals("main")) {
                                 throw new CompileException("Cannot call main function: " + name);
                             } else {
                                 throw new CompileException("No function defined: " + name);
                             }
-                        }*/
+                        }
 
                         // TODO: check params
 
                         continue;
                     }
 
-                    if (instruction instanceof FunctionDeclaration declaration) {
+                    if (instruction instanceof Declaration declaration) {
                         // TODO
                     }
                 }
@@ -69,6 +71,7 @@ public class Compiler {
                             throw new CompileException("Duplicate function: " + function.getName());
                         }
 
+                        functions.add(function);
                         continue;
                     }
                     
@@ -101,7 +104,15 @@ public class Compiler {
                 instructions.add(0, mainFunction);
             }
 
+            private void injectStdLibrary() {
+                for (var function : StdLibrary.getStdFunctions()) {
+                    root.addInstruction(function);
+                }
+            }
+
             public Assembler compile() throws CompileException {
+                injectStdLibrary();
+
                 processAST();
                 
                 var assembler = new Assembler();
@@ -126,14 +137,16 @@ public class Compiler {
     public static void main(String[] args) {
         try {
             String code = """
-                func ciao(aaa i32) {
+                func ciao() {
                     let a = 2;
-                    let b = 3;
+                    let b = a;
+                    print(2 * (1 + 1) - b);
                 }
+
                 func main() {
-                    ciao(2);
+                    ciao();
                 }
-            """;
+            """; // DEALLOC 1 ?
 
             String _code = """
                 func ciao(type a, type2 b) {

@@ -270,6 +270,7 @@ public class Assembler {
         // Increase stack offset such that scope erases params
         body[0].addMetaData(new ALTER_STACK_OFFSET(+paramTotalSize));
 
+        
         functionParamSizes.put(name, paramSizes);
 
         // body[0] of the function should be masterStack of every parameter
