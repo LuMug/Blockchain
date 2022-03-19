@@ -3,7 +3,6 @@ package ch.samt.blockchain.piccions.compiler.parser;
 import java.util.LinkedList;
 import java.util.List;
 
-import ch.samt.blockchain.piccions.compiler.CompileException;
 import ch.samt.blockchain.piccions.compiler.SyntaxException;
 import ch.samt.blockchain.piccions.compiler.lexer.Lexer;
 import ch.samt.blockchain.piccions.compiler.lexer.tokens.Identifier;
@@ -12,7 +11,7 @@ import ch.samt.blockchain.piccions.compiler.lexer.tokens.Token;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.Assignment;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.Compilable;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.Declaration;
-import ch.samt.blockchain.piccions.compiler.parser.instructions.Function;
+import ch.samt.blockchain.piccions.compiler.parser.instructions.FunctionDeclaration;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.FunctionCall;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.InstructionSet;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.MainFunction;
@@ -94,7 +93,8 @@ public class Parser {
                     String type = currentToken.getValue();
                     nextToken();
 
-                    parameters.add(new Parameter(name, type));
+                    // Size of 1
+                    parameters.add(new Parameter(name, type, 1));
 
                     if (!currentToken.getValue().equals(FUNCTION_PARAM_CLOSER)) {
                         currentToken.assertValue(PARAMETER_SEPARATOR, "Expected '" + PARAMETER_SEPARATOR + "'");
@@ -111,6 +111,7 @@ public class Parser {
                 currentToken.assertValue(ASSIGN_OPERATOR, "Expected '" + ASSIGN_OPERATOR + "'");
                 nextToken();
                 Pushable value = parseExpression();
+                nextToken();
                 return new Declaration(name, value);
             }
 
@@ -206,7 +207,6 @@ public class Parser {
                     while (!currentToken.getValue().equals(FUNCTION_PARAM_CLOSER)) {
                         // FunctionCallWithParam instead od FunctionCall
                         parameters.add(parseExpression());
-                        nextToken();
 
                         if (!currentToken.getValue().equals(FUNCTION_PARAM_CLOSER)) {
                             currentToken.assertValue(PARAMETER_SEPARATOR, "Expected: " + PARAMETER_SEPARATOR);
@@ -229,10 +229,10 @@ public class Parser {
                     nextToken(); // ?
                     currentToken.assertValue(INSTRUCTION_CLOSER, "Expected: '" + INSTRUCTION_CLOSER + "'");
                     nextToken();
+                 
                     
                     return new Assignment(identifier, expr);
                 }
-
 
                 throw new SyntaxException("Unexpected token: " + currentToken.getValue());
             }
@@ -264,7 +264,7 @@ public class Parser {
                 nextToken();
                 currentToken.assertValue(FUNCTION_PARAM_OPENER, "Expected '" + FUNCTION_PARAM_OPENER + "'");
                 
-                Function function = new Function(functionName);
+                var function = new FunctionDeclaration(functionName);
 
                 List<Parameter> params = parseParameters();
                 for (var param : params) {
@@ -279,7 +279,7 @@ public class Parser {
 
                 while (!currentToken.getValue().equals(FUNCTION_BODY_CLOSER)) {
                     body.addInstruction(parseInstruction());
-                    nextToken();
+                    //nextToken();
                 }
 
                 if (functionName.equals(MAIN_FUNCTION)) {

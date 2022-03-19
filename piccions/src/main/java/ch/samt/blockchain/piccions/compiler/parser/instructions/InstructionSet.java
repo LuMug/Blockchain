@@ -15,6 +15,10 @@ public class InstructionSet implements Compilable {
         instructions.add(instruction);
     }
 
+    public List<Compilable> getInstructions() {
+        return instructions;
+    }
+
     @Override
     public Opcode[] getOpcodes(Assembler assembler) {
         List<Opcode> opcodes = new LinkedList<>();

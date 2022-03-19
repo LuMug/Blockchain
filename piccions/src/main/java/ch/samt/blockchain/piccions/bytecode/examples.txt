@@ -127,8 +127,8 @@ assembler.add(
 ---------------------------------------------------------------
 
 func main() {
-    variable = 51
-    print_sum(variable, variable)
+    let variable = 51;
+    print_sum(variable, variable);
 }
 
 func print_sum(var1, var2) {

@@ -367,6 +367,10 @@ public class Assembler {
     }
 
     public Opcode[] scope(Opcode... instructions) {
+        if (instructions.length == 0) { // empty scope
+            return instructions;
+        }
+        
         int id = nextID();
 
         instructions[0].addMetaData(new MASTER_STACK_OFFSET(id));
@@ -575,6 +579,7 @@ public class Assembler {
 
         int digits = (int) Math.log10(bytecode.size()) + 1;
 
+        // TODO use iterator
         int nextInstructionIndex = 0;
         for (int i = 0; i < bytecode.size(); i++) {
             builder.append(pad(i, digits) + ".\t");

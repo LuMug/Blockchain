@@ -21,9 +21,28 @@ public class FunctionCall implements Compilable {
         this.parameters = parameters;
     }
 
+    public String getName() {
+        return name;
+    }
+
     @Override
     public Opcode[] getOpcodes(Assembler assembler) {
-        return assembler.invokeFunc(name);
+        if (parameters.size() == 0) { // no parameters
+            return assembler.invokeFunc(name);
+        }
+
+        // push parameters
+        List<Opcode> push = new LinkedList<>();
+        for (var instr : parameters) {
+            var chunk = instr.getOpcodes(assembler);
+            for (var opcode : chunk) {
+                push.add(opcode);
+            }
+        }
+
+        var pushParams = push.toArray(new Opcode[push.size()]);
+
+        return assembler.invokeFuncWithParams(name, pushParams);
     }
     
 }

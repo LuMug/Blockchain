@@ -1,5 +1,6 @@
 package ch.samt.blockchain.piccions.compiler.parser.instructions.expression;
 
+import ch.samt.blockchain.piccions.bytecode.ByteCode;
 import ch.samt.blockchain.piccions.compiler.assembler.Assembler;
 import ch.samt.blockchain.piccions.compiler.assembler.Opcode;
 
@@ -17,8 +18,10 @@ public class VariableExpression extends Expression {
 
     @Override
     public Opcode[] getOpcodes(Assembler assembler) {
-        System.out.print(name);
-        return null;
+        return new Opcode[] {
+            Assembler.buildInstruction(ByteCode.LOAD),
+            assembler.variable(name)
+        };
     }
     
 }
