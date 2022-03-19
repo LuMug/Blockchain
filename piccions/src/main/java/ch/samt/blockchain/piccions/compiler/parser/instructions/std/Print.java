@@ -21,7 +21,6 @@ public class Print {
 
         @Override
         public Opcode[] getOpcodes(Assembler assembler) {
-            System.out.println("ADSSDs");
             return assembler.declareFuncWithParams("print", new int[]{1}, Assembler.buildInstructions(
                 Assembler.buildInstruction(ByteCode.LOAD),
                 assembler.param("print", 0),

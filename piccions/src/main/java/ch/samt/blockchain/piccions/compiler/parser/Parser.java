@@ -12,11 +12,14 @@ import ch.samt.blockchain.piccions.compiler.parser.instructions.Assignment;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.Compilable;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.Declaration;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.FunctionDeclaration;
+import ch.samt.blockchain.piccions.compiler.parser.instructions.IfElseStatement;
+import ch.samt.blockchain.piccions.compiler.parser.instructions.IfStatement;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.FunctionCall;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.InstructionSet;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.MainFunction;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.Parameter;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.Pushable;
+import ch.samt.blockchain.piccions.compiler.parser.instructions.WhileLoop;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.expression.AddExpression;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.expression.DivExpression;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.expression.Expression;
@@ -116,11 +119,54 @@ public class Parser {
             }
 
             private Compilable parseIfStatement() throws SyntaxException {
-                throw new SyntaxException("Not implemented yet");
+                var condition = parseExpression();
+
+                currentToken.assertValue(IF_BODY_OPENER, "Expected '" + IF_BODY_OPENER + "'");
+                nextToken();
+
+                var ifBody = new InstructionSet();
+
+                while (!currentToken.getValue().equals(IF_BODY_CLOSER)) {
+                    ifBody.addInstruction(parseInstruction());
+                }
+
+                nextToken();
+
+                if (!currentToken.getValue().equals(ELSE_STATEMENT)) {
+                    return new IfStatement(condition, ifBody);
+                }
+
+                nextToken();
+
+                currentToken.assertValue(ELSE_BODY_OPENER, "Expected '" + ELSE_BODY_OPENER + "'");
+                nextToken();
+
+                var elseBody = new InstructionSet();
+
+                while (!currentToken.getValue().equals(ELSE_BODY_CLOSER)) {
+                    elseBody.addInstruction(parseInstruction());
+                }
+
+                nextToken();
+
+                return new IfElseStatement(condition, ifBody, elseBody);
             }
 
             private Compilable parseWhileStatement() throws SyntaxException {
-                throw new SyntaxException("Not implemented yet");
+                var condition = parseExpression();
+
+                currentToken.assertValue(WHILE_BODY_OPENER, "Expected '" + WHILE_BODY_OPENER + "'");
+                nextToken();
+
+                var body = new InstructionSet();
+
+                while (!currentToken.getValue().equals(WHILE_BODY_CLOSER)) {
+                    body.addInstruction(parseInstruction());
+                }
+
+                nextToken();
+
+                return new WhileLoop(condition, body);
             }
 
             private Expression parseExpression3() throws SyntaxException {
@@ -146,9 +192,6 @@ public class Parser {
                     // or function
                 }
                 
-                //nextToken();
-                //currentToken.assertValue(PRECEDENCE_CLOSER, "Expected: '" + PRECEDENCE_CLOSER + "'");
-
                 return x;
             }
 
@@ -182,9 +225,9 @@ public class Parser {
                         x = new SubExpression(x, parseExpression2());
                         // ? x = new AddExpression(x, parseExpression1());
                     } else {
-                        if (!(currentToken.getValue().equals(PRECEDENCE_CLOSER) || currentToken.getValue().equals(PARAMETER_SEPARATOR))) {
-                            currentToken.assertValue(INSTRUCTION_CLOSER, "Expected: '" + INSTRUCTION_CLOSER + "'");
-                        }
+                        //if (!(currentToken.getValue().equals(PRECEDENCE_CLOSER) || currentToken.getValue().equals(PARAMETER_SEPARATOR))) {
+                        //    currentToken.assertValue(INSTRUCTION_CLOSER, "Expected: '" + INSTRUCTION_CLOSER + "'");
+                        //}
                         return x;
                     }
                 }
@@ -226,10 +269,8 @@ public class Parser {
                     nextToken();
                     var expr = parseExpression();
                     
-                    nextToken(); // ?
                     currentToken.assertValue(INSTRUCTION_CLOSER, "Expected: '" + INSTRUCTION_CLOSER + "'");
                     nextToken();
-                 
                     
                     return new Assignment(identifier, expr);
                 }
@@ -279,7 +320,6 @@ public class Parser {
 
                 while (!currentToken.getValue().equals(FUNCTION_BODY_CLOSER)) {
                     body.addInstruction(parseInstruction());
-                    //nextToken();
                 }
 
                 if (functionName.equals(MAIN_FUNCTION)) {

@@ -3,6 +3,7 @@ package ch.samt.blockchain.piccions.compiler;
 import java.util.LinkedList;
 import java.util.List;
 
+import ch.samt.blockchain.piccions.bytecode.ByteCode;
 import ch.samt.blockchain.piccions.compiler.assembler.Assembler;
 import ch.samt.blockchain.piccions.compiler.parser.Parser;
 import ch.samt.blockchain.piccions.compiler.parser.instructions.Declaration;
@@ -112,7 +113,6 @@ public class Compiler {
 
             public Assembler compile() throws CompileException {
                 injectStdLibrary();
-
                 processAST();
                 
                 var assembler = new Assembler();
@@ -137,39 +137,29 @@ public class Compiler {
     public static void main(String[] args) {
         try {
             String code = """
-                func ciao() {
-                    let a = 2;
-                    let b = a;
-                    print(2 * (1 + 1) - b);
-                }
-
                 func main() {
-                    ciao();
-                }
-            """; // DEALLOC 1 ?
-
-            String _code = """
-                func ciao(type a, type2 b) {
-                    let v1 = 2+1-3;
-                    let v2 = (1-2)*2;
-                    let v3 = 2*2*4+2;
-                    let v4 = 2+2/66;
-                    let v5 = (3);
-                    let v6 = (((((8*3)))));
+                    let variable = 10;
+                
+                    while variable / 10 {
+                        print(variable);
+                        variable = variable + 1;
+                    }
                 }
             """;
 
             var assembler = Compiler.compile(code);
-            
             var bytecode = assembler.assemble();
-
             System.out.println(assembler);
             new VirtualMachine(bytecode).execute();
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+        // SEMICOLON CHECK
         // TODO: support empty functions
+        // check variables
+        // check param size/count
+        // check(instructionSet) -> recursive
     }
 
 }
