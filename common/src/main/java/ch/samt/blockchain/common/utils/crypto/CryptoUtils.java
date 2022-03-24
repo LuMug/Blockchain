@@ -1,139 +1,100 @@
 package ch.samt.blockchain.common.utils.crypto;
 
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.KeyFactory;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.Security;
-import java.security.Signature;
-import java.security.SignatureException;
-import java.security.spec.InvalidKeySpecException;
-import java.util.Base64;
 
-import org.bouncycastle.asn1.x9.X9ECParameters;
-import org.bouncycastle.crypto.ec.CustomNamedCurves;
-import org.bouncycastle.jce.interfaces.ECPrivateKey;
+import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+import org.bouncycastle.crypto.CryptoException;
+import org.bouncycastle.crypto.DataLengthException;
+import org.bouncycastle.crypto.Signer;
+import org.bouncycastle.crypto.generators.Ed25519KeyPairGenerator;
+import org.bouncycastle.crypto.params.AsymmetricKeyParameter;
+import org.bouncycastle.crypto.params.Ed25519KeyGenerationParameters;
+import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
+import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
+import org.bouncycastle.crypto.signers.Ed25519Signer;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.jce.spec.ECParameterSpec;
-import org.bouncycastle.jce.spec.ECPublicKeySpec;
-import org.bouncycastle.math.ec.ECPoint;
 
 public class CryptoUtils {
-    
-    private MessageDigest sha256Digest;
-    private KeyPairGenerator ecKeyGen;
-    private KeyFactory ecdsaKeyFactory;
-    private SecureRandom secureRandom;
-    private Signature ecdsaSign;
 
+    private MessageDigest sha256Digest;
+    private SecureRandom secureRandom;
+    private Ed25519KeyPairGenerator keyPairGenerator;
+    private Signer signer;
+    private Signer verifier;
+
+    static {
+        Security.addProvider(new BouncyCastleProvider());
+    }
+    
     public CryptoUtils() {
         try {
-            Security.addProvider(new BouncyCastleProvider());
+            this.sha256Digest = MessageDigest.getInstance("SHA-256");
+            this.secureRandom = new SecureRandom();
+            this.keyPairGenerator = new Ed25519KeyPairGenerator();
+            this.signer = new Ed25519Signer();
+            this.verifier = new Ed25519Signer();
 
-            sha256Digest = MessageDigest.getInstance("SHA-256");
-
-            ecdsaKeyFactory = KeyFactory.getInstance("ECDSA", "BC");
-
-            secureRandom = new SecureRandom();
-
-            X9ECParameters curveParams = CustomNamedCurves.getByName("Curve25519");
-            ECParameterSpec ecSpec = new ECParameterSpec(curveParams.getCurve(), curveParams.getG(), curveParams.getN(), curveParams.getH(), curveParams.getSeed());
-            ecKeyGen = KeyPairGenerator.getInstance("EC", "BC");
-            ecKeyGen.initialize(ecSpec);
-            
-            ecKeyGen.initialize(ecSpec, secureRandom);
-            ecKeyGen.initialize(ecSpec);
-
-            ecdsaSign = Signature.getInstance("SHA256withECDSA");
-        } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException | NoSuchProviderException e) {
+            keyPairGenerator.init(new Ed25519KeyGenerationParameters(secureRandom));
+        } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
     }
-    
+
     public byte[] SHA256(byte[] digest) {
         return sha256Digest.digest(digest);
     }
 
-    public KeyPair generateECDSAKeyPair() {
-        return ecKeyGen.generateKeyPair();
+    public Ed25519PublicKeyParameters getPublicKey(AsymmetricCipherKeyPair keyPair) {
+        return (Ed25519PublicKeyParameters) keyPair.getPublic();
     }
 
-    public PublicKey publicECDSAKeyFromPrivateKey(PrivateKey privateKey)
-        throws InvalidKeySpecException {
-
-        ECPrivateKey ecPrivateKey = (ECPrivateKey) privateKey;
-
-        ECParameterSpec ecParams = ecPrivateKey.getParameters();
-        ECPoint q = ecParams.getG().multiply(ecPrivateKey.getD());
-
-        ECPublicKeySpec publicKeySpec = new ECPublicKeySpec(q, ecParams);
-
-        return ecdsaKeyFactory.generatePublic(publicKeySpec);
+    public Ed25519PrivateKeyParameters getPrivateKey(AsymmetricCipherKeyPair keyPair) {
+        return (Ed25519PrivateKeyParameters) keyPair.getPrivate();
     }
 
-    public byte[] signSHA256withECDSA(byte[] data, PrivateKey privateKey) {
-        try {
-            ecdsaSign.initSign(privateKey);
-            ecdsaSign.update(data);
-            return ecdsaSign.sign();
-        } catch (InvalidKeyException | SignatureException e) {
-            e.printStackTrace();
-            return null;
-        }
+    public AsymmetricCipherKeyPair generateKeyPair() {
+        return keyPairGenerator.generateKeyPair();
     }
 
-    public boolean verifySHA256withECDSA(byte[] data, byte[] signature, PublicKey publicKey) {
-        try {
-            ecdsaSign.initVerify(publicKey);
-            ecdsaSign.update(data);
-            return ecdsaSign.verify(signature);
-        } catch (InvalidKeyException | SignatureException e) {
-            e.printStackTrace();
-            return false;
-        }
+    public byte[] sign(byte[] data, AsymmetricKeyParameter privKey)
+            throws DataLengthException, CryptoException {
+        signer.init(true, privKey);
+        signer.update(data, 0, data.length);
+        return signer.generateSignature();
     }
 
-    /*public static void main(String[] args) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, NoSuchProviderException, InvalidKeyException, SignatureException {
-        // Bouncy Castle Provider
-        Security.addProvider(new BouncyCastleProvider());
+    public boolean verify(byte[] sig, byte[] data, AsymmetricKeyParameter publicKey) {
+        verifier.init(false, publicKey);
+        verifier.update(data, 0, data.length);
+        return verifier.verifySignature(sig);
+    }
+
+    public Ed25519PrivateKeyParameters privateKeyFromEncoded(byte[] encoded) {
+        return new Ed25519PrivateKeyParameters(encoded, 0);
+    }
+
+    public Ed25519PublicKeyParameters publicKeyFromPrivateKey(Ed25519PrivateKeyParameters privateKey) {
+        return privateKey.generatePublicKey();
+    }
+
+    /*public static void main(String[] args) throws CryptoException {
+
+        var cu = new CryptoUtils();
+        var keypair = cu.generateKeyPair();
+
+        var data = "CIAOOO".getBytes();
         
-        // Secure random
-        SecureRandom secureRandom = new SecureRandom();
+        var sig = cu.sign(data, keypair.getPrivate());
+        var res = cu.verify(sig, data, keypair.getPublic());
+        System.out.println(res);
 
-        // Key generator
-        X9ECParameters curveParams = CustomNamedCurves.getByName("Curve25519");
-        ECParameterSpec ecSpec = new ECParameterSpec(curveParams.getCurve(), curveParams.getG(), curveParams.getN(), curveParams.getH(), curveParams.getSeed());
-        KeyPairGenerator ecKeyGen = KeyPairGenerator.getInstance("EC", "BC");
-        ecKeyGen.initialize(ecSpec);
-        ecKeyGen.initialize(ecSpec, secureRandom);
-        ecKeyGen.initialize(ecSpec);
-
-        // Signer
-        Signature ecdsaSign = Signature.getInstance("SHA256withECDSA");
-
-        // Generate Key pair
-        var keypair = ecKeyGen.generateKeyPair();
-        var pub = keypair.getPublic();
-        var priv = keypair.getPrivate();
-
-        // Signature
-        byte[] data = "Some data".getBytes();
-        ecdsaSign.initSign(priv);
-        ecdsaSign.update(data);
-        // java.security.SignatureException: Curve not supported: java.security.spec.ECParameterSpec@6069db5
-        byte[] sig = ecdsaSign.sign();
-
-
+        System.out.println(toBase64(cu.getPublicKey(keypair).getEncoded()));
+        var pub = cu.publicKeyFromPrivateKey(cu.getPrivateKey(keypair));
+        System.out.println(toBase64(pub.getEncoded()));
     }
-
-    // https://github.com/starkbank/ecdsa-java
 
     private static String toBase64(byte[] data) {
         return Base64.getEncoder().encodeToString(data);
