@@ -31,7 +31,7 @@ POP -> removes the topmost value from the stack
 
 A simple bytecode for working with 8-bit values:
 
-PUSH | _ -> value
+PSH | _ -> value
     pushes the next value in the bytecode onto the stack
 ADD | v1, v2 -> result
     pop the two topmost values, adds them and pushes the result onto the stack
@@ -382,11 +382,5 @@ Rust automatically frees unused memory, however this features comes with some ex
 
 Helpful resources:
     - https://gameprogrammingpatterns.com/bytecode.html
-
-
-
-
-
-
 
     // Source -> Lexer -> Parser -> Compiler -> Assembler -> Compiled -> VM

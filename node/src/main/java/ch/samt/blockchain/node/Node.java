@@ -42,7 +42,7 @@ public abstract class Node extends Thread {
         this.port = port;
         this.nodeCache = new NodeCacheDatabaseImpl("nodecache_" + port + ".db");
         this.neighbours = new LinkedList<>();
-        this.scheduler = Executors.newScheduledThreadPool(1);
+        this.scheduler = Executors.newScheduledThreadPool(5);
     }
 
     @Override
@@ -203,7 +203,7 @@ public abstract class Node extends Thread {
     }
 
     private void initPeriodicUpdate() {
-        scheduler.scheduleAtFixedRate(
+        schedule(
             () -> {
                 Logger.info("Updating connections from local cache and neighbour nodes");
 
@@ -225,14 +225,14 @@ public abstract class Node extends Thread {
     }
 
     private void initPeridicRegister() {
-        scheduler.scheduleAtFixedRate(
+        schedule(
             () -> registerToSeeder(),
             Protocol.Node.REGISTER_INTERVAL,
             Protocol.Node.REGISTER_INTERVAL,
             TimeUnit.MILLISECONDS);
     }
 
-    // tries to register to random seeder, if connection cannot be estblished,
+    // tries to register to a random seeder, if connection cannot be estblished,
     // it tries every other seeder until one works. If none is found the program dies.
     private void registerToSeeder() {
         Logger.info("Registering to a random seeder");
@@ -253,6 +253,8 @@ public abstract class Node extends Thread {
                 return;
             }
         }
+
+        Logger.error("No active seeder found");
     }
 
     private void updateFromSeeder() {
@@ -284,10 +286,6 @@ public abstract class Node extends Thread {
         }
 
         return neighbours.get((int) (Math.random() * neighbours.size()));
-    }
-
-    private InetSocketAddress getRandomSeeder() {
-        return Seeders.seeders[(int) (Math.random() * Seeders.seeders.length)];
     }
 
     public InetSocketAddress[] drawNodes(int amount, UUID exclude) {
@@ -366,6 +364,10 @@ public abstract class Node extends Thread {
         }
     }
 
+    protected void schedule(Runnable command, long initialDelay, long delay, TimeUnit unit) {
+        scheduler.scheduleWithFixedDelay(command, initialDelay, delay, unit);
+    }
+
     private void printNeighbours(PrintStream ps) {
         ps.println("Total neighbours (" + neighbours.size() + ")");
         for (var node : neighbours) {
@@ -383,15 +385,5 @@ public abstract class Node extends Thread {
             stop\t\t Stop the service
         """);
     }
-
-    /**
-     * TODO:
-     * use CircleIterator for iterating over seeders and neighbours
-     * 
-     * simplify var in, var out with class
-     * 
-     * 
-     *
-     */
 
 }
