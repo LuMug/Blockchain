@@ -109,23 +109,27 @@ public abstract class Node extends Thread {
         return false;
     }
 
-    private InetSocketAddress[] querySeeders(int amount) { // TODO: Usare circulariterator
-        // Select random seeder
-        var address = getRandomSeeder();
+    private InetSocketAddress[] querySeeders(int amount) {
+        int start = (int) (Math.random() * Seeders.seeders.length);
+        for (var index : new CircularIterator(Seeders.seeders.length, start)) {
+            var address = Seeders.seeders[index];
+            Logger.info("Trying seeder: " + address);
 
-        try (var seeder = new Socket(address.getHostString(), address.getPort())) {
-            var in = new PacketInputStream(seeder.getInputStream());
-            var out = new PacketOutputStream(seeder.getOutputStream());
+            try (var seeder = new Socket(address.getHostString(), address.getPort())) {
+                var in = new PacketInputStream(seeder.getInputStream());
+                var out = new PacketOutputStream(seeder.getOutputStream());
+    
+                var reqPacket = RequestNodesPacket.create(amount, uuid);
+                out.writePacket(reqPacket);
+    
+                var responseData = in.nextPacket();
+                if (responseData != null) {
+                    var responsePacket = new ServeNodesPacket(responseData);
+                    return responsePacket.getNodes();
+                }
+            } catch (IOException e) {}
+        }
 
-            var reqPacket = RequestNodesPacket.create(amount, uuid);
-            out.writePacket(reqPacket);
-
-            var responseData = in.nextPacket();
-            if (responseData != null) {
-                var responsePacket = new ServeNodesPacket(responseData);
-                return responsePacket.getNodes();
-            }
-        } catch (IOException e) {}
         return new InetSocketAddress[0];
     }
 

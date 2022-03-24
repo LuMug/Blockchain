@@ -27,6 +27,9 @@ public class Seeder extends Thread {
         this.port = port;
     }
 
+    // TODO: check if service address of new node already exists.
+    // If yes, remove the old one.
+
     @Override
     public void run() {
         try (ServerSocket server = new ServerSocket(port)) {
@@ -35,7 +38,7 @@ public class Seeder extends Thread {
                     // Wait for connection
                     var socket = server.accept();
                     var connection = new Connection(this, socket);
-                    Logger.info("incoming " + socket.getRemoteSocketAddress());
+                    Logger.info("Connection incoming " + socket.getRemoteSocketAddress());
                     new Thread(connection).start();
                 } catch (IOException e) {}
             }

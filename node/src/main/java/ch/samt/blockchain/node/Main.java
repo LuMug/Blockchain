@@ -23,5 +23,5 @@ public class Main {
 
         // Interactive console
         node.attachConsole(System.in, System.out);
-    }
+    } // CHECK IF SERVICE ALREADY EXISTS
 }
