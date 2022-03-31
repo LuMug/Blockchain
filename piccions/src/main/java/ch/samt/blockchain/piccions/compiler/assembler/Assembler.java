@@ -488,8 +488,7 @@ public class Assembler {
         for (int i = 0; i < result.size(); i++) {
             Opcode instruction = result.get(i);
             byte opcode = instruction.getInstruction();
-            
-
+    
             if (instruction.hasMetaData(MASTER_STACK_OFFSET)) {
                 offsets.put(((MASTER_STACK_OFFSET) instruction.getMetaData(MASTER_STACK_OFFSET)).getValue(), stackOffset);
             }
