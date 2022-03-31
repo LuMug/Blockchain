@@ -35,7 +35,6 @@ public class BlockchainApi implements HttpServer {
 
     private Route getLatestBlocks() {
         return (req, res) -> {
-            System.out.println("latest blocks");
             // Get the latest 10 blocks
             // /getLatestBlocks/0/10
 

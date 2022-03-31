@@ -16,6 +16,11 @@ function uploadFiles() {
 }
 
 async function postData(url = '', data = {}) {
+    let href = window.location.href;
+    let index = href.indexOf('/', 8);
+    href = href.substring(0, index);
+    url = href + url;
+
     const response = await fetch(url, {
         method: 'POST',
         cache: 'no-cache',
@@ -29,7 +34,7 @@ async function postData(url = '', data = {}) {
 }
 
 function sendBlocksRequest() {
-    postData('http://127.0.0.1/getLatestBlocks/0/10', {})
+    postData('/getLatestBlocks/0/10')
         .then(json => {
             console.log(json)
         });
