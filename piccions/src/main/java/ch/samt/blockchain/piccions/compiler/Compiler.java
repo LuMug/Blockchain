@@ -49,7 +49,6 @@ public class Compiler {
                         }
 
                         // TODO: check params
-
                         continue;
                     }
 

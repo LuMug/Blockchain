@@ -5,51 +5,53 @@ import ch.samt.blockchain.piccions.vm.VirtualMachine;
 import static ch.samt.blockchain.piccions.bytecode.ByteCode.*;
 import static ch.samt.blockchain.piccions.compiler.assembler.Assembler.*;
 
+import ch.samt.blockchain.piccions.bytecode.ByteCode;
+import ch.samt.blockchain.piccions.compiler.CompileException;
+import ch.samt.blockchain.piccions.compiler.Compiler;
+import ch.samt.blockchain.piccions.compiler.SyntaxException;
+
 
 public class Test {
     
-    public static void main(String[] args) {
-        var assembler = new Assembler();
+    public static void main(String[] args) throws SyntaxException, CompileException {
 
+        String code = """
+            func main() {
+                let variable = 10;
+            
+                while variable / 10 {
+                    print(variable);
+                    variable = variable + 1;
+                }
+
+                
+            }
+        """;
+
+        var assembler = Compiler.compile(code);
+
+        /*var assembler = new Assembler();
         assembler.add(
             assembler.mainFunc(
-                buildInstructions(
-                    buildInstructions(
-                        buildInstruction(PUSH_I8),
-                        assembler.variable("variable", (byte) 10)
-                    ),
-                    assembler.whileLoop(
-                        buildInstructions(
-                            buildInstruction(LOAD), // push var
-                            assembler.variable("variable"),
-                            buildInstruction(PUSH_I8),   // push 10
-                            buildInstruction((byte) 10),
-                            buildInstruction(DIV_I8),    // div
-                            buildInstruction(PUSH_I8),   // push 1
-                            buildInstruction((byte) 1),
-                            buildInstruction(EQUALS_I8) // compare
-                        ),
-                        buildInstructions(
-                            buildInstruction(LOAD), // push var
-                            assembler.variable("variable"),
-                            buildInstruction(PRINT_I8),
-                            buildInstruction(LOAD), // push var
-                            assembler.variable("variable"),
-                            buildInstruction(PUSH_I8),
-                            buildInstruction((byte) 1),
-                            buildInstruction(ADD_I8),
-                            buildInstruction(STORE), // write var
-                            assembler.variable("variable")
-                        )
-                    )
+                Assembler.buildInstructions(
+                    Assembler.buildInstruction(ByteCode.PUSH_I8),
+                    assembler.variable("a", (byte) 5),
+
+                    Assembler.buildInstruction(ByteCode.LOAD),
+                    assembler.variable("a"),
+                    Assembler.buildInstruction(ByteCode.PUSH_I8),
+                    Assembler.buildInstruction((byte) 1),
+                    assembler.variable("b", Assembler.buildInstruction(ByteCode.ADD_I8)),
+
+                    Assembler.buildInstruction(ByteCode.LOAD),
+                    assembler.variable("b"),
+                    Assembler.buildInstruction(ByteCode.PRINT_I8)
                 )
             )
-        );
+        );*/
 
-        var bytecode = assembler.assemble(); // assemble
-
+        var bytecode = assembler.assemble();
         System.out.println(assembler);
-        print(bytecode);
 
         var vm = new VirtualMachine(bytecode);
         vm.execute();
