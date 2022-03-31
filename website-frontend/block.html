@@ -11,14 +11,17 @@
 </head>
 
 <body>
-    <h1>BLOCK</h1>
-    <button onclick="sendBlocksRequest()">Richiesta al server</button>
+    <h1>Latest Blocks</h1>
+    <hr>
 
     <main id="blocksTable">
-
     </main>
 </body>
 
 <script src="js/func.js"></script>
+<script>
+    sendBlocksRequest();
+    setInterval(sendBlocksRequest, 15000);
+</script>
 
 </html>

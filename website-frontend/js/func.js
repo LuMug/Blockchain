@@ -51,16 +51,31 @@ function sendBlocksRequest() {
         });
 }
 
-/**const table = document.getElementById("blocksTable");
-table.innerHTML += "<table>";
-for (let i = 0; i < json.blocks.length; i++) {
-    table.innerHTML += "<tr>";
-    table.innerHTML += "<td>" + json.blocks[i].id + "</td>";
-    table.innerHTML += "<td>" + json.blocks[i].timestamp + "</td>";
-    table.innerHTML += "<td>" + json.blocks[i].hash + "</td>";
-    table.innerHTML += "<td>" + json.blocks[i].nTx + "</td>";
-    table.innerHTML += "</tr>";
+function sendSizeRequest() {
+    postData('/getBlockchainSize')
+        .then(json => {
+            var html = "<h2>Dimensione blockchain: ";
+            html += json.size;
+            html += "</h2";
+            document.getElementById("statistiche").innerHTML = html;
+            console.log(json);
+        });
 }
-table.innerHTML += "</table>";
-//table.innerHTML += json.blocks.length;
-console.log(json);*/
+
+function sendTransactionsRequest() {
+    postData('/getLatestTransactions/0/10')
+        .then(json => {
+            var html = "<table><tr><th>From</th><th>To</th><th>Amount</th><th>Timestamp</th></tr>";
+            for (let i = json.transactions.length - 1; i >= 0; i--) {
+                html += "<tr>"
+                html += "<td align=center>" + json.transactions[i].from + "</td>";
+                html += "<td align=center>" + json.transactions[i].to + "</td>";
+                html += "<td align=center>" + json.transactions[i].amount + "</td>";
+                html += "<td align=center>" + json.transactions[i].timestamp + "</td>";
+                html += "</tr>"
+            }
+            html += "</table>";
+            document.getElementById("transactionsTable").innerHTML = html;
+        });
+}
+
