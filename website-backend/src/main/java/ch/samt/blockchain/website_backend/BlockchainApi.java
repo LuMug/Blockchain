@@ -3,19 +3,39 @@ package ch.samt.blockchain.website_backend;
 import static spark.Spark.*;
 
 import spark.Route;
+import spark.Service;
 
-public class Backend {
+public class BlockchainApi implements HttpServer {
 
-    public static void init(int port) {
-        port(port);
+    public static final int MAX_THREADS = 20;
 
-        post("/getLatestBlocks/:from/:to", getLatestBlocks());
-        post("/getLatestTransactions/:from/:to", getLatestTransactions());
-        post("/getBlockchainSize", getBlockchainSize());
+    private Service http;
+    private int port;
+
+    public BlockchainApi(int port) {
+        this.port = port;
     }
 
-    private static Route getLatestBlocks() {
+    public BlockchainApi(Service http) {
+        this.http = http;
+    }
+
+    @Override
+    public void init() {
+        if (http == null) {
+            this.http = Service.ignite()
+                .port(port)
+                .threadPool(MAX_THREADS);
+        }
+
+        http.post("/getLatestBlocks/:from/:to", getLatestBlocks());
+        http.post("/getLatestTransactions/:from/:to", getLatestTransactions());
+        http.post("/getBlockchainSize", getBlockchainSize());
+    }
+
+    private Route getLatestBlocks() {
         return (req, res) -> {
+            System.out.println("latest blocks");
             // Get the latest 10 blocks
             // /getLatestBlocks/0/10
 
@@ -46,7 +66,7 @@ public class Backend {
         };
     }
 
-    private static Route getLatestTransactions() {
+    private Route getLatestTransactions() {
         return (req, res) -> {
             int from = 0;
             int to = 0;
@@ -75,7 +95,7 @@ public class Backend {
         };
     }
 
-    private static Route getBlockchainSize() {
+    private Route getBlockchainSize() {
         return (req, res) -> {
             return """
                         {
@@ -85,8 +105,9 @@ public class Backend {
         };
     }
 
-    public static void stop() {
-        spark.Spark.stop();
+    @Override
+    public void stop() {
+        http.stop();
     }
 
     /*
