@@ -36,6 +36,31 @@ async function postData(url = '', data = {}) {
 function sendBlocksRequest() {
     postData('/getLatestBlocks/0/10')
         .then(json => {
-            console.log(json)
+            var html = "<table><tr><th>Id</th><th>Timestamp</th><th>Hash</th><th>Transactions</th></tr>";
+
+            for (let i = json.blocks.length - 1; i >= 0; i--) {
+                html += "<tr>"
+                html += "<td align=center>" + json.blocks[i].id + "</td>";
+                html += "<td align=center>" + json.blocks[i].timestamp + "</td>";
+                html += "<td align=center>" + json.blocks[i].hash + "</td>";
+                html += "<td align=center>" + json.blocks[i].nTx + "</td>";
+                html += "</tr>"
+            }
+            html += "</table>";
+            document.getElementById("blocksTable").innerHTML = html;
         });
 }
+
+/**const table = document.getElementById("blocksTable");
+table.innerHTML += "<table>";
+for (let i = 0; i < json.blocks.length; i++) {
+    table.innerHTML += "<tr>";
+    table.innerHTML += "<td>" + json.blocks[i].id + "</td>";
+    table.innerHTML += "<td>" + json.blocks[i].timestamp + "</td>";
+    table.innerHTML += "<td>" + json.blocks[i].hash + "</td>";
+    table.innerHTML += "<td>" + json.blocks[i].nTx + "</td>";
+    table.innerHTML += "</tr>";
+}
+table.innerHTML += "</table>";
+//table.innerHTML += json.blocks.length;
+console.log(json);*/
