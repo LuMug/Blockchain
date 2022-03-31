@@ -8,12 +8,15 @@ public class WebServer implements HttpServer {
 
     private Service http;
     private int port;
+    private String path;
 
-    public WebServer(int port) {
+    public WebServer(String path, int port) {
+        this.path = path;
         this.port = port;
     }
 
-    public WebServer(Service http) {
+    public WebServer(String path, Service http) {
+        this.path = path;
         this.http = http;
     }
 
@@ -21,15 +24,11 @@ public class WebServer implements HttpServer {
     public void init() {
         if (http == null) {
             this.http = Service.ignite()
-                .port(port)
-                .threadPool(MAX_THREADS);
+                    .port(port)
+                    .threadPool(MAX_THREADS);
         }
 
-        http.staticFiles.externalLocation("/Users/paul/Desktop/blockchain/website-frontend");
-        
-        /*http.get("/", (req, res) -> {
-            return "ciaoooo";
-        });*/
+        http.staticFiles.externalLocation(path);
 
         // Allow CORS
         http.after((req, res) -> {

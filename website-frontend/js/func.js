@@ -19,10 +19,8 @@ async function postData(url = '', data = {}) {
     const response = await fetch(url, {
         method: 'POST',
         cache: 'no-cache',
-        mode: 'no-cors',
         headers: {
-            'Content-Type': 'application/json',
-            "Access-Control-Allow-Origin": "*"
+            'Content-Type': 'application/json'
         },
         referrerPolicy: 'no-referrer',
         body: JSON.stringify(data)
@@ -30,8 +28,8 @@ async function postData(url = '', data = {}) {
     return response.json();
 }
 
-function sendBlockRequest() {
-    postData('http://127.0.0.1:7777/getLatestBlocks/0/10', {})
+function sendBlocksRequest() {
+    postData('http://127.0.0.1/getLatestBlocks/0/10', {})
         .then(json => {
             console.log(json)
         });

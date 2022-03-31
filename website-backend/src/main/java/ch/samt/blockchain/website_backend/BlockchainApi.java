@@ -24,8 +24,8 @@ public class BlockchainApi implements HttpServer {
     public void init() {
         if (http == null) {
             this.http = Service.ignite()
-                .port(port)
-                .threadPool(MAX_THREADS);
+                    .port(port)
+                    .threadPool(MAX_THREADS);
         }
 
         http.post("/getLatestBlocks/:from/:to", getLatestBlocks());
@@ -50,6 +50,7 @@ public class BlockchainApi implements HttpServer {
             }
 
             res.type("application/json");
+            res.status(200);
 
             // Result example
             long timestamp = System.currentTimeMillis();
@@ -79,6 +80,7 @@ public class BlockchainApi implements HttpServer {
             }
 
             res.type("application/json");
+            res.status(200);
 
             // Result example
             long timestamp = System.currentTimeMillis();
@@ -97,6 +99,9 @@ public class BlockchainApi implements HttpServer {
 
     private Route getBlockchainSize() {
         return (req, res) -> {
+            res.type("application/json");
+            res.status(200);
+
             return """
                         {
                             "size": "20 Mib"
