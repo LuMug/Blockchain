@@ -4,6 +4,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.Security;
+import java.util.Base64;
+import java.util.Base64.Decoder;
+import java.util.Base64.Encoder;
 
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.CryptoException;
@@ -24,6 +27,8 @@ public class CryptoUtils {
     private Ed25519KeyPairGenerator keyPairGenerator;
     private Signer signer;
     private Signer verifier;
+    private Encoder base64Encoder;
+    private Decoder base64Decoder;
 
     static {
         Security.addProvider(new BouncyCastleProvider());
@@ -36,6 +41,8 @@ public class CryptoUtils {
             this.keyPairGenerator = new Ed25519KeyPairGenerator();
             this.signer = new Ed25519Signer();
             this.verifier = new Ed25519Signer();
+            this.base64Encoder = Base64.getEncoder();
+            this.base64Decoder = Base64.getDecoder();
 
             keyPairGenerator.init(new Ed25519KeyGenerationParameters(secureRandom));
         } catch (NoSuchAlgorithmException e) {
@@ -80,6 +87,11 @@ public class CryptoUtils {
         return privateKey.generatePublicKey();
     }
 
+    public byte[] sha256(byte[] digest) {
+        sha256Digest.update(digest);
+        return sha256Digest.digest();
+    }
+
     /*public static void main(String[] args) throws CryptoException {
 
         var cu = new CryptoUtils();
@@ -95,9 +107,22 @@ public class CryptoUtils {
         var pub = cu.publicKeyFromPrivateKey(cu.getPrivateKey(keypair));
         System.out.println(toBase64(pub.getEncoded()));
     }
+*/
 
-    private static String toBase64(byte[] data) {
+    public String getAddress(Ed25519PublicKeyParameters publicKey) {
+        return toBase64(sha256(publicKey.getEncoded()));
+    }
+
+    public String toBase64(byte[] data) {
         return Base64.getEncoder().encodeToString(data);
-    }*/
+    }
+
+    public byte[] fromBase64(byte[] data) {
+        return Base64.getDecoder().decode(data);
+    }
+
+    public byte[] fromBase64(String data) {
+        return Base64.getDecoder().decode(data);
+    }
 
 }

@@ -26,6 +26,8 @@ repositories {
 
 dependencies {
     implementation project(':common')
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.70' // remove this
+    // should be included in jar
 }
 
 application {
