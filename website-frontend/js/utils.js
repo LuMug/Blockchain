@@ -15,6 +15,8 @@ function uploadFiles() {
     alert("Selected file(s) :\n____________________\n" + filenames);
 }
 
+// ----------------------------------
+
 async function postData(url = '', data = {}) {
     let href = window.location.href;
     let index = href.indexOf('/', 8);
@@ -32,24 +34,7 @@ async function postData(url = '', data = {}) {
     });
     return response.json();
 }
-
-function sendBlocksRequest() {
-    postData('/getLatestBlocks/0/10')
-        .then(json => {
-            var html = "<table><tr><th>Id</th><th>Timestamp</th><th>Hash</th><th>Transactions</th></tr>";
-
-            for (let i = json.blocks.length - 1; i >= 0; i--) {
-                html += "<tr>"
-                html += "<td align=center>" + json.blocks[i].id + "</td>";
-                html += "<td align=center>" + json.blocks[i].timestamp + "</td>";
-                html += "<td align=center>" + json.blocks[i].hash + "</td>";
-                html += "<td align=center>" + json.blocks[i].nTx + "</td>";
-                html += "</tr>"
-            }
-            html += "</table>";
-            document.getElementById("blocksTable").innerHTML = html;
-        });
-}
+/*
 
 function sendSizeRequest() {
     postData('/getBlockchainSize')
@@ -78,4 +63,4 @@ function sendTransactionsRequest() {
             document.getElementById("transactionsTable").innerHTML = html;
         });
 }
-
+*/
