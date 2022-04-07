@@ -4,8 +4,6 @@ import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import javax.print.event.PrintJobEvent;
-
 import org.bouncycastle.crypto.CryptoException;
 import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
@@ -108,6 +106,8 @@ public class Forger {
         
         var packet = SendTransactionPacket.create(recipient, sender, amountLong, timestamp, lastTxHash, signature);
         writeFile(outPath, packet);
+
+        System.out.println("\nTransaction packet written to output\n");
     }
 
     public static void tx(String privkeyPath, String to, String amount, String outPath, String lastTxPath) {
