@@ -1,7 +1,5 @@
 package ch.samt.blockchain.website_backend;
 
-import static spark.Spark.*;
-
 import spark.Route;
 import spark.Service;
 

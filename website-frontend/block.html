@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BGDS</title>
+    <title>Blockchain</title>
 
     <link rel="stylesheet" href="css/Bootstrap/bootstrap.min.css">
     <link rel="icon" href="media/logo.ico" type="image/icon type">
@@ -22,7 +22,7 @@
 <body class="bg-primary">
     <div class="container">
         <nav class="navbar navbar-expand-md bg-primary navbar-dark mt-2">
-            <a class="navbar-brand" href="#">
+            <a class="navbar-brand" href="/">
                 <img src="media/logo.png" alt="" width="48" height="48">
                 <span style="font-size: 1em; vertical-align: middle;">
                     Piccion
@@ -37,7 +37,7 @@
                         <a class="nav-link active" href="wallet.html">Wallets</a>
                     </li>
                     <li class="nav-item p-2">
-                        <a class="nav-link active" href="block.html">Blocks</a>
+                        <a class="nav-link active" href="blocks.html">Blocks</a>
                     </li>
                     <li class="nav-item p-2">
                         <a class="nav-link active" href="stats.html">Analytics</a>
@@ -52,21 +52,15 @@
 
         <br><br><br>
 
-        <div class="text-light">
-            <div class="bg-info rounded-pill row">
-                <div class="col-1">ID</div>
-                <div class="col-3">Timestamp</div>
-                <div class="col-7">Hash</div>
-                <div class="col-1">nTx</div>
+        <div class="container">
+            <div class="text-light row">
+                <div class="col">
+                    <h2>Block: ZWRzdGVycmdnZWFmdGVyZWdzZWFzdmVyUkFB</h2>
+                </div>
             </div>
-            <div id="blocks"></div>
         </div>
-    </div>
-    <script src="js/blocks.js"></script>
-    <script src="js/utils.js"></script>
 
-    <script>
-        initBlocksUpdate(document.getElementById('blocks'));
-    </script>
+    </div>
+
 </body>
 </html>

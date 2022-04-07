@@ -50,7 +50,23 @@
             </div>
         </nav>
 
-        <!-- -->
+        <br><br><br>
+
+        <div class="text-light">
+            <div class="bg-info rounded-pill row mb-1">
+                <div class="col-1">ID</div>
+                <div class="col-3">Timestamp</div>
+                <div class="col-7">Hash</div>
+                <div class="col-1">nTx</div>
+            </div>
+            <div id="blocks"></div>
+        </div>
     </div>
+    <script src="js/blocks.js"></script>
+    <script src="js/utils.js"></script>
+
+    <script>
+        initBlocksUpdate(document.getElementById('blocks'));
+    </script>
 </body>
 </html>

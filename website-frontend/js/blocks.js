@@ -1,4 +1,8 @@
+"use strict";
+
 const INTERVAL = 1000;
+
+let url = window.location.href.substring(0, window.location.href.indexOf('/', 8));
 
 let container;
 
@@ -17,9 +21,9 @@ function initBlocksUpdate(el) {
 function update() {
     postData('/getLatestBlocks/0/10')
         .then(json => {
-            for (let i = json.blocks.length - 1; i >= 0; i--) {
+            for (let i = 0; i < json.blocks.length; i++) {
                 /*
-                    <div class="bg-info rounded-pill row block">
+                    <div class="bg-info row block">
                         <div class="col-1">ID</div>
                         <div class="col-3">Timestamp</div>
                         <div class="col-7">Hash</div>
@@ -35,7 +39,7 @@ function update() {
                 let nTx = json.blocks[i].nTx;
 
                 let div = document.createElement('div');
-                div.className = 'bg-info rounded-pill row mt-1';
+                div.className = 'bg-info row mt-1 block';
 
                 let col1 = document.createElement('div');
                 col1.className = 'col-1';
@@ -58,7 +62,9 @@ function update() {
                 div.appendChild(col3);
                 div.appendChild(col4);
 
-                container.appendChild(div);
+                div.onclick = _ => window.location.href = url + '/block=' + hash;
+
+                container.prepend(div);
             }
         
         });

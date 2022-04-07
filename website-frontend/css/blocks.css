@@ -5,3 +5,7 @@
     overflow-x: hidden;
     scrollbar-width: none;
 }
+
+.block:hover {
+    cursor: pointer;
+}

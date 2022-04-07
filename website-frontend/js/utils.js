@@ -1,3 +1,5 @@
+"use strict";
+
 function redirect(name) {
     document.getElementById('frame').src = name;
 }
@@ -20,7 +22,7 @@ function uploadFiles() {
 async function postData(url = '', data = {}) {
     let href = window.location.href;
     let index = href.indexOf('/', 8);
-    href = href.substring(0, index);
+    href = href.substring(0, index); // compute once
     url = href + url;
 
     const response = await fetch(url, {
