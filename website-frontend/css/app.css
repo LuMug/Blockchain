@@ -67,3 +67,8 @@ img {
     height: 3em;
     cursor: pointer;
 }
+
+hr {
+    border: 10px solid green;
+    border-radius: 5px;
+}

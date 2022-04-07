@@ -1,2 +1,27 @@
-<body style="background-color: #BFBBFF;"></body>
-<h1>STATS</h1>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BGDS</title>
+
+    <link rel="stylesheet" href="css/page.css">
+</head>
+
+<body style="background-color: #BFBBFF;">
+    <h1>STATS</h1>
+    <hr>
+
+    <main id="statistiche">
+    </main>
+</body>
+
+<script src="js/func.js"></script>
+<script>
+    sendSizeRequest();
+    setInterval(sendSizeRequest, 15000);
+</script>
+
+</html>

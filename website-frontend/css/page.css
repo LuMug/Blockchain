@@ -5,9 +5,15 @@ body {
 
 table, td, th {
     border: 2px solid black;
-  }
+}
 
-  table {
+table {
     width: 100%;
     border-collapse: collapse;
-  }
+}
+  
+hr {
+    background-color: white;
+    border: 1px solid white;
+    
+}

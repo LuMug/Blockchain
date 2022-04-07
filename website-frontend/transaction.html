@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BGDS</title>
 
+    <link rel="stylesheet" href="css/page.css">
     <link rel="stylesheet" href="css/transaction.css">
     <link rel="icon" href="media/logo.ico" type="image/icon type">
 </head>
@@ -17,6 +18,11 @@
 
 <body>
     <h1>Transaction</h1>
+    <hr>
+
+    <main id="transactionsTable">
+    </main>
+
     <div id="dropbox">
         <button id="button">Select or Drop a .tx file</button>
         <input id="file-input" type="file" name="name" style="display: none;" multiple />
@@ -29,5 +35,10 @@
             </script>
 </body>
 
+<script src="js/func.js"></script>
+<script>
+    sendTransactionsRequest();
+    setInterval(sendTransactionsRequest, 15000);
+</script>
 
 </html>

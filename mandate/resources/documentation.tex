@@ -1,4 +1,5 @@
 \documentclass{article}
+
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{parskip}
@@ -6,6 +7,8 @@
 \usepackage{hyperref}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{graphics}
+\usepackage{array}
 
 \hypersetup{
     colorlinks=true,
@@ -438,17 +441,78 @@ The bytecode looks as follows
 
 Here's how the stack evolves whilst computing the expression
 
-TODO
-
 %|   | PSH |   | PSH |   | ADD |   | PSH |   | MUL |    | PSH |    | PSH | 1  | SUB |    | PSH | 2  | MUL |    | DIV |   |
 %|   | ->  |   | ->  | 2 | ->  |   | ->  | 4 | ->  |    | ->  | 3  | ->  | 3  | ->  | 2  | ->  | 2  | ->  | 4  | ->  |   |
 %|   |     | 2 |     | 2 |     | 4 |     | 4 |     | 16 |     | 16 |     | 16 |     | 16 |     | 16 |     | 16 |     | 4 |
+
+
+\newcommand{\PreserveBackslash}[1]{\let\temp=\\#1\let\\=\temp}
+\newcolumntype{C}[1]{>{\PreserveBackslash\centering}m{#1}}
+\newcolumntype{R}[1]{>{\PreserveBackslash\raggedleft}m{#1}}
+\newcolumntype{L}[1]{>{\PreserveBackslash\raggedright}m{#1}}
+
+\newcommand{\stack}[3]{
+    \begin{tabular}{|C{0.5cm}|}
+        \hline
+        #3 \\
+        \hline
+        #2 \\
+        \hline
+        #1 \\
+        \hline
+    \end{tabular}   
+}
+
+\newcommand{\stackinstarg}[2]{
+    \begin{tabular}{C{1cm}}
+        \rightarrow \\
+        #1 \\
+        #2 \\
+    \end{tabular}   
+}
+
+\newcommand{\stackinst}[1]{
+    \stackinstarg{#1}{\rightarrow}
+}
+
+\resizebox{16cm}{!}{
+    \stack{}{}{}
+    \stackinstarg{PSH}{2}
+    \stack{2}{}{}
+    \stackinstarg{PSH}{2}
+    \stack{2}{2}{}
+    \stackinst{ADD}
+    \stack{4}{}{}
+    \stackinstarg{PSH}{4}
+    \stack{4}{4}{}
+    \stackinst{MUL}
+    \stack{16}{}{}
+    \stackinstarg{PSH}{3}
+}
+\\
+\\
+\\
+\resizebox{16cm}{!}{
+    \stack{16}{3}{}
+    \stackinstarg{PSH}{1}
+    \stack{16}{3}{1}
+    \stackinst{SUB}
+    \stack{16}{2}{}
+    \stackinstarg{PSH}{2}
+    \stack{16}{2}{2}
+    \stackinst{MUL}
+    \stack{16}{4}{}
+    \stackinst{DIV}
+    \stack{4}{}{}
+}
 
 The beauty of the stack is that it will keep stacking elements on top of eachother, but eventually everything will simplify
 and the result will be on top of the stack.
 
 With the stack, you can compute any nested expression no matter how complex. The only limitation is the size of the stack,
 if an element is pushes to the stack but there's no more space for it, the program crashes. This is called a stack overflow.
+
+\pagebreak
 
 \subsection{Data types}
 
@@ -460,8 +524,6 @@ separately. The action of popping the i32 from the stack, is actually 4 differen
 by the VM into an i32 so that you can work on it.
 
 Another data type could be 32-bit floating-point numbers (f32), boolean values, strings and so on.
-
-\pagebreak
 
 \subsection{Storing variables}
 
