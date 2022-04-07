@@ -36,5 +36,6 @@ bin
 # Tinylog
 logs
 
-# Private ecdsa keys
+# Test files
 *.priv
+*.tx
