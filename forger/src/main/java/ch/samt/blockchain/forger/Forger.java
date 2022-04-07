@@ -1,7 +1,13 @@
 package ch.samt.blockchain.forger;
 
 import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
+import javax.print.event.PrintJobEvent;
+
+import org.bouncycastle.crypto.CryptoException;
+import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
 
 import ch.samt.blockchain.common.protocol.SendTransactionPacket;
@@ -32,12 +38,7 @@ public class Forger {
         var raw = cryptoUtils.getPrivateKey(keyPair).getEncoded();
         var content = cryptoUtils.toBase64(raw);
 
-        try {
-            Files.write(file, content.getBytes());
-        } catch (IOException e) {
-            System.err.println("Error writing file: " + e.getMessage());
-            return;
-        }
+        writeFile(file, content.getBytes());
 
         System.out.println("\nPrivate key written to output\n");
 
@@ -67,41 +68,102 @@ public class Forger {
             return;
         }
 
-        System.out.println("Amount: " + packet.getAmount());
-        System.out.println("Timestamp: " + packet.getTimestamp());
-        System.out.println("LastHash: " + packet.getLastTransactionHash());
-        System.out.println("Recipient: " + cryptoUtils.toBase64(packet.getRecipient()));
-        System.out.println("Sender: " + cryptoUtils.toBase64(packet.getSender()));
-        System.out.println("Signature: " + cryptoUtils.toBase64(packet.getSignature()));
+        var date = new Date(packet.getTimestamp());
+        var sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
+        var formattedTimestamp = sdf.format(date);
+
+        System.out.println("Amount:\t\t" + packet.getAmount());
+        System.out.println("Timestamp:\t" + formattedTimestamp);
+        System.out.println("Recipient:\t" + cryptoUtils.toBase64(packet.getRecipient()));
+        System.out.println("Sender:\t\t" + cryptoUtils.toBase64(packet.getSender()));
+        System.out.println("Signature:\t" + cryptoUtils.toBase64(packet.getSignature()));
+        System.out.println("LastHash:\t" + cryptoUtils.toBase64(packet.getLastTransactionHash()));
     }
-    
-    public static void tx(String privkeyPath, String to, String amount, String outPath) {
-        //var priv = loadPrivateKey(privkeyPath);
-        //var pub = cryptoUtils.publicKeyFromPrivateKey(priv);
+
+    public static void tx(String privKeyPath, String to, String amount, String outPath, byte[] lastTxHash) {
+        var amountLong = 0L;
+        try {
+            amountLong = Long.parseLong(amount);
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid amount: " + amount);
+            return;
+        }
+        
+        var priv = loadPrivateKey(privKeyPath);
+        var pub = cryptoUtils.publicKeyFromPrivateKey(priv);
+        var recipient = cryptoUtils.fromBase64(to);
+        var sender = cryptoUtils.sha256(pub.getEncoded());
+        var timestamp = System.currentTimeMillis();
         
         // Forge transaction
 
-        //SendTransactionPacket.create(recipient, sender, amount, timestamp, lastTransactionHash, signature)
+        var data = SendTransactionPacket.toSign(recipient, sender, amountLong, timestamp, lastTxHash);
+        
+        byte[] signature = null;
+        try {
+            signature = cryptoUtils.sign(data, priv);
+        } catch (DataLengthException | CryptoException e) {
+            System.err.println("Error while signing tx: " + e.getMessage());
+        }
+        
+        var packet = SendTransactionPacket.create(recipient, sender, amountLong, timestamp, lastTxHash, signature);
+        writeFile(outPath, packet);
     }
 
+    public static void tx(String privkeyPath, String to, String amount, String outPath, String lastTxPath) {
+        var lastTx = readFile(lastTxPath);
 
-    
+        tx(privkeyPath, to, amount, outPath, cryptoUtils.sha256(lastTx));
+    }
+
+    public static void tx(String privkeyPath, String to, String amount, String outPath) {
+        // http request to get lastTx
+        System.out.println("Not implemented yet");
+    }
+
+    public static void tx(String privkeyPath, String to, String amount, String outPath, boolean first) {
+        tx(privkeyPath, to, amount, outPath, new byte[32]);
+    }
+
     private static Ed25519PrivateKeyParameters loadPrivateKey(String path) {
-        var file = Path.of(path);
-
-        byte[] raw = null;
-        try {
-            raw = Files.readAllBytes(file);
-        } catch (IOException e) {
-            System.err.println("Error reading file: " + e.getMessage());
-            return null;
-        }
-
+        byte[] raw = readFile(path);
         byte[] encoded = cryptoUtils.fromBase64(raw);
 
         var priv = cryptoUtils.privateKeyFromEncoded(encoded);
 
         return priv;
+    }
+
+    private static byte[] readFile(String path) {
+        var file = Path.of(path);
+
+        try {
+            return Files.readAllBytes(file);
+        } catch (IOException e) {
+            System.err.println("Error reading file: " + e.getMessage());
+            System.exit(0);
+            return null;
+        }
+    }
+
+    private static void writeFile(String path, byte[] data) {
+        var file = Path.of(path);
+
+        try {
+            Files.write(file, data);
+        } catch (IOException e) {
+            System.err.println("Error writing file: " + e.getMessage());
+            System.exit(0);
+        }
+    }
+
+    private static void writeFile(Path path, byte[] data) {
+        try {
+            Files.write(path, data);
+        } catch (IOException e) {
+            System.err.println("Error writing file: " + e.getMessage());
+            System.exit(0);
+        }
     }
 
 }

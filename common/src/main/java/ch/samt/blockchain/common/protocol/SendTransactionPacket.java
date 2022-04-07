@@ -65,4 +65,20 @@ public class SendTransactionPacket {
         return packet;
     }
 
+    public static byte[] toSign(byte[] recipient, byte[] sender, long amount, long timestamp, byte[] lastTransactionHash) {
+        int size = 29 + recipient.length + sender.length + lastTransactionHash.length;
+
+        byte[] packet = new byte[size];
+        Offset offset = new Offset();
+
+        writeByte(packet, Protocol.SEND_TRANSACTION, offset);
+        writeBlob(packet, recipient, offset);
+        writeBlob(packet, sender, offset);
+        writeLongLE(packet, amount, offset);
+        writeLongLE(packet, timestamp, offset);
+        writeBlob(packet, lastTransactionHash, offset);
+
+        return packet;
+    }
+
 }

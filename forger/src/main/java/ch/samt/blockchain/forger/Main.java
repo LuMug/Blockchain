@@ -15,7 +15,9 @@ public class Main {
             .addArg("to", false, "address", ParamHandler.propertyOf("Descritpion", "Tx receiver"))
             .addFlag("help", ParamHandler.propertyOf("Descritpion", "Displays this message"))
             .addFlag("examples", ParamHandler.propertyOf("Descritpion", "Displays some examples"))
-            .addArg("dump", false, "path", ParamHandler.propertyOf("Descritpion", "Displays this message"));
+            .addFlag("first", ParamHandler.propertyOf("Descritpion", "First transaction"))
+            .addArg("dump", false, "path", ParamHandler.propertyOf("Descritpion", "Displays this message"))
+            .addArg("last", false, "path", ParamHandler.propertyOf("Descritpion", "Last transaction"));
 
         try {
             params.parse(args);
@@ -47,12 +49,21 @@ public class Main {
 
         if (any(params, new String[]{"to", "amount"})) {
             assertAll(params, new String[]{"to", "amount", "out", "priv"});
-            Forger.tx(
-                params.getArg("priv"),
-                params.getArg("to"),
-                params.getArg("amount"),
-                params.getArg("out")
-            );
+
+            var priv = params.getArg("priv");
+            var to = params.getArg("to");
+            var amount = params.getArg("amount");
+            var out = params.getArg("out");
+            var last = params.getArg("last");
+
+            if (params.getFlag("first")) {
+                Forger.tx(priv, to, amount, out, true);
+            } else if (params.isNull("last")) {
+                Forger.tx(priv, to, amount, out);
+            } else {
+                Forger.tx(priv, to, amount, out, last);
+            }
+
             return;
         }
     }
@@ -93,6 +104,10 @@ public class Main {
         System.out.println();
         System.out.println("Create transaction");
         System.out.println("\tjava -jar forger.jar -priv ./key.priv -amount 10000 -out transaction.tx -to J2VY3W0oEZCBxBKAu4ufsOc4/Qjl5Kiu2ottLxQgrK4=");
+        System.out.println();
+        System.out.println("Create transaction (no HTTP request for lastHash)");
+        System.out.println("\tjava -jar forger.jar -priv ./key.priv -last ./last.tx -amount 10000 -out transaction.tx -to J2VY3W0oEZCBxBKAu4ufsOc4/Qjl5Kiu2ottLxQgrK4=");
+        System.out.println("\tjava -jar forger.jar -priv ./key.priv -first -amount 10000 -out transaction.tx -to J2VY3W0oEZCBxBKAu4ufsOc4/Qjl5Kiu2ottLxQgrK4=");
         System.out.println();
         System.out.println("Dump transaction file content");
         System.out.println("\tjava -jar forger.jar -dump ./transaction.tx");
