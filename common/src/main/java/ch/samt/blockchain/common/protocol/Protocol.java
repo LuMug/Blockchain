@@ -2,7 +2,6 @@ package ch.samt.blockchain.common.protocol;
 
 public class Protocol {
     
-    
     public final static byte REQUEST_NODES                      = 0;
     public final static byte SERVE_NODES                        = 1;
     public final static byte REGISTER_NODE                      = 2;
@@ -11,6 +10,7 @@ public class Protocol {
     public final static byte SERVE_REQUEST_BLOCKCHAIN_LENGTH    = 5;
     public final static byte REQUEST_IF_HASH_EXISTS             = 6;
     public final static byte SERVE_REQUEST_IF_HASH_EXISTS       = 7;
+    public final static byte POW_SOLVED                         = 8;
     
     public static class Database {
 
@@ -70,7 +70,6 @@ public class Protocol {
          */
         public final static int MAX_TRIES_NEIGHBOUR = 5;
 
- 
     }
 
 }
