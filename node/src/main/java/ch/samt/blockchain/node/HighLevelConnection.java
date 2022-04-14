@@ -24,6 +24,4 @@ public class HighLevelConnection extends Connection {
         //
     }
 
-
-
 }

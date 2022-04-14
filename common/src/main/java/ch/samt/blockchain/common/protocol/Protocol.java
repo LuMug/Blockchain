@@ -2,6 +2,7 @@ package ch.samt.blockchain.common.protocol;
 
 public class Protocol {
     
+    
     public final static byte REQUEST_NODES                      = 0;
     public final static byte SERVE_NODES                        = 1;
     public final static byte REGISTER_NODE                      = 2;
@@ -9,9 +10,25 @@ public class Protocol {
     public final static byte REQUEST_BLOCKCHAIN_LENGTH          = 4;
     public final static byte SERVE_REQUEST_BLOCKCHAIN_LENGTH    = 5;
     public final static byte REQUEST_IF_HASH_EXISTS             = 6;
-    public final static byte SERVE_REQUEST_IF_HASH_EXISTS      = 7;
+    public final static byte SERVE_REQUEST_IF_HASH_EXISTS       = 7;
     
-    
+    public static class Database {
+
+        /**
+         * The maximum number of cached nodes in the database.
+         */
+        public static final int MAX_CACHED_NODES = 50;
+
+    }
+
+    public static class Blockchain {
+
+        /**
+         * The reward for mining a block.
+         */
+        public static final int BLOCK_REWARD = 1000;
+
+    }
 
     public static class Node {
 

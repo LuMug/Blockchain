@@ -134,7 +134,7 @@ public class ParamHandler {
 
 		builder.append(cmd);
 		builder.append("\n\nDESCRIPTION\n\t" + description);
-		builder.append("\n\nSYNTAX\n\t" + cmd + " ");
+		builder.append("\n\nSYNOPSIS\n\t" + cmd + " ");
 
 		args.forEach((k, v) -> {
 			builder.append(

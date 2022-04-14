@@ -22,8 +22,8 @@ import ch.samt.blockchain.common.protocol.RequestNodesPacket;
 import ch.samt.blockchain.common.protocol.ServeNodesPacket;
 import ch.samt.blockchain.common.utils.stream.PacketInputStream;
 import ch.samt.blockchain.common.utils.stream.PacketOutputStream;
-import ch.samt.blockchain.node.database.NodeCacheDatabase;
-import ch.samt.blockchain.node.database.NodeCacheDatabaseImpl;
+import ch.samt.blockchain.node.database.BlockchainDatabase;
+import ch.samt.blockchain.node.database.BlockchainDatabaseImpl;
 import ch.samt.blockchain.node.utils.CircularIterator;
 
 public abstract class Node extends Thread {
@@ -32,7 +32,7 @@ public abstract class Node extends Thread {
 
     public final int port;
 
-    private NodeCacheDatabase nodeCache;
+    private BlockchainDatabase nodeCache;
 
     private List<Connection> neighbours;
 
@@ -40,7 +40,7 @@ public abstract class Node extends Thread {
 
     public Node(int port) {
         this.port = port;
-        this.nodeCache = new NodeCacheDatabaseImpl("nodecache_" + port + ".db");
+        this.nodeCache = new BlockchainDatabaseImpl("blockchain_" + port + ".db");
         this.neighbours = new LinkedList<>();
         this.scheduler = Executors.newScheduledThreadPool(5);
     }
