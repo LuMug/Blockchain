@@ -89,7 +89,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     @Override
     public boolean isNodeCached(String address, int port) {
         var result = connection.query("SELECT port FROM node WHERE address='" + address + "' AND port=" + port + ";");
-        try {
+        try (result) {
             return result.next();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -119,7 +119,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         ResultSet rs = connection.query("SELECT address, port FROM node;");
 
         int i = 0;
-        try {
+        try (rs) {
             while (rs.next()) {
                 String address = rs.getString(1);
                 int port = rs.getInt(2);
@@ -145,7 +145,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     @Override
     public boolean isNodeCacheEmpty() {
         var result = connection.query("SELECT address FROM node LIMIT 1;");
-        try {
+        try (result) {
             return !result.next();
         } catch (SQLException e) {
             e.printStackTrace();

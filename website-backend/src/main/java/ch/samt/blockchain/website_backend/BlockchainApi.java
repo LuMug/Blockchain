@@ -9,13 +9,16 @@ public class BlockchainApi implements HttpServer {
 
     private Service http;
     private int port;
+    private String wwwPath;
 
-    public BlockchainApi(int port) {
+    public BlockchainApi(int port, String wwwPath) {
         this.port = port;
+        this.wwwPath = wwwPath;
     }
 
-    public BlockchainApi(Service http) {
+    public BlockchainApi(Service http, String wwwPath) {
         this.http = http;
+        this.wwwPath = wwwPath;
     }
 
     @Override
@@ -25,6 +28,15 @@ public class BlockchainApi implements HttpServer {
                     .port(port)
                     .threadPool(MAX_THREADS);
         }
+
+        http.staticFiles.externalLocation(wwwPath);
+
+        // Allow CORS
+        http.after((req, res) -> {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
+            res.header("Content-Security-Policy", "default-src 'none'");
+        });
 
         http.post("/getLatestBlocks/:from/:to", getLatestBlocks());
         http.post("/getLatestTransactions/:from/:to", getLatestTransactions());
@@ -111,27 +123,5 @@ public class BlockchainApi implements HttpServer {
     public void stop() {
         http.stop();
     }
-
-    /*
-     * POST in JS
-     * 
-     * async function postData(url = '', data = {}) {
-     * const response = await fetch(url, {
-     * method: 'POST',
-     * cache: 'no-cache',
-     * headers: {
-     * 'Content-Type': 'application/json'
-     * },
-     * referrerPolicy: 'no-referrer',
-     * body: JSON.stringify(data)
-     * });
-     * return response.json();
-     * }
-     * 
-     * postData('/post/path', { })
-     * .then(json => {
-     * 
-     * });
-     */
 
 }

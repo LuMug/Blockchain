@@ -8,7 +8,7 @@ public class Main {
 
     public static final int PORT = 80;
 
-    public static final String PATH = "C:\\Users\\giann\\OneDrive\\Documenti\\GitHub\\Blockchain\\website-frontend";
+    public static final String PATH = "/Users/paul/Desktop/blockchain/website-frontend";
 
     public static void main(String[] args) {
         var http = Service
@@ -22,11 +22,8 @@ public class Main {
             http.secure(args[0], args[1], null, null);
         }
 
-        var api = new BlockchainApi(http);
-        var webserver = new WebServer(PATH,
-                http);
+        var api = new BlockchainApi(http, PATH);
 
-        webserver.init(); // must be initialized before
         api.init();
 
         // terminal
