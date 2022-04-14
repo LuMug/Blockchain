@@ -1,4 +1,5 @@
 package ch.samt.blockchain.common.protocol;
+
 import static ch.samt.blockchain.common.utils.byteutils.ByteUtils.*;
 import ch.samt.blockchain.common.utils.byteutils.Offset;
 

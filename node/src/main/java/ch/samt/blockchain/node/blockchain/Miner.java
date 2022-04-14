@@ -1,6 +1,7 @@
 package ch.samt.blockchain.node.blockchain;
 
-public class Blockchain {
+public class Miner {
 
+    
 
 }
