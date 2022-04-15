@@ -1,0 +1,213 @@
+\documentclass[../documentation.tex]{subfiles}
+
+\begin{document}
+
+\subsection{Abstract}
+
+\subsection{Information}
+
+This is a project of the Scuola Arti e Mestieri di Trevano (SAMT) under the following circumstances
+
+\begin{itemize}
+    \item \textbf{Section}: Computer Science
+    \item \textbf{Year:} Third
+    \item \textbf{Class:} Module 306
+    \item \textbf{Supervisor:} Luca Muggiasca
+    \item \textbf{Title:} Blockchain
+    \item \textbf{Start date}: 2021-27-01
+    \item \textbf{Deadline}: 2022-05-05
+\end{itemize}
+
+and the following requirements
+
+\begin{itemize}
+    \item \textbf{Documentation}: a full documentation of the work done
+    \item \textbf{Diary}: constant changelog for each work session
+    \item \textbf{Source code}: working source code of the project
+\end{itemize}
+
+All the source code and documents can be found at
+\href{https://github.com/LuMug/Blockchain}{https://github.com/LuMug/Blockchain}
+\cite{gitrepo}.
+
+\pagebreak
+
+\subsection{Requirements}
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{center}
+    \begin{tabular}{ |l|p{9cm}| }
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Req-01}} \\
+        \hline
+        \textbf{Name} & BlockChain \\
+        \hline
+        \textbf{Priority} & 1 \\
+        \hline
+        \textbf{Version} & 1.0 \\
+        \hline
+        \textbf{Notes} & none \\
+        \hline
+        \textbf{Description} & It is required to create a Blockchain based on PoS interacting with each node of the chain. \\
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Subrequirements}} \\
+        \hline
+        \textbf{Req-01\_0} & There must be implemented the Proof of Stake (PoS). \\
+        \hline
+        \textbf{Req-01\_1} & There must be implemented a peer discovery algorithm. \\
+        \hline
+        \textbf{Req-01\_2} & There must be implemented a consensus algorithm. \\
+        \hline
+        \textbf{Req-01\_3} & There must be implemented a P2P algorithm. \\
+        \hline
+        \textbf{Req-01\_4} & There must be implemented a Gossip algorithm. \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{center}
+    \begin{tabular}{ |l|p{9cm}| }
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Req-02}} \\
+        \hline
+        \textbf{Name} & Node \\
+        \hline
+        \textbf{Priority} & 1 \\
+        \hline
+        \textbf{Version} & 1.0 \\
+        \hline
+        \textbf{Notes} & none \\
+        \hline
+        \textbf{Description} & It is required that a computing machine can become a node of the blockchain.. \\
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Subrequirements}} \\
+        \hline
+        \textbf{Req-01\_0} & Each node must have the blockchain saved locally as a SQLite database. \\
+        \hline
+        \textbf{Req-01\_1} & There must be implemented an algorithm that allow al nodes to perform the proof of stake. \\
+        \hline
+        \textbf{Req-01\_2} & Every node must be capable of executing a transaction. \\
+        \hline
+        \textbf{Req-01\_3} & Any node must be able to make a smart contract. \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{center}
+    \begin{tabular}{ |l|p{9cm}| }
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Req-03}} \\
+        \hline
+        \textbf{Name} & Transaction \\
+        \hline
+        \textbf{Priority} & 1 \\
+        \hline
+        \textbf{Version} & 1.0 \\
+        \hline
+        \textbf{Notes} & none \\
+        \hline
+        \textbf{Description} & On the blockchain it must be able to make transactions, both for cryptocurrency and for smart contacts. \\
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Subrequirements}} \\
+        \hline
+        \textbf{Req-01\_0} & There must be implemented an algorithm that validates the transaction and adds it to the block. \\
+        \hline
+        \textbf{Req-01\_0} & There must be a deflation system, which functions using gas fees. \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{center}
+    \begin{tabular}{ |l|p{9cm}| }
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Req-04}} \\
+        \hline
+        \textbf{Name} & Smart Contract \\
+        \hline
+        \textbf{Priority} & 2 \\
+        \hline
+        \textbf{Version} & 1.0 \\
+        \hline
+        \textbf{Notes} & none \\
+        \hline
+        \textbf{Description} & There must be a system that generates a smart contract that is self-executing, containing the terms of the agreement between buyer and seller written directly in lines of code. \\
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Subrequirements}} \\
+        \hline
+        \textbf{Req-01\_0} & There must be an algorithm dedicated to defalcation system for the transaction of the smart contract with gas fees. \\
+        \hline
+        \textbf{Req-01\_1} & The code and the agreements in it must exist on the decentralized blockchain. \\
+        \hline
+        \textbf{Req-01\_2} & The code controls execution and transactions are traceable and irreversible. \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{center}
+    \begin{tabular}{ |l|p{9cm}| }
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Req-05}} \\
+        \hline
+        \textbf{Name} & WebApp \\
+        \hline
+        \textbf{Priority} & 2 \\
+        \hline
+        \textbf{Version} & 1.0 \\
+        \hline
+        \textbf{Notes} & none \\
+        \hline
+        \textbf{Description} & It is required that from a web application any user can request and see the basic information of the blockchain (transaction, block, ...). \\
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Subrequirements}} \\
+        \hline
+        \textbf{Req-01\_0} & There must be a section on the site dedicated to information about blocks, transactions, gas fees. \\
+        \hline
+        \textbf{Req-01\_1} & There must be a section on the site that allows the user to generate a wallet. \\
+        \hline
+        \textbf{Req-01\_2} & There must be a section on the site that allows the user to carry out and control their transactions. \\
+        \hline
+        \textbf{Req-01\_3} & There must be a section in the site that allows the user to carry out the proof of stake, that is to block a determined quantity of coins in order to be chosen as validator. \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{center}
+    \begin{tabular}{ |l|p{9cm}| }
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Req-06}} \\
+        \hline
+        \textbf{Name} & Info Website \\
+        \hline
+        \textbf{Priority} & 3 \\
+        \hline
+        \textbf{Version} & 1.0 \\
+        \hline
+        \textbf{Notes} & Required by the mandator, but optional. \\
+        \hline
+        \textbf{Description} & It is required a website that explain how the blockchain works and how we've done it. \\
+        \hline
+        \multicolumn{2}{|c|}{\textbf{Subrequirements}} \\
+        \hline
+        \textbf{Req-01\_0} & IDK. \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\end{document}
