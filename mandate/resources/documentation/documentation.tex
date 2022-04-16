@@ -2,14 +2,15 @@
 
 \usepackage{amsmath}
 \usepackage{amssymb}
-\usepackage{parskip}
-\usepackage{fullpage}
-\usepackage{hyperref}
-\usepackage{listings}
-\usepackage{xcolor}
-\usepackage{graphics}
 \usepackage{array}
-\usepackage{tikz-cd}
+\usepackage{parskip} % skip line
+\usepackage{fullpage} % margins
+\usepackage{hyperref} % hyper references and document setup
+\usepackage{xcolor} % colored text
+\usepackage{graphics} % images
+\usepackage{listings} % format code
+\usepackage{tikz-cd} % tikz-cd diagrams
+\usepackage{makecell} % cell scopes for tables
 \usepackage[normalem]{ulem} % authour strikethrough
 \usepackage{biblatex} % references
 \usepackage{subfiles} % project structure - best loaded last in the preamble
@@ -30,14 +31,47 @@
     backgroundcolor=\color{lightgray},
 }
 
-\title{Blockchain}
-\author{Paolo Bettelini, Gianni Grasso, \sout{Giacinto Di Santis}}
+\lstdefinestyle{sql} {
+    language=SQL,
+  	backgroundcolor=\color{lightgray},
+  	breakatwhitespace=false,
+    basicstyle=\footnotesize,
+  	breaklines=true,
+  	captionpos=b,
+    commentstyle=\color{dkgreen},
+  	deletekeywords={...},
+  	escapeinside={\%*}{*)},
+  	extendedchars=true,
+  	keepspaces=true,
+  	keywordstyle=\color{blue},
+  	morekeywords={*,modify,MODIFY,...},
+  	numbers=none,
+  	showspaces=false,
+  	showstringspaces=false, 
+  	showtabs=false,
+  	stepnumber=1,
+}
+
+\newcommand{\paragraphln}[1]{\paragraph{#1}\mbox{}\\}
+
+\title{
+    Blockchain \\
+    \large Documentation}
+    
+\author{
+    Paolo Bettelini, Gianni Grasso, \sout{Giacinto Di Santis} \\
+    \large Scuola d'Arti e Mestieri di Trevano (SAMT)}
+
 \date{}
 
 \begin{document}
 
 \maketitle
+
+\pagebreak
+
 \tableofcontents
+
 \pagebreak
 
 \section{Introduction}
@@ -52,26 +86,40 @@
 
 \pagebreak
 
-\section{Programming language}
-
-\subfile{sections/programming_language}
-
-\pagebreak
-
 \section{Blockchain Implementation}
 
 \subfile{sections/blockchain_impl}
 
 \pagebreak
 
+\section{Programming language}
+
+\subfile{sections/programming_language}
+
+\pagebreak
+
+\section{Structure}
+
+\subfile{sections/structure}
+
+\pagebreak
+
+\section{Conclusion}
+
+\subfile{sections/conclusion}
+
+\pagebreak
+
 \section{References}
 
-\subfile{sections/references}
+\nocite{*} % cite all entries
+
+\printbibliography[type=online, heading=subbibliography, title=Sitography]
 
 \end{document}
 
-% COMPILE
+% COMPILE FROM ROOT
 % cd mandate/resources/documentation; lualatex documentation.tex; mv documentation.pdf ../..; cd ../../..;
 
-% COMPILE (new references)
+% COMPILE FROM ROOT (new references)
 % cd mandate/resources/documentation; lualatex documentation.tex; biber documentation; lualatex documentation.tex; lualatex documentation.tex; mv documentation.pdf ../..; cd ../../..;

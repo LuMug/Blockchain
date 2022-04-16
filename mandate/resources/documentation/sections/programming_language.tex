@@ -331,8 +331,6 @@ given by the next value in the bytecode if the bool value is false.
 The condition boolean will be pushed on top of the stack before the if execution. It doesn't matter if it is
 hardcoded on the bytecode, read from the stack frame or is the return type of a function.
 
-\pagebreak
-
 \begin{lstlisting}[style=generic]
     if (true) {
         PSH
@@ -354,6 +352,8 @@ There are many ways to implement if statements, here's one:
     PSH         // Outer code (<checkpoint> instruction)
     4
 \end{lstlisting}
+
+\pagebreak
 
 \subsection{If-Else Statements}
 
@@ -387,8 +387,6 @@ Consider the following program:
     ADD
 \end{lstlisting}
 
-\pagebreak
-
 The bytecode looks as follows:
 
 \begin{lstlisting}[style=generic]
@@ -405,6 +403,8 @@ The bytecode looks as follows:
     PSH             (<checkpoin2>)
     6
 \end{lstlisting}
+
+\pagebreak
 
 \subsection{While loop}
 
@@ -558,9 +558,11 @@ Other languages don't require you to manually free memory: \\
 Java implements a "Garbage Collector", which frees all the unused memory from the heap. \\
 Rust automatically frees unused memory, however this features comes with some extra retrictions.
 
-% Helpful resources:
-%     - https://gameprogrammingpatterns.com/bytecode.html
-% 
+Helpful resources:
+\href{https://gameprogrammingpatterns.com/bytecode.html}{https://gameprogrammingpatterns.com/bytecode.html}
+\cite{gameprogrammingpatterns}.
+
+
 %     // Source -> Lexer -> Parser -> Compiler -> Assembler -> Compiled -> VM
 
 \end{document}

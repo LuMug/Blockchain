@@ -2,29 +2,6 @@
 
 \begin{document}
 
-\lstdefinestyle{sql} {
-    language=SQL,
-  	backgroundcolor=\color{lightgray},
-  	breakatwhitespace=false,
-    basicstyle=\footnotesize,
-  	breaklines=true,
-  	captionpos=b,
-    commentstyle=\color{dkgreen},
-  	deletekeywords={...},
-  	escapeinside={\%*}{*)},
-  	extendedchars=true,
-  	keepspaces=true,
-  	keywordstyle=\color{blue},
-  	morekeywords={*,modify,MODIFY,...},
-  	numbers=none,
-  	showspaces=false,
-  	showstringspaces=false, 
-  	showtabs=false,
-  	stepnumber=1,
-}
-
-\newcommand{\paragraphln}[1]{\paragraph{#1}\mbox{}\\}
-
 \subsection{Peer Discovery}
 
 \subsubsection{Seeder}
@@ -63,6 +40,12 @@ To do so we define the \textit{node} table.
     );
 \end{lstlisting}
 
+When a connection to a peer is established, the node is added to this table.
+If the node is already in the database, its \textit{last\_seen\_alive} field is updated.
+\\
+If the number of nodes in the cache exceeds \texttt{MAX\_CACHED\_NODES},
+the node with the oldest \textit{last\_seen\_alive} field is deleted.
+
 \subsubsection{Algorithm}
 
 A node will actively try to always have \texttt{MIN\_CONNECTIONS} established connections.
@@ -74,40 +57,41 @@ By doing this dead nodes will stop registering and exit the seeder pool.
 The node will periodically execute the following update every \texttt{UPDATE\_INTERVAL} ms:
 
 \begin{enumerate}
-    \item If peers are less than \texttt{MIN\_CONNECTIONS}, update from a peer up to \texttt{MAX\_TRIES\_NEIGHBOUR} times
+    \item If peers are less than \texttt{MIN\_CONNECTIONS}, update from a random peer up to \texttt{MAX\_TRIES\_NEIGHBOUR} times
     \item If peers are less than \texttt{MIN\_CONNECTIONS}, update from local cache
-    \item If peers are \(0\), update from seeder up to \texttt{MAX\_TRIES\_SEEDER} times
+    \item If peers are \(0\), update from a random seeder up to \texttt{MAX\_TRIES\_SEEDER} times
 \end{enumerate}
-
-\paragraphln{Querying a random seeder/peer}
-Seeder addresses are hard-coded in \texttt{SEEDERS}.
-% Circular iterator
-
-% https://q.uiver.app/?q=WzAsNixbMCwxLCJcXHRleHR7ZWx9XzAiXSxbMSwxLCJcXHRleHR7ZWx9XzEiXSxbMiwxLCJcXHRleHR7ZWx9XzIiXSxbMywxLCJcXHRleHR7ZWx9XzMiXSxbNCwxLCJcXHRleHR7ZWx9XzQiXSxbMywwLCJcXHRleHR7cm5kfSJdLFszLDQsIiIsMCx7ImN1cnZlIjotMn1dLFswLDEsIiIsMCx7ImN1cnZlIjotMn1dLFsxLDIsIiIsMCx7ImN1cnZlIjotMn1dLFs0LDAsIiIsMCx7ImxhYmVsX3Bvc2l0aW9uIjo2MCwib2Zmc2V0IjotMSwiY3VydmUiOi0zfV0sWzUsM11d
-%\begin{tikzcd}
-%	&&& {\text{rnd}} \\
-%	{\text{el}_0} & {\text{el}_1} & {\text{el}_2} & {\text{el}_3} & {\text{el}_4}
-%	\arrow[curve={height=-12pt}, from=2-4, to=2-5]
-%	\arrow[curve={height=-12pt}, from=2-1, to=2-2]
-%	\arrow[curve={height=-12pt}, from=2-2, to=2-3]
-%	\arrow[shift left=1, curve={height=-18pt}, from=2-5, to=2-1]
-%	\arrow[from=1-4, to=2-4]
-%\end{tikzcd}
-
-% \begin{center}
-%     \begin{tikzcd}
-%         &&& {\text{rnd}} \\
-%         {\text{el}_0} & {\text{el}_1} & {\text{el}_2} & {\text{el}_3} & {\text{el}_4}
-%         \arrow[from=1-4, to=2-4]
-%     \end{tikzcd}
-% \end{center}
-
-% how to contact a random seeder/peer
-%
 
 \pagebreak
 
-\subsubsection{Constants}
+\paragraphln{Picking a random seeder}
+Seeder addresses are hard-coded in the \texttt{SEEDERS} array.
+Start with a random index, if that seeder is unreachable traverse the array in a circular manner
+until one is reachable.
+
+% Circular iterator
+
+\begin{center}
+    \begin{tikzcd}
+        &&& {\text{rnd}} \\
+        {\text{el}_0} & {\text{el}_1} & {\text{el}_2} & {\text{el}_3} & {\text{el}_4}
+        \arrow[from=1-4, to=2-4]
+        \arrow[from=2-1, to=2-2, bend left=60]
+        \arrow[from=2-2, to=2-3, bend left=60]
+        \arrow[from=2-4, to=2-5, bend left=60]
+        \arrow[from=2-5, to=2-1, bend left=60]
+    \end{tikzcd}
+\end{center}
+
+\paragraphln{Updating from local cache}
+\paragraphln{Updating from seeder}
+\paragraphln{Update from a peer}
+% last_time_seen + cache
+% + registration
+
+\pagebreak
+
+\subsection{Constants}
 
 Here is a list of hard-coded values.
 
@@ -160,15 +144,16 @@ Constants related to the peer connections:
     \\ \hline
     MAX\_TRIES\_NEIGHBOUR & 5
     \\ \hline
+    SEEDERS & \makecell[t] {
+        127.0.0.1:4670 \\
+        127.0.0.1:4671 \\
+        127.0.0.1:4672
+    }
+    \\ \hline
 \end{tabular}
 \egroup{}
 
-% + Seeders
-% node("127.0.0.1", 4670),
-% node("127.0.0.1", 4671),
-% node("127.0.0.1", 4672)
-
-\subsubsection{Packets}
+\subsection{Packets}
 
 % some command to link packets (texttt + hyperref to section)
 % and constants
