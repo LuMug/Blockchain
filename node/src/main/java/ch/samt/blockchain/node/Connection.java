@@ -26,12 +26,11 @@ public abstract class Connection extends Thread {
     private PacketInputStream in;
     private PacketOutputStream out;
 
-    private BlockingQueue<InetSocketAddress[]> nodesRequestResponse;
+    private BlockingQueue<InetSocketAddress[]> nodesRequestResponse = new ArrayBlockingQueue<>(1);
 
     public Connection(Node node, Socket socket) {
         this.node = node;
         this.socket = socket;
-        this.nodesRequestResponse = new ArrayBlockingQueue<>(1);
     }
 
     @Override
@@ -75,7 +74,6 @@ public abstract class Connection extends Thread {
             }
 
             if (nodeUuid != null) {
-                System.out.println("Node hasn't registered in time");
                 return;
             }   
         }

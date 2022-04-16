@@ -38,12 +38,19 @@ public abstract class Node extends Thread {
 
     private ScheduledExecutorService scheduler;
 
-    public Node(int port) {
+    // TODO: discard connection if hasn't registered in time
+    // (interrupt Thread)
+
+    public Node(int port, String db) {
         this.port = port;
-        // pass by argument?
-        this.database = new BlockchainDatabaseImpl("blockchain_" + port + ".db");
+        this.database = new BlockchainDatabaseImpl(db);
         this.neighbours = new LinkedList<>();
         this.scheduler = Executors.newScheduledThreadPool(5);
+    }
+
+    public Node(int port) {
+        // TODO allow this in Main
+        this(port, "blockchain_" + port + ".db");
     }
 
     @Override
@@ -134,7 +141,7 @@ public abstract class Node extends Thread {
         return new InetSocketAddress[0];
     }
 
-    private InetSocketAddress[] queryNeighbours(int amount) { // TODO: Usare Circulariterator
+    private InetSocketAddress[] queryNeighbours(int amount) {
         // Select random neighbour
         var neighbour = getRandomNeighbour();
 

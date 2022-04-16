@@ -5,8 +5,10 @@ import java.io.InputStream;
 import java.io.PrintStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
 
@@ -14,21 +16,21 @@ import org.tinylog.Logger;
 
 public class Seeder extends Thread {
     
-    // move to Protocol
+    // TODO: move to Protocol
     public static final int POOL_CAPACITY = 100;
     public static final int MAX_REQUEST = 10;
 
     // Top is older nodes
     private List<Node> nodes = new LinkedList<>();
 
+    // Quick indexing
+    private Map<InetSocketAddress, Node> hashtable = new HashMap<>();
+
     private int port;
 
     public Seeder(int port) {
         this.port = port;
     }
-
-    // TODO: check if service address of new node already exists.
-    // If yes, remove the old one.
 
     @Override
     public void run() {
@@ -50,14 +52,24 @@ public class Seeder extends Thread {
 
     public void renew(Node node) {
         synchronized (nodes) {
+            // existing address
+            System.out.println(hashtable.containsKey(node.address()) + " " + hashtable.size());
+            if (hashtable.containsKey(node.address())) {
+                nodes.remove(hashtable.get(node.address()));
+                hashtable.remove(node.address());
+            }
+
             int index = nodes.indexOf(node);
-            if (index != -1) { // renew existing entry
+            if (index != -1) { // renew existing entry (address + uuid)
                 nodes.remove(index);
             } else { // adding new entry
                 if (nodes.size() == POOL_CAPACITY - 1) {
                     // remove oldest
-                    nodes.remove(0);
+                    var removed = nodes.remove(0);
+                    hashtable.remove(removed.address());
                 }
+
+                hashtable.put(node.address(), node);
             }
 
             // push to bottom

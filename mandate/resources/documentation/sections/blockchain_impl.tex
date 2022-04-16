@@ -7,6 +7,14 @@
 
 \subsection{Peer Discovery}
 
+\subsubsection{Registration}
+
+When a node starts it generates a random UUID.
+
+When to peers establish a connection, they change a
+\packet{RegisterNode} packet. This packet contains information
+about their service address and UUID.
+
 \subsubsection{Seeder}
 
 The first step of our peer discovery solution is the \textit{Seeder}.
@@ -31,6 +39,8 @@ Connection is then closed.
 
 It is important to only rely on a seeder when 0 peers are known or when all
 the known peers are unreachable.
+
+If a node with an already registered address does register with a new UUID, the old entry is removed.
 
 \subsubsection{Cache}
 
@@ -60,6 +70,8 @@ If the number of connections exceeds \const{MAX\_CONNECTIONS}, a random peer is 
 The node will periodically register himself to a random seeder every \const{REGISTER\_INTERVAL} ms.
 By doing this dead nodes will stop registering and exit the seeder pool.
 
+\pagebreak
+
 The node will periodically execute the following update every \const{UPDATE\_INTERVAL} ms:
 
 \begin{enumerate}
@@ -67,8 +79,6 @@ The node will periodically execute the following update every \const{UPDATE\_INT
     \item If peers are less than \const{MIN\_CONNECTIONS}, update from local cache
     \item If peers are \(0\), update from a random seeder up to \const{MAX\_TRIES\_SEEDER} times
 \end{enumerate}
-
-\pagebreak
 
 \paragraphln{Picking a random seeder}
 Seeder addresses are hard-coded in the \const{SEEDERS} array.
@@ -113,7 +123,10 @@ until one is reachable.
     \item Try to connect to each of them
 \end{enumerate}
 
-% + registration UUID
+When a node receives a \packet{RequestNodes}
+it will try to randomly draw as many nodes as requested (max
+\const{MAX\_REQUEST}) excluding the requester itself.
+The \packet{ServeRequestNodes} response packet will be sent back.
 
 \pagebreak
 
