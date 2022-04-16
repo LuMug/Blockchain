@@ -18,13 +18,13 @@ import ch.samt.blockchain.common.utils.stream.PacketOutputStream;
 
 public abstract class Connection extends Thread {
 
-    private UUID nodeUuid;
-    private InetSocketAddress serviceAddress;
+    UUID nodeUuid;
+    InetSocketAddress serviceAddress;
 
-    private Node node;
-    private Socket socket;
-    private PacketInputStream in;
-    private PacketOutputStream out;
+    Node node;
+    Socket socket;
+    PacketInputStream in;
+    PacketOutputStream out;
 
     private BlockingQueue<InetSocketAddress[]> nodesRequestResponse = new ArrayBlockingQueue<>(1);
 
@@ -83,7 +83,7 @@ public abstract class Connection extends Thread {
         waitNodeRegistration(-1);
     }
 
-    private boolean sendPacket(byte[] packet) {
+    public boolean sendPacket(byte[] packet) {
         try {
             out.writePacket(packet);
             return true;

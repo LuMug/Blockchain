@@ -32,11 +32,11 @@ public abstract class Node extends Thread {
 
     public final int port;
 
-    private BlockchainDatabase database;
+    BlockchainDatabase database;
 
-    private List<Connection> neighbours; // TODO peers
+    List<Connection> neighbours; // TODO peers
 
-    private ScheduledExecutorService scheduler;
+    ScheduledExecutorService scheduler;
 
     // TODO: discard connection if hasn't registered in time
     // (interrupt Thread)
@@ -55,6 +55,9 @@ public abstract class Node extends Thread {
     // TODO: don't ask seeder too many times
     // if it responds with less than requested nodes
     // (also peers?)
+
+    abstract void broadcastTx(byte[] packet, Connection exclude);
+    abstract void deployTx(byte[] packet);
 
     @Override
     public void run() {

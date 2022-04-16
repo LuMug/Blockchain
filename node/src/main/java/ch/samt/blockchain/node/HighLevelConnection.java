@@ -17,7 +17,7 @@ public class HighLevelConnection extends Connection {
     }
 
     private void processSendTransactionPacket(byte[] data) {
-        
+        super.node.broadcastTx(data, this);
     }
 
     protected void onRegistration() {

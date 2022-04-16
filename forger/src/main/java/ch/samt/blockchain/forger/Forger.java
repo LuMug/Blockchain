@@ -66,12 +66,7 @@ public class Forger {
             return;
         }
 
-        var date = new Date(packet.getTimestamp());
-        var sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
-        var formattedTimestamp = sdf.format(date);
-
         System.out.println("Amount:\t\t" + packet.getAmount());
-        System.out.println("Timestamp:\t" + formattedTimestamp);
         System.out.println("Recipient:\t" + cryptoUtils.toBase64(packet.getRecipient()));
         System.out.println("Sender:\t\t" + cryptoUtils.toBase64(packet.getSender()));
         System.out.println("Signature:\t" + cryptoUtils.toBase64(packet.getSignature()));
@@ -91,11 +86,10 @@ public class Forger {
         var pub = cryptoUtils.publicKeyFromPrivateKey(priv);
         var recipient = cryptoUtils.fromBase64(to);
         var sender = cryptoUtils.sha256(pub.getEncoded());
-        var timestamp = System.currentTimeMillis();
         
         // Forge transaction
 
-        var data = SendTransactionPacket.toSign(recipient, sender, amountLong, timestamp, lastTxHash);
+        var data = SendTransactionPacket.toSign(recipient, sender, amountLong, lastTxHash);
         
         byte[] signature = null;
         try {
@@ -104,7 +98,7 @@ public class Forger {
             System.err.println("Error while signing tx: " + e.getMessage());
         }
         
-        var packet = SendTransactionPacket.create(recipient, sender, amountLong, timestamp, lastTxHash, signature);
+        var packet = SendTransactionPacket.create(recipient, sender, amountLong, lastTxHash, signature);
         writeFile(outPath, packet);
 
         System.out.println("\nTransaction packet written to output\n");

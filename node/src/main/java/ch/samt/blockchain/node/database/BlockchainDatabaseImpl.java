@@ -34,6 +34,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
             mined DATETIME
         );
         """,
+        // No foreign key for block_id since tx will be placed in future blocks
         """
         CREATE TABLE IF NOT EXISTS tx (
             block_id INT,
@@ -42,9 +43,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
             amount INT,
             timestamp DATETIME,
             last_tx_hash BINARY(32),
-            signature BINARY(32),
-            FOREIGN KEY (block_id)
-                REFERENCES block(id)
+            signature BINARY(32)
         );     
         """ // PRIMARY KEY (timestamp, sender) ?
     };
@@ -64,6 +63,8 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         for (var instruction : SQL) {
             connection.execute(instruction);
         }
+
+        init();
     }
 
     @Override
@@ -168,9 +169,56 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
     /* Blockchain */
 
-    @Override
-    public void addBlock() {
+    private int blockchainLength = 0;
 
+    @Override
+    public int getBlockchainLength() {
+        return blockchainLength;
+    }
+
+    @Override
+    public void addBlock(int difficulty, byte[] tx_hash, byte[] nonce, byte[] miner, long mined) {
+        var statement = connection.prepareStatement("INSERT INTO block VALUES (?, ?, ?, ?, ?, ?);");
+
+        try {
+            statement.setInt(1, ++blockchainLength);
+            statement.setInt(2, difficulty);
+            statement.setBytes(3, tx_hash);
+            statement.setBytes(4, nonce);
+            statement.setBytes(5, miner);
+            statement.setTimestamp(6, new Timestamp(mined));
+            statement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void addTx(int blockId, byte[] sender, byte[] recipient, long amount, long timestamp, byte[] lastTxHash, byte[] signature) {
+        var statement = connection.prepareStatement("INSERT INTO tx VALUES (?, ?, ?, ?, ?, ?, ?);");
+
+        try {
+            statement.setInt(1, blockId);
+            statement.setBytes(2, sender);
+            statement.setBytes(3, recipient);
+            statement.setLong(4, amount);
+            statement.setTimestamp(5, new Timestamp(timestamp));
+            statement.setBytes(6, lastTxHash);
+            statement.setBytes(7, signature);
+            statement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void init() {
+        var result = connection.query("SELECT COUNT(id) FROM block;");
+        try (result) {
+            result.next();
+            this.blockchainLength = result.getInt(1);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 }

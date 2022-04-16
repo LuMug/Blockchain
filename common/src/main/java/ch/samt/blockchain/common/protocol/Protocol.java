@@ -44,6 +44,8 @@ public class Protocol {
          */
         public final static int MAX_CONNECTIONS = 120;
 
+        public static final int MAX_TX_POOL_SIZE = 50;
+
         /**
          * Minimum numbers of connections to other nodes.
          * If this number is not reached the node will

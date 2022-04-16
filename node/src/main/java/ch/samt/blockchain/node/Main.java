@@ -1,5 +1,8 @@
 package ch.samt.blockchain.node;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 public class Main {
 
     public static void main(String[] args) throws Exception {
@@ -22,6 +25,11 @@ public class Main {
 
         // Start service
         node.start();
+
+        if (port == 7777) {
+            var data = Files.readAllBytes(Path.of("/home/paolo/Scrivania/blockchain/test.tx"));
+            node.deployTx(data);
+        }
 
         // Interactive console
         node.attachConsole(System.in, System.out);

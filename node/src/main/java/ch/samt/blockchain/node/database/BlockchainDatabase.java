@@ -26,8 +26,10 @@ public interface BlockchainDatabase {
 
     // Blockchain
 
-    void addBlock();
+    int getBlockchainLength();
+    
+    void addBlock(int difficulty, byte[] tx_hash, byte[] nonce, byte[] miner, long mined);
 
-    // ...
+    void addTx(int blockId, byte[] sender, byte[] recipient, long amount, long timestamp, byte[] lastTxHash, byte[] signature);
 
 }
