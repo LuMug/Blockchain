@@ -6,10 +6,6 @@
 
 % TODO
 
-\subsection{forger}
-
-% TODO
-
 \subsection{mandate}
 
 % TODO
@@ -38,5 +34,33 @@
 
 % TODO
 
+\subsection{forger}
+
+\subsubsection{Usage}
+
+\paragraphln{Generate wallet}
+\begin{lstlisting}[style=generic]
+java -jar forger.jar -gen -out ./key.priv
+\end{lstlisting}
+
+\paragraphln{Create transaction}
+\begin{lstlisting}[style=generic]
+java -jar forger.jar -priv ./key.priv -amount 10000
+     -out transaction.tx -to <address>
+\end{lstlisting}
+
+\paragraphln{Create transaction (no HTTP request for lastHash)}
+\begin{lstlisting}[style=generic]
+java -jar forger.jar -priv ./key.priv -last ./last.tx -amount 10000
+     -out transaction.tx -to <address>
+
+java -jar forger.jar -priv ./key.priv -first -amount 10000
+     -out transaction.tx -to <address>
+\end{lstlisting}
+
+\paragraphln{Dump transaction file content}
+\begin{lstlisting}[style=generic]
+java -jar forger.jar -dump ./transaction.tx
+\end{lstlisting}
 
 \end{document}

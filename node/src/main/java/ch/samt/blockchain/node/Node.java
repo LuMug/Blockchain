@@ -32,7 +32,7 @@ public abstract class Node extends Thread {
 
     public final int port;
 
-    private BlockchainDatabase nodeCache;
+    private BlockchainDatabase database;
 
     private List<Connection> neighbours;
 
@@ -40,7 +40,8 @@ public abstract class Node extends Thread {
 
     public Node(int port) {
         this.port = port;
-        this.nodeCache = new BlockchainDatabaseImpl("blockchain_" + port + ".db");
+        // pass by argument?
+        this.database = new BlockchainDatabaseImpl("blockchain_" + port + ".db");
         this.neighbours = new LinkedList<>();
         this.scheduler = Executors.newScheduledThreadPool(5);
     }
@@ -76,17 +77,17 @@ public abstract class Node extends Thread {
             var rnd_connection = getRandomNeighbour();
             disconnect(rnd_connection);
 
-            nodeCache.updateLastSeen(rnd_connection.getServiceAddress());
+            database.updateLastSeen(rnd_connection.getServiceAddress());
         }
         
-        nodeCache.cacheNode(connection.getServiceAddress());
+        database.cacheNode(connection.getServiceAddress());
     }
 
     public void connect() {
         Logger.info("Connecting to blockchain");
 
         // Query database nodes cache
-        if (!nodeCache.isNodeCacheEmpty()) {
+        if (!database.isNodeCacheEmpty()) {
             Logger.info("Fetching database for cached nodes");
             updateFromCache();
         }
@@ -110,9 +111,9 @@ public abstract class Node extends Thread {
     }
 
     private InetSocketAddress[] querySeeders(int amount) {
-        int start = (int) (Math.random() * Seeders.seeders.length);
-        for (var index : new CircularIterator(Seeders.seeders.length, start)) {
-            var address = Seeders.seeders[index];
+        int start = (int) (Math.random() * Seeders.SEEDERS.length);
+        for (var index : new CircularIterator(Seeders.SEEDERS.length, start)) {
+            var address = Seeders.SEEDERS[index];
             Logger.info("Trying seeder: " + address);
 
             try (var seeder = new Socket(address.getHostString(), address.getPort())) {
@@ -183,7 +184,7 @@ public abstract class Node extends Thread {
     }
 
     private void updateFromCache() {
-        var nodes = nodeCache.getCachedNodes(); // TODO: ritorna [] + interface
+        var nodes = database.getCachedNodes(); // TODO: ritorna [] + interface
         for (int i = 0; i < nodes.length && neighbours.size() < Protocol.Node.MIN_CONNECTIONS; i++) {
             var address = nodes[i];
 
@@ -237,11 +238,11 @@ public abstract class Node extends Thread {
     private void registerToSeeder() {
         Logger.info("Registering to a random seeder");
 
-        int seeders = Seeders.seeders.length;
+        int seeders = Seeders.SEEDERS.length;
         int randomIndex = (int) (Math.random() * seeders); // random starting point
         
         for (int index : new CircularIterator(seeders, randomIndex)) {
-            var connection = tryConnection(Seeders.seeders[index]);
+            var connection = tryConnection(Seeders.SEEDERS[index]);
     
             if (connection != null) {
                 try (connection) {

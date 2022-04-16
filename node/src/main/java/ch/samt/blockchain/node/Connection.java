@@ -75,6 +75,7 @@ public abstract class Connection extends Thread {
             }
 
             if (nodeUuid != null) {
+                System.out.println("Node hasn't registered in time");
                 return;
             }   
         }

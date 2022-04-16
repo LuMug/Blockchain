@@ -2,6 +2,9 @@
 
 \begin{document}
 
+\newcommand{\const}[1]{\hyperlink{constants}{\texttt{#1}}}
+\newcommand{\packet}[1]{\hyperlink{packets}{\texttt{#1}}}
+
 \subsection{Peer Discovery}
 
 \subsubsection{Seeder}
@@ -10,21 +13,24 @@ The first step of our peer discovery solution is the \textit{Seeder}.
 The Seeder is a server which stores information about node's service addresses.
 \\
 A node might register himself to a seeder by opening a TCP connection and sending
-a \texttt{RegisterNode} packet.
+a \packet{RegisterNode} packet.
 Likewise, a node might ask a seeder the service addresses of \textbf{N} nodes by sending a
-\texttt{RequestNodes} packet.
+\packet{RequestNodes} packet.
 
-When the seeder receives a \texttt{RegisterNode} it will store its address in the
-services pool. The services pool has a fixed capacity of \texttt{POOL\_CAPACITY}.
+When the seeder receives a \packet{RegisterNode} it will store its address in the
+services pool. The services pool has a fixed capacity of \const{POOL\_CAPACITY}.
 Nodes are stored along with their registration timestamp, this means that when the pool
 reaches max capacity the oldest node will be uncached. If an already registered node
 send a registration packet, the timestamp is updated.
 Connection is then closed.
 
-When the seeder receives a \texttt{RequestNodes} it will try to randomly draw
-as many nodes as requested (max \texttt{MAX\_REQUEST}) excluding the requester itself.
-The \texttt{ServeRequestNodes} response packet will be sent back.
+When the seeder receives a \packet{RequestNodes} it will try to randomly draw
+as many nodes as requested (max \const{MAX\_REQUEST}) excluding the requester itself.
+The \packet{ServeRequestNodes} response packet will be sent back.
 Connection is then closed.
+
+It is important to only rely on a seeder when 0 peers are known or when all
+the known peers are unreachable.
 
 \subsubsection{Cache}
 
@@ -43,29 +49,29 @@ To do so we define the \textit{node} table.
 When a connection to a peer is established, the node is added to this table.
 If the node is already in the database, its \textit{last\_seen\_alive} field is updated.
 \\
-If the number of nodes in the cache exceeds \texttt{MAX\_CACHED\_NODES},
+If the number of nodes in the cache exceeds \const{MAX\_CACHED\_NODES},
 the node with the oldest \textit{last\_seen\_alive} field is deleted.
 
 \subsubsection{Algorithm}
 
-A node will actively try to always have \texttt{MIN\_CONNECTIONS} established connections.
-If the number of connections exceeds \texttt{MAX\_CONNECTIONS}, a random peer is disconnected.
+A node will actively try to always have \const{MIN\_CONNECTIONS} established connections.
+If the number of connections exceeds \const{MAX\_CONNECTIONS}, a random peer is disconnected.
 
-The node will periodically register himself to a random seeder every \texttt{REGISTER\_INTERVAL} ms.
+The node will periodically register himself to a random seeder every \const{REGISTER\_INTERVAL} ms.
 By doing this dead nodes will stop registering and exit the seeder pool.
 
-The node will periodically execute the following update every \texttt{UPDATE\_INTERVAL} ms:
+The node will periodically execute the following update every \const{UPDATE\_INTERVAL} ms:
 
 \begin{enumerate}
-    \item If peers are less than \texttt{MIN\_CONNECTIONS}, update from a random peer up to \texttt{MAX\_TRIES\_NEIGHBOUR} times
-    \item If peers are less than \texttt{MIN\_CONNECTIONS}, update from local cache
-    \item If peers are \(0\), update from a random seeder up to \texttt{MAX\_TRIES\_SEEDER} times
+    \item If peers are less than \const{MIN\_CONNECTIONS}, update from a random peer up to \texttt{MAX\_TRIES\_NEIGHBOUR} times
+    \item If peers are less than \const{MIN\_CONNECTIONS}, update from local cache
+    \item If peers are \(0\), update from a random seeder up to \const{MAX\_TRIES\_SEEDER} times
 \end{enumerate}
 
 \pagebreak
 
 \paragraphln{Picking a random seeder}
-Seeder addresses are hard-coded in the \texttt{SEEDERS} array.
+Seeder addresses are hard-coded in the \const{SEEDERS} array.
 Start with a random index, if that seeder is unreachable traverse the array in a circular manner
 until one is reachable.
 
@@ -84,13 +90,34 @@ until one is reachable.
 \end{center}
 
 \paragraphln{Updating from local cache}
+\begin{enumerate}
+    \item Read all cached peers from the database
+    \item Filter the ones without an estblished connection
+    \item While there is still room, try to establish a connection with them
+\end{enumerate}
+
 \paragraphln{Updating from seeder}
+\begin{enumerate}
+    \item Establish a TCP connection with the seeder
+    \item Send a \packet{RequestNodes} packet requesting
+        \((\text{\const{MIN\_CONNECTIONS}} - \text{\texttt{CONNECTIONS}})\) peers
+    \item Filter the ones without an estblished connection
+    \item Try to connect to each of them
+\end{enumerate}
+
 \paragraphln{Update from a peer}
-% last_time_seen + cache
-% + registration
+\begin{enumerate}
+    \item Send a \packet{RequestNodes} packet requesting
+        \((\text{\const{MIN\_CONNECTIONS}} - \text{\texttt{CONNECTIONS}})\) peers
+    \item Filter the ones without an estblished connection
+    \item Try to connect to each of them
+\end{enumerate}
+
+% + registration UUID
 
 \pagebreak
 
+\hypertarget{constants}{}
 \subsection{Constants}
 
 Here is a list of hard-coded values.
@@ -153,7 +180,49 @@ Constants related to the peer connections:
 \end{tabular}
 \egroup{}
 
+\hypertarget{packets}{}
 \subsection{Packets}
+
+Packets are sent over a TCP socket stream.
+Each packet is preceded by the length of the packet,
+encoded as a Little-Endian 32-bit integer.
+
+\subsubsection{PoWSolvedPacket}
+
+% TODO
+
+\subsubsection{RegisterNodePacket}
+
+% TODO
+
+\subsubsection{RequestBlockchainLengthPacket}
+
+% TODO
+
+\subsubsection{RequestIfHashExistsPacket}
+
+% TODO
+
+\subsubsection{RequestNodesPacket}
+
+% TODO
+
+\subsubsection{SendTransactionPacket}
+
+% TODO
+
+\subsubsection{ServeBlockchainLengthPacket}
+
+% TODO
+
+\subsubsection{ServeIfHashExistsPacket}
+
+% TODO
+
+\subsubsection{ServeNodesPacket}
+
+% TODO
+
 
 % some command to link packets (texttt + hyperref to section)
 % and constants
