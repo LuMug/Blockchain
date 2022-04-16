@@ -35,14 +35,14 @@ public class Protocol {
         /**
          * Maximum number of connections to other nodes
          */
-        public final static int MAX_CONNECTIONS = 100;
+        public final static int MAX_CONNECTIONS = 120;
 
         /**
          * Minimum numbers of connections to other nodes.
          * If this number is not reached the node will
          * periodically try to connect to more nodes.
          */
-        public final static int MIN_CONNECTIONS = 500;
+        public final static int MIN_CONNECTIONS = 100;
 
         /**
          * Interval in ms for the node to register to a random seeder.
@@ -54,11 +54,6 @@ public class Protocol {
          * of connections if needed.
          */
         public final static int UPDATE_INTERVAL = 30000;//180000;
-
-        /**
-         * Maximum size of the persistent node cache.
-         */
-        public final static int MAX_NODE_CACHE_SIZE = 150;
 
         /**
          * Maximum number of queries to the seeder a time.

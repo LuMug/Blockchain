@@ -1,0 +1,176 @@
+\documentclass[../documentation.tex]{subfiles}
+
+\begin{document}
+
+\lstdefinestyle{sql} {
+    language=SQL,
+  	backgroundcolor=\color{lightgray},
+  	breakatwhitespace=false,
+    basicstyle=\footnotesize,
+  	breaklines=true,
+  	captionpos=b,
+    commentstyle=\color{dkgreen},
+  	deletekeywords={...},
+  	escapeinside={\%*}{*)},
+  	extendedchars=true,
+  	keepspaces=true,
+  	keywordstyle=\color{blue},
+  	morekeywords={*,modify,MODIFY,...},
+  	numbers=none,
+  	showspaces=false,
+  	showstringspaces=false, 
+  	showtabs=false,
+  	stepnumber=1,
+}
+
+\newcommand{\paragraphln}[1]{\paragraph{#1}\mbox{}\\}
+
+\subsection{Peer Discovery}
+
+\subsubsection{Seeder}
+
+The first step of our peer discovery solution is the \textit{Seeder}.
+The Seeder is a server which stores information about node's service addresses.
+\\
+A node might register himself to a seeder by opening a TCP connection and sending
+a \texttt{RegisterNode} packet.
+Likewise, a node might ask a seeder the service addresses of \textbf{N} nodes by sending a
+\texttt{RequestNodes} packet.
+
+When the seeder receives a \texttt{RegisterNode} it will store its address in the
+services pool. The services pool has a fixed capacity of \texttt{POOL\_CAPACITY}.
+Nodes are stored along with their registration timestamp, this means that when the pool
+reaches max capacity the oldest node will be uncached. If an already registered node
+send a registration packet, the timestamp is updated.
+Connection is then closed.
+
+When the seeder receives a \texttt{RequestNodes} it will try to randomly draw
+as many nodes as requested (max \texttt{MAX\_REQUEST}) excluding the requester itself.
+The \texttt{ServeRequestNodes} response packet will be sent back.
+Connection is then closed.
+
+\subsubsection{Cache}
+
+The nodes will also locally cache some of the peers.
+To do so we define the \textit{node} table.
+
+\begin{lstlisting}[style=sql]
+    CREATE TABLE IF NOT EXISTS node (
+        address VARCHAR(20),
+        port INT,
+        last_seen_alive DATETIME,
+        PRIMARY KEY (address, port)
+    );
+\end{lstlisting}
+
+\subsubsection{Algorithm}
+
+A node will actively try to always have \texttt{MIN\_CONNECTIONS} established connections.
+If the number of connections exceeds \texttt{MAX\_CONNECTIONS}, a random peer is disconnected.
+
+The node will periodically register himself to a random seeder every \texttt{REGISTER\_INTERVAL} ms.
+By doing this dead nodes will stop registering and exit the seeder pool.
+
+The node will periodically execute the following update every \texttt{UPDATE\_INTERVAL} ms:
+
+\begin{enumerate}
+    \item If peers are less than \texttt{MIN\_CONNECTIONS}, update from a peer up to \texttt{MAX\_TRIES\_NEIGHBOUR} times
+    \item If peers are less than \texttt{MIN\_CONNECTIONS}, update from local cache
+    \item If peers are \(0\), update from seeder up to \texttt{MAX\_TRIES\_SEEDER} times
+\end{enumerate}
+
+\paragraphln{Querying a random seeder/peer}
+Seeder addresses are hard-coded in \texttt{SEEDERS}.
+% Circular iterator
+
+% https://q.uiver.app/?q=WzAsNixbMCwxLCJcXHRleHR7ZWx9XzAiXSxbMSwxLCJcXHRleHR7ZWx9XzEiXSxbMiwxLCJcXHRleHR7ZWx9XzIiXSxbMywxLCJcXHRleHR7ZWx9XzMiXSxbNCwxLCJcXHRleHR7ZWx9XzQiXSxbMywwLCJcXHRleHR7cm5kfSJdLFszLDQsIiIsMCx7ImN1cnZlIjotMn1dLFswLDEsIiIsMCx7ImN1cnZlIjotMn1dLFsxLDIsIiIsMCx7ImN1cnZlIjotMn1dLFs0LDAsIiIsMCx7ImxhYmVsX3Bvc2l0aW9uIjo2MCwib2Zmc2V0IjotMSwiY3VydmUiOi0zfV0sWzUsM11d
+%\begin{tikzcd}
+%	&&& {\text{rnd}} \\
+%	{\text{el}_0} & {\text{el}_1} & {\text{el}_2} & {\text{el}_3} & {\text{el}_4}
+%	\arrow[curve={height=-12pt}, from=2-4, to=2-5]
+%	\arrow[curve={height=-12pt}, from=2-1, to=2-2]
+%	\arrow[curve={height=-12pt}, from=2-2, to=2-3]
+%	\arrow[shift left=1, curve={height=-18pt}, from=2-5, to=2-1]
+%	\arrow[from=1-4, to=2-4]
+%\end{tikzcd}
+
+% \begin{center}
+%     \begin{tikzcd}
+%         &&& {\text{rnd}} \\
+%         {\text{el}_0} & {\text{el}_1} & {\text{el}_2} & {\text{el}_3} & {\text{el}_4}
+%         \arrow[from=1-4, to=2-4]
+%     \end{tikzcd}
+% \end{center}
+
+% how to contact a random seeder/peer
+%
+
+\pagebreak
+
+\subsubsection{Constants}
+
+Here is a list of hard-coded values.
+
+\paragraphln{Database}
+Constants related to the database node caching
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{tabular}{|l|l|}
+    \hline
+    \textbf{Name} & \textbf{Value}
+    \\ \hline
+    MAX\_CACHED\_NODES & 50
+    \\ \hline
+\end{tabular}
+\egroup{}
+
+\paragraphln{Blockchain}
+Constants related to the blockchain system:
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{tabular}{|l|l|}
+    \hline
+    \textbf{Name} & \textbf{Value}
+    \\ \hline
+    BLOCK\_REWARD & 1000
+    \\ \hline
+\end{tabular}
+\egroup{}
+
+\paragraphln{Node}
+Constants related to the peer connections:
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{tabular}{|l|l|}
+    \hline
+    \textbf{Name} & \textbf{Value}
+    \\ \hline
+    MAX\_CONNECTIONS & 150
+    \\ \hline
+    MIN\_CONNECTIONS & 100
+    \\ \hline
+    REGISTER\_INTERVAL & 180000
+    \\ \hline
+    UPDATE\_INTERVAL & 180000
+    \\ \hline
+    MAX\_TRIES\_SEEDER & 5
+    \\ \hline
+    MAX\_TRIES\_NEIGHBOUR & 5
+    \\ \hline
+\end{tabular}
+\egroup{}
+
+% + Seeders
+% node("127.0.0.1", 4670),
+% node("127.0.0.1", 4671),
+% node("127.0.0.1", 4672)
+
+\subsubsection{Packets}
+
+% some command to link packets (texttt + hyperref to section)
+% and constants
+
+\end{document}
