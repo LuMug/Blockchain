@@ -1,10 +1,10 @@
-package ch.samt.blockchain.forger.paramhandler;
+package ch.samt.blockchain.common.utils.paramhandler;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
-import ch.samt.blockchain.forger.paramhandler.types.Arg;
-import ch.samt.blockchain.forger.paramhandler.types.Flag;
+import ch.samt.blockchain.common.utils.paramhandler.types.Arg;
+import ch.samt.blockchain.common.utils.paramhandler.types.Flag;
 
 /**
  * @author Paolo Bettelini
@@ -203,5 +203,35 @@ public class ParamHandler {
 
 		return builder.toString();
 	}
+
+	public boolean any(String... args) {
+        for (var arg : args) {
+            if (!isNull(arg)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public void assertAll(String... args) {
+        var builder = new StringBuilder();
+        
+        for (var arg : args) {
+            if (isNull(arg)) {
+                builder.append(arg + ", ");
+            }
+        }
+
+        if (builder.isEmpty()) {
+            return;
+        }
+
+        var str = builder.toString();
+        System.err.println("Missing arguments: {" + str.substring(0, str.length() - 2) + "}");
+
+        System.exit(0);
+    }
+
 
 }

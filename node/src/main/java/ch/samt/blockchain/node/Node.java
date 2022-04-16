@@ -34,7 +34,7 @@ public abstract class Node extends Thread {
 
     private BlockchainDatabase database;
 
-    private List<Connection> neighbours;
+    private List<Connection> neighbours; // TODO peers
 
     private ScheduledExecutorService scheduler;
 
@@ -49,9 +49,12 @@ public abstract class Node extends Thread {
     }
 
     public Node(int port) {
-        // TODO allow this in Main
         this(port, "blockchain_" + port + ".db");
     }
+
+    // TODO: don't ask seeder too many times
+    // if it responds with less than requested nodes
+    // (also peers?)
 
     @Override
     public void run() {
@@ -173,8 +176,16 @@ public abstract class Node extends Thread {
     }
 
     private void updateFromNeighbours() {
-        for (int i = 0; i < Protocol.Node.MAX_TRIES_NEIGHBOUR && neighbours.size() < Protocol.Node.MIN_CONNECTIONS; i++) {
-            var nodes = queryNeighbours(Protocol.Node.MIN_CONNECTIONS - neighbours.size());
+        int requested = 0;
+        int received = 0;
+
+        for (int i = 0; i < Protocol.Node.MAX_TRIES_NEIGHBOUR &&
+                neighbours.size() < Protocol.Node.MIN_CONNECTIONS &&
+                requested == received; i++) {
+            
+            requested = Math.min(Protocol.Seeder.MAX_REQUEST, Protocol.Node.MIN_CONNECTIONS - neighbours.size());
+            var nodes = queryNeighbours(requested);
+            received = nodes.length;
             for (var node : nodes) {
                 if (!neighboursContain(node)) {
                     var socket = tryConnection(node.getHostString(), node.getPort());
@@ -187,6 +198,38 @@ public abstract class Node extends Thread {
                     }
                 }
             }
+        }
+    }
+
+    private void updateFromSeeder() {
+        Logger.info("No active node found. Connecting to seeder");
+
+        int requested = 0;
+        int received = 0;
+
+        for (int i = 0; i < Protocol.Node.MAX_TRIES_SEEDER &&
+                neighbours.size() < Protocol.Node.MIN_CONNECTIONS &&
+                requested == received; i++) {
+
+            requested = Math.min(Protocol.Seeder.MAX_REQUEST, Protocol.Node.MIN_CONNECTIONS - neighbours.size());
+            var nodes = querySeeders(Protocol.Node.MIN_CONNECTIONS);
+            received = nodes.length;
+
+            Logger.info("Received " + nodes.length + " candidate nodes");
+            for (var node : nodes) {
+                if (!neighboursContain(node)) {
+                    Logger.info("Trying connection with " + node);
+                    var socket = tryConnection(node.getHostString(), node.getPort());
+                
+                    // If has responded
+                    if (socket != null) {
+                        var connection = new HighLevelConnection(this, socket);
+                        connection.start();
+                        connection.waitNodeRegistration(1000); // TIMEOUT
+                    }
+                }
+            }
+
         }
     }
 
@@ -263,29 +306,6 @@ public abstract class Node extends Thread {
         }
 
         Logger.error("No active seeder found");
-    }
-
-    private void updateFromSeeder() {
-        Logger.info("No active node found. Connecting to seeder");
-        List<Connection> result = new LinkedList<>();
-        for (int i = 0; i < Protocol.Node.MAX_TRIES_SEEDER && result.size() < Protocol.Node.MIN_CONNECTIONS; i++) {
-            var nodes = querySeeders(Protocol.Node.MIN_CONNECTIONS);
-            Logger.info("Received " + nodes.length + " candidate nodes");
-            for (var node : nodes) {
-                if (!neighboursContain(node)) {
-                    Logger.info("Trying connection with " + node);
-                    var socket = tryConnection(node.getHostString(), node.getPort());
-                
-                    // If has responded
-                    if (socket != null) {
-                        var connection = new HighLevelConnection(this, socket);
-                        connection.start();
-                        connection.waitNodeRegistration(1000); // TIMEOUT
-                    }
-                }
-            }
-
-        }
     }
 
     private Connection getRandomNeighbour() {

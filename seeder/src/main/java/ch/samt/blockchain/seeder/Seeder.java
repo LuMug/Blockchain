@@ -14,11 +14,9 @@ import java.util.UUID;
 
 import org.tinylog.Logger;
 
+import ch.samt.blockchain.common.protocol.Protocol;
+
 public class Seeder extends Thread {
-    
-    // TODO: move to Protocol
-    public static final int POOL_CAPACITY = 100;
-    public static final int MAX_REQUEST = 10;
 
     // Top is older nodes
     private List<Node> nodes = new LinkedList<>();
@@ -53,7 +51,6 @@ public class Seeder extends Thread {
     public void renew(Node node) {
         synchronized (nodes) {
             // existing address
-            System.out.println(hashtable.containsKey(node.address()) + " " + hashtable.size());
             if (hashtable.containsKey(node.address())) {
                 nodes.remove(hashtable.get(node.address()));
                 hashtable.remove(node.address());
@@ -63,7 +60,7 @@ public class Seeder extends Thread {
             if (index != -1) { // renew existing entry (address + uuid)
                 nodes.remove(index);
             } else { // adding new entry
-                if (nodes.size() == POOL_CAPACITY - 1) {
+                if (nodes.size() == Protocol.Seeder.POOL_CAPACITY - 1) {
                     // remove oldest
                     var removed = nodes.remove(0);
                     hashtable.remove(removed.address());
@@ -87,7 +84,7 @@ public class Seeder extends Thread {
         synchronized (nodes) {
             amount = Math.min(
                 Math.min(amount, nodes.size()),
-                MAX_REQUEST
+                Protocol.Seeder.MAX_REQUEST
             );
 
             int excludeIndex = 0;

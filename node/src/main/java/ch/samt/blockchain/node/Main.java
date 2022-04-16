@@ -4,9 +4,11 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         if (args.length != 1) {
-            System.out.println("Arguments: <port>");
+            System.out.println("Arguments: <port> [-db <file>]");
             return;
         }
+
+        // TODO db param
 
         int port = 0;
         try {

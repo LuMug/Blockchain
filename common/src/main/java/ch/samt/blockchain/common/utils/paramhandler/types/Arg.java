@@ -1,6 +1,6 @@
-package ch.samt.blockchain.forger.paramhandler.types;
+package ch.samt.blockchain.common.utils.paramhandler.types;
 
-import ch.samt.blockchain.forger.paramhandler.Property;
+import ch.samt.blockchain.common.utils.paramhandler.Property;
 
 public class Arg {
 	

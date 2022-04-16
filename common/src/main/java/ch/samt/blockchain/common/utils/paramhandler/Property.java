@@ -1,4 +1,4 @@
-package ch.samt.blockchain.forger.paramhandler;
+package ch.samt.blockchain.common.utils.paramhandler;
 
 public record Property(String property, String value) {
 

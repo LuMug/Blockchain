@@ -13,6 +13,8 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
     private DatabaseConnection connection;
 
+    // TODO ? Index on tx.block_id
+
     private static final String[] SQL = {
         """
         CREATE TABLE IF NOT EXISTS node (
@@ -33,16 +35,21 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         );
         """,
         """
-            CREATE TABLE IF NOT EXISTS tx (
-                amount INT,
-                recipient BINARY(32),
-                sender BINARY(32),
-                timestamp DATETIME,
-                last_tx_hash BINARY(32),
-                signature BINARY(32)
-            );     
-        """
+        CREATE TABLE IF NOT EXISTS tx (
+            block_id INT,
+            sender BINARY(32),
+            recipient BINARY(32),
+            amount INT,
+            timestamp DATETIME,
+            last_tx_hash BINARY(32),
+            signature BINARY(32),
+            FOREIGN KEY (block_id)
+                REFERENCES block(id)
+        );     
+        """ // PRIMARY KEY (timestamp, sender) ?
     };
+
+    /* Node cache */
 
     public BlockchainDatabaseImpl(String database) {
         this.connection = new DatabaseConnectionImpl(database);
@@ -158,6 +165,8 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         connection.execute(
             "DELETE FROM node WHERE last_seen_alive=(SELECT last_seen_alive FROM node ORDER BY last_seen_alive DESC);");
     }
+
+    /* Blockchain */
 
     @Override
     public void addBlock() {

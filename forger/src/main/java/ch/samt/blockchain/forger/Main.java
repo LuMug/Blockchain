@@ -1,6 +1,6 @@
 package ch.samt.blockchain.forger;
 
-import ch.samt.blockchain.forger.paramhandler.ParamHandler;
+import ch.samt.blockchain.common.utils.paramhandler.ParamHandler;
 
 public class Main {
     
@@ -37,7 +37,7 @@ public class Main {
         }
 
         if (params.getFlag("gen")) {
-            assertAll(params, new String[]{"out"});
+            params.assertAll(new String[]{"out"});
             Forger.gen(params.getArg("out"));
             return;
         }
@@ -47,8 +47,8 @@ public class Main {
             return;
         }
 
-        if (any(params, new String[]{"to", "amount"})) {
-            assertAll(params, new String[]{"to", "amount", "out", "priv"});
+        if (params.any(new String[]{"to", "amount"})) {
+            params.assertAll(new String[]{"to", "amount", "out", "priv"});
 
             var priv = params.getArg("priv");
             var to = params.getArg("to");
@@ -66,35 +66,6 @@ public class Main {
 
             return;
         }
-    }
-
-    private static boolean any(ParamHandler handler, String... args) {
-        for (var arg : args) {
-            if (!handler.isNull(arg)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static void assertAll(ParamHandler handler, String... args) {
-        var builder = new StringBuilder();
-        
-        for (var arg : args) {
-            if (handler.isNull(arg)) {
-                builder.append(arg + ", ");
-            }
-        }
-
-        if (builder.isEmpty()) {
-            return;
-        }
-
-        var str = builder.toString();
-        System.err.println("Missing arguments: {" + str.substring(0, str.length() - 2) + "}");
-
-        System.exit(0);
     }
 
     private static void printExamples() {

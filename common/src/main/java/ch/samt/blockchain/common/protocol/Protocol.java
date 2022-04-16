@@ -30,6 +30,13 @@ public class Protocol {
 
     }
 
+    public static class Seeder {
+
+        public static final int POOL_CAPACITY = 100;
+        public static final int MAX_REQUEST = 10;
+
+    }
+
     public static class Node {
 
         /**
