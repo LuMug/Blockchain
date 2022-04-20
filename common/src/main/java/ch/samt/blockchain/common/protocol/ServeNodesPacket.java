@@ -35,7 +35,7 @@ public class ServeNodesPacket {
         byte[] packet = new byte[size];
         Offset offset = new Offset();
 
-        writeByte(packet, Protocol.SERVE_NODES, offset);
+        writeByte(packet, Protocol.SERVE_NODES, offset); 
         writeIntLE(packet, nodes.length, offset);
 
         for (var node : nodes) {

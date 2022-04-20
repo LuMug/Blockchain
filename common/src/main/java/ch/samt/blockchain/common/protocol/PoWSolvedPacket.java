@@ -7,7 +7,10 @@ import ch.samt.blockchain.common.utils.byteutils.Offset;
 public class PoWSolvedPacket {
     
     private byte[] nonce;
+
     private byte[] miner;
+    
+    private long timestmap; /////////////////////////
 
     public PoWSolvedPacket(byte[] packet) {
         Offset offset = new Offset(1);
@@ -22,6 +25,10 @@ public class PoWSolvedPacket {
     
     public byte[] getMiner() {
         return miner;
+    }
+
+    public long getTimestamp() {
+        return timestmap;
     }
 
     public static byte[] create(byte[] nonce, byte[] miner) {
