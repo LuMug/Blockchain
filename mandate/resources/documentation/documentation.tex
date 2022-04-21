@@ -14,6 +14,7 @@
 \usepackage{makecell} % cell scopes for tables
 \usepackage[normalem]{ulem} % authour strikethrough
 \usepackage{biblatex} % references
+\usepackage{fancybox} % oval boxes
 \usepackage{subfiles} % project structure - best loaded last in the preamble
 
 \usetikzlibrary{ % tikz packages
@@ -60,6 +61,40 @@
   	stepnumber=1,
 }
 
+\colorlet{punct}{red!60!black}
+\definecolor{background}{HTML}{EEEEEE}
+\definecolor{delim}{RGB}{20,105,176}
+\colorlet{numb}{magenta!60!black}
+
+\lstdefinelanguage{json}{
+    basicstyle=\normalfont\ttfamily,
+    numbers=none,
+    numberstyle=\scriptsize,
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    backgroundcolor=\color{background},
+    literate=
+     *{0}{{{\color{numb}0}}}{1}
+      {1}{{{\color{numb}1}}}{1}
+      {2}{{{\color{numb}2}}}{1}
+      {3}{{{\color{numb}3}}}{1}
+      {4}{{{\color{numb}4}}}{1}
+      {5}{{{\color{numb}5}}}{1}
+      {6}{{{\color{numb}6}}}{1}
+      {7}{{{\color{numb}7}}}{1}
+      {8}{{{\color{numb}8}}}{1}
+      {9}{{{\color{numb}9}}}{1}
+      {:}{{{\color{punct}{:}}}}{1}
+      {,}{{{\color{punct}{,}}}}{1}
+      {\{}{{{\color{delim}{\{}}}}{1}
+      {\}}{{{\color{delim}{\}}}}}{1}
+      {[}{{{\color{delim}{[}}}}{1}
+      {]}{{{\color{delim}{]}}}}{1},
+}
+
 \newcommand{\paragraphln}[1]{\paragraph{#1}\mbox{}\\}
 
 \title{
@@ -100,9 +135,15 @@
 
 \pagebreak
 
-\section{Programming language}
+\section{Programming Language}
 
 \subfile{sections/programming_language}
+
+\pagebreak
+
+\section{Programming Language Implementation}
+
+\subfile{sections/programming_language_impl}
 
 \pagebreak
 
@@ -167,13 +208,9 @@ Assets to use
 \begin{ganttchart}[
 	vgrid,
 	]{1}{12}
-	\gantttitle{2015}{4}
-	\gantttitle{2016}{4}
-	\gantttitle{2017}{4}
+	\gantttitle{2022}{12}
 	% top nodes
-	\ganttbar[name=holiday-2015-top,bar/.style={fill=none, draw=none}]{}{1}{1}
-	\ganttbar[name=holiday-2016-top,bar/.style={fill=none, draw=none}]{}{5}{5}
-	\ganttbar[name=holiday-2017-top,bar/.style={fill=none, draw=none}]{}{9}{9} \\
+	\ganttbar[name=holiday-2022-top,bar/.style={fill=none, draw=none}]{}{1}{1}
 	
 	% gantt chart contents
 	\ganttgroup{Group 1}{1}{7} \\
@@ -183,15 +220,11 @@ Assets to use
 	\ganttbar{Final Task}{8}{12}
 	
 	% bottom nodes
-	\ganttbar[name=holiday-2015-bottom,bar/.style={fill=none, draw=none}]{}{1}{1}
-	\ganttbar[name=holiday-2016-bottom,bar/.style={fill=none, draw=none}]{}{5}{5}
-	\ganttbar[name=holiday-2017-bottom,bar/.style={fill=none, draw=none}]{}{9}{9}
+	\ganttbar[name=holiday-2022-bottom,bar/.style={fill=none, draw=none}]{}{1}{1}
 	
 	% shading
 	\begin{scope}
-	\draw [opacity=0.2,line width=12] (holiday-2015-top) -- ($(holiday-2015-bottom)+(0,-11pt)$);
-	\draw [opacity=0.2,line width=12] (holiday-2016-top) -- ($(holiday-2016-bottom)+(0,-11pt)$);
-	\draw [opacity=0.2,line width=12] (holiday-2017-top) -- ($(holiday-2017-bottom)+(0,-11pt)$);
+	\draw [opacity=0.2,line width=12] (holiday-2022-top) -- ($(holiday-2022-bottom)+(0,-11pt)$);
 	\end{scope}
 	
 \end{ganttchart}

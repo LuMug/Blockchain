@@ -2,9 +2,37 @@
 
 \begin{document}
 
+% bouncycastle
+% FAT JAR
+
 \subsection{common}
 
-% TODO
+\texttt{common/} is a gradle module containing utils and
+the blockchain protocols.
+
+\subsubsection{Protocol}
+
+The \texttt{protocol/} folder contains all the packets and constants.
+
+\subsubsection{Utils}
+
+The \texttt{utils/} contains various utils.
+
+\paragraph{Byteutils} (\texttt{byteutils/})
+
+Utils for serializing data into byte streams.
+
+\paragraph{Crypto} (\texttt{crypto/})
+
+Utils for hashing, generating keypairs and signing (EdDSA), base64 conversion.
+
+\paragraph{ParamHandler} (\texttt{paramhandler/})
+
+Library for handling CLI parameters and flags.
+
+\paragraph{Stream} (\texttt{stream/})
+
+Utils for sending and receiving packets over the network.
 
 \subsection{mandate}
 
