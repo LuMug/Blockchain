@@ -1,35 +1,48 @@
 package ch.samt.blockchain.node;
 
+import ch.samt.blockchain.common.protocol.Protocol;
+
 public class Miner {
     
-    private byte[] theta = new byte[32];
+    private byte[] txHash = new byte[32];
+    private byte[] nonceHash = new byte[32];
+    private byte[] heightHash = new byte[32];
 
-    public void addTx(byte[] hash) {
-        xor(hash);
+    public synchronized void addTx(byte[] hash) {
+        for (int i = 0; i < txHash.length; i++) {
+            txHash[i] ^= hash[i];
+        }
     }
     
-    public void setNonce(byte[] nonceHash) {
-        xor(nonceHash);
+    public void setNonce(byte[] nonce) {
+        nonceHash = Protocol.CRYPTO.sha256(nonce);
     }
 
-    public void setHeight(byte[] heightHash) {
-        xor(heightHash);
+    public void setHeight(int height) {
+        heightHash = Protocol.CRYPTO.sha256(toBytes(height));
     }
     
-    public byte[] getTheta() {
-        return theta;
+    public byte[] getTxHash() {
+        return txHash;
     }
 
     public void clear() {
-        for (int i = 0; i < theta.length; i++) {
-            theta[i] = 0;
+        for (int i = 0; i < txHash.length; i++) {
+            txHash[i] = nonceHash[i] = heightHash[i] = 0;
         }
     }
 
-    private void xor(byte[] data) {
-        for (int i = 0; i < theta.length; i++) {
-            theta[i] ^= data[i];
-        }
+    private static byte[] toBytes(int v) {
+        return new byte[]{
+            (byte) ((v >> 030) & 255),
+            (byte) ((v >> 020) & 255),
+            (byte) ((v >> 010) & 255),
+            (byte) ((v >> 000) & 255)
+        };
+    }
+
+    public boolean isMined() {
+        return true;
     }
 
 }

@@ -76,8 +76,15 @@ public abstract class Node extends Thread {
         this(port, "blockchain_" + port + ".db");
     }
 
+    public abstract void deployTx(byte[] packet);
     abstract void broadcastTx(byte[] packet, Connection exclude);
-    abstract void deployTx(byte[] packet);
+    abstract void powSolved(byte[] packet);
+
+    public void broadcast(byte[] packet) {
+        for (var peer : neighbours) {
+            peer.sendPacket(packet);
+        }
+    }
 
     @Override
     public void run() {

@@ -2,6 +2,8 @@ package ch.samt.blockchain.node;
 
 import java.net.Socket;
 
+import org.tinylog.Logger;
+
 import ch.samt.blockchain.common.protocol.Protocol;
 
 public class HighLevelConnection extends Connection {
@@ -13,8 +15,13 @@ public class HighLevelConnection extends Connection {
     protected void processHighLevelPacket(byte[] data) {
         switch (data[0]) {
             case Protocol.SEND_TRANSACTION -> processSendTransactionPacket(data);
+            case Protocol.POW_SOLVED -> processPoWSolvedPacket(data);
+            default -> Logger.info("Unknown packet: " + data[0]);
         }
-        // serve hash of block bla bla
+    }
+
+    private void processPoWSolvedPacket(byte[] data) {
+        super.node.powSolved(data);
     }
 
     private void processSendTransactionPacket(byte[] data) {

@@ -83,7 +83,7 @@ public abstract class Connection extends Thread {
         waitNodeRegistration(-1);
     }
 
-    public boolean sendPacket(byte[] packet) {
+    public synchronized boolean sendPacket(byte[] packet) {
         try {
             out.writePacket(packet);
             return true;

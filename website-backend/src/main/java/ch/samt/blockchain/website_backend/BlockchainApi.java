@@ -29,14 +29,14 @@ public class BlockchainApi implements HttpServer {
                     .threadPool(MAX_THREADS);
         }
 
-        http.staticFiles.externalLocation(wwwPath);
+        /*http.staticFiles.externalLocation(wwwPath);
 
         // Allow CORS
         http.after((req, res) -> {
             res.header("Access-Control-Allow-Origin", "*");
             res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
             res.header("Content-Security-Policy", "default-src 'none'");
-        });
+        });*/
 
         http.post("/getLatestBlocks/:from/:to", getLatestBlocks());
         http.post("/getLatestTransactions/:from/:to", getLatestTransactions());

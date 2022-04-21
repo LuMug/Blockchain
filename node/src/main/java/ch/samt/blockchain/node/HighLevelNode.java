@@ -2,6 +2,7 @@ package ch.samt.blockchain.node;
 
 import org.tinylog.Logger;
 
+import ch.samt.blockchain.common.protocol.PoWSolvedPacket;
 import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.common.protocol.SendTransactionPacket;
 
@@ -18,17 +19,17 @@ public class HighLevelNode extends Node {
         super(port);
     }
 
+    {
+        newBlock();
+    }
+
     @Override
     void broadcastTx(byte[] packet, Connection exclude) {
         if (!registerTx(packet)) {
             return;
         }
 
-        for (var peer : super.neighbours) {
-            if (peer != exclude) {
-                peer.sendPacket(packet);
-            }
-        }
+        broadcast(packet, exclude);
     }
 
     @Override
@@ -42,12 +43,45 @@ public class HighLevelNode extends Node {
         }
     }
 
+    @Override
+    void powSolved(byte[] data) {
+        var packet = new PoWSolvedPacket(data);
+
+        miner.setNonce(packet.getNonce());
+        if (!miner.isMined()) {
+            // Setting nonce again removes the nonce,
+            // Due to XOR property.
+            miner.setNonce(packet.getNonce());
+            Logger.info("Invalid PoW received");
+            return;
+        }
+
+        super.database.addBlock(
+            50, // DIFFICULTY
+            miner.getTxHash(),
+            packet.getNonce(),
+            packet.getMiner(),
+            packet.getTimestamp()
+        );
+
+        newBlock();
+    }
+
+    private void newBlock() {
+        Logger.info("New block");
+        miner.setHeight(super.database.getBlockchainLength() + 1);
+
+        // mempool -> miner + database
+    }
+
     private boolean registerTx(byte[] data) {
         var packet = new SendTransactionPacket(data);
 
         if (mempool.contains(packet.getSignature())) {
             return false;
         }
+
+        // Check amount
 
         long amount = packet.getAmount();
 
@@ -64,6 +98,10 @@ public class HighLevelNode extends Node {
             Logger.info("Insufficient UTXO");
             return false;
         }
+
+        // TODO: Check last hash
+
+        // Check signature
 
         byte[] toSig = SendTransactionPacket.toSign(
             packet.getRecipient(),
@@ -97,10 +135,19 @@ public class HighLevelNode extends Node {
         super.database.updateUTXO(sender,                -amount);
         super.database.updateUTXO(packet.getRecipient(), +amount);
 
-        // miner.addTx(hash);
+        var txHash = Protocol.CRYPTO.sha256(data);
+
+        miner.addTx(txHash);
 
         return true;
     }
 
+    private void broadcast(byte[] packet, Connection exclude) {
+        for (var peer : super.neighbours) {
+            if (peer != exclude) {
+                peer.sendPacket(packet);
+            }
+        }
+    }
 
 }
