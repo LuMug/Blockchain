@@ -293,6 +293,8 @@ Constants related to the peer connections:
 \end{tabular}
 \egroup{}
 
+\pagebreak
+
 \hypertarget{packets}{}
 \subsection{Packets}
 
@@ -300,40 +302,102 @@ Packets are sent over a TCP socket stream.
 Each packet is preceded by the length of the packet,
 encoded as a Little-Endian 32-bit integer.
 
+
+\newcommand{\tline}{
+    \\ \hline
+}
+
+\newcommand{\packettabular}[1]{
+    \bgroup{}
+    \def\arraystretch{1.25}
+    \begin{center}
+        \begin{tabular}{|l|l|l|}
+            \hline
+            \textbf{Name} & \textbf{Type} & \textbf{Descritpion}
+            \tline
+            ID & u8 & Packet Identifier
+            \tline
+            #1
+            \tline
+        \end{tabular}
+    \end{center}
+    \egroup{}
+}
+
 \subsubsection{PoWSolvedPacket}
 
-% TODO
+Used when a miner mines a block.
+
+\packettabular{
+    nonce & blob & The mined nonce
+    \tline
+    miner & blob & Address of the miner
+    \tline
+    timestamp & u64 & Timestamp
+}
 
 \subsubsection{RegisterNodePacket}
 
-% TODO
+Used to register the node service to another peer or a seedeer.
+
+\packettabular{
+    port & u16 & The port of the service
+    \tline
+    uuid & UUID & The UUID of the node
+}
 
 \subsubsection{RequestBlockchainLengthPacket}
 
-% TODO
+\packettabular{
+
+}
 
 \subsubsection{RequestIfHashExistsPacket}
 
-% TODO
+\packettabular{
+
+}
 
 \subsubsection{RequestNodesPacket}
 
-% TODO
+\packettabular{
+    amount & u32 & Requested amount
+    \tline
+    exclude & UUID & UUID to exclude
+}
 
 \subsubsection{SendTransactionPacket}
 
-% TODO
+\packettabular{
+    timestamp & u64 & The timestamp
+    \tline
+    recipient & blob & Recipient address
+    \tline
+    sender\_pub & blob & Sender public key
+    \tline
+    amount & u64 & The amount of the transaction
+    \tline
+    last\_tx\_hash & blob & The hash of the last transaction
+    \tline
+    signature & blob & The signature
+}
 
 \subsubsection{ServeBlockchainLengthPacket}
 
-% TODO
+\packettabular{
+
+}
 
 \subsubsection{ServeIfHashExistsPacket}
 
-% TODO
+\packettabular{
+
+}
 
 \subsubsection{ServeNodesPacket}
 
-% TODO
+\packettabular{
+
+}
 
 \end{document}
