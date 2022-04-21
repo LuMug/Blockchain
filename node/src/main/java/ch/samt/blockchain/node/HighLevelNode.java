@@ -1,8 +1,5 @@
 package ch.samt.blockchain.node;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
-
 import org.tinylog.Logger;
 
 import ch.samt.blockchain.common.protocol.Protocol;
@@ -10,7 +7,8 @@ import ch.samt.blockchain.common.protocol.SendTransactionPacket;
 
 public class HighLevelNode extends Node {
 
-    private Set<byte[]> lastTxSigHashTable = new LinkedHashSet<>();
+    private Mempool mempool = new Mempool();
+    private Miner miner = new Miner();
     
     public HighLevelNode(int port, String db) {
         super(port, db);
@@ -47,19 +45,41 @@ public class HighLevelNode extends Node {
     private boolean registerTx(byte[] data) {
         var packet = new SendTransactionPacket(data);
 
-        if (lastTxSigHashTable.contains(packet.getSignature())) {
+        if (mempool.contains(packet.getSignature())) {
             return false;
         }
-        
-        // TODO check validity
-        
-        lastTxSigHashTable.add(packet.getSignature());
 
-        // Limit table capacity
-        if (lastTxSigHashTable.size() > Protocol.Node.MAX_TX_POOL_SIZE) {
-            var oldest = lastTxSigHashTable.iterator().next();
-            lastTxSigHashTable.remove(oldest);
+        long amount = packet.getAmount();
+
+        if (amount < 0) {
+            Logger.info("Transaction with negative amount");
+            return false;
         }
+
+        byte[] sender = Protocol.CRYPTO.sha256(packet.getSenderPublicKey());
+
+        long utxo = super.database.getUTXO(sender);
+
+        if (amount > utxo) {
+            Logger.info("Insufficient UTXO");
+            return false;
+        }
+
+        byte[] toSig = SendTransactionPacket.toSign(
+            packet.getRecipient(),
+            packet.getSenderPublicKey(),
+            amount,
+            packet.getLastTransactionHash()
+        );
+
+        var pub = Protocol.CRYPTO.publicKeyFromEncoded(packet.getSenderPublicKey());
+
+        if (!Protocol.CRYPTO.verify(packet.getSignature(), toSig, pub)) {
+            Logger.warn("Transaction with invalid signature");
+            return false;
+        }
+
+        mempool.add(packet);
 
         Logger.info("Received transaction");
 
@@ -67,12 +87,17 @@ public class HighLevelNode extends Node {
 
         super.database.addTx(
             blockId,
-            packet.getSender(),
+            packet.getSenderPublicKey(),
             packet.getRecipient(),
             packet.getAmount(),
             packet.getTimestamp(),
             packet.getLastTransactionHash(),
             packet.getSignature());
+
+        super.database.updateUTXO(sender,                -amount);
+        super.database.updateUTXO(packet.getRecipient(), +amount);
+
+        // miner.addTx(hash);
 
         return true;
     }

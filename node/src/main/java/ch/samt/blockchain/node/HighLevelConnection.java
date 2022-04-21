@@ -14,6 +14,7 @@ public class HighLevelConnection extends Connection {
         switch (data[0]) {
             case Protocol.SEND_TRANSACTION -> processSendTransactionPacket(data);
         }
+        // serve hash of block bla bla
     }
 
     private void processSendTransactionPacket(byte[] data) {

@@ -38,12 +38,53 @@ The nodes run code from the contract program at a relevant event, such as a rece
 Users can interact with the contract via transactions. Contracts can often interact with other contracts
 and some of them are Turing-complete.
 
-\subsubsection{Deployment}
+%\subsubsection{Deployment}
+%
+%A smart contract is deployed by sending a transaction to the blockchain which includes the compiled program
+%as well as a special receiver address.
+%
+%The program is added to the current block. When the block is added to the blockchain, the contract
+%will execute one time to set its initial state, at which point the smart contract will now be valid and running.
 
-A smart contract is deployed by sending a transaction to the blockchain which includes the compiled program
-as well as a special receiver address.
+\subsection{Difficulty}
 
-The program is added to the current block. When the block is added to the blockchain, the contract
-will execute one time to set its initial state, at which point the smart contract will now be valid and running.
+If we want the time gap between two mined blocks to be approximately
+\(N\) units of time, we need adjust the difficulty of the mining process every 
+\(M\) units of time such that
+
+\[
+    \text{difficulty}_\text{current} =
+    \text{difficulty}_\text{previous}
+    \cdot \frac{M}{\Delta (\frac{M}{N})}
+\]
+
+where \(\Delta (x)\) is the units of time to mine the last \(x\) blocks.
+
+Or we could adjust the difficulty \(N\) blocks
+
+\[
+    \text{difficulty}_\text{current} =
+    \text{difficulty}_\text{previous}
+    \cdot \frac{N \cdot k}{\Delta(k)}
+\]
+
+where \(k\) is the number of last blocks on which you want to
+base the adjustment on. These two formulas are the same.
+
+\subsection{Mempool}
+
+The mempool is the place where uncofirmed transactions
+wait to be confirmed.
+When a transaction is broadcasted and received by the nodes,
+if valid, it is put in the mempool.
+When a new block is created, up to X transactions are removed from the
+mempool and will be included in the next block.
+
+\subsection{Deployment}
+
+To deploy a transaction a node has to broadcast it to his peers.
+To avoid flooding of the network, a node will only broadcast
+the same transaction once (as long as the transaction is still in the mempool).
+% TODO link mempool to section
 
 \end{document}

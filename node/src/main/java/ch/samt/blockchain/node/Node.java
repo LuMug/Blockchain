@@ -28,19 +28,39 @@ import ch.samt.blockchain.node.utils.CircularIterator;
 
 public abstract class Node extends Thread {
     
+    /**
+     * The <code>UUID</code> of this node.
+     */
     public final UUID uuid = UUID.randomUUID();
 
+    /**
+     * The port of the service.
+     */
     public final int port;
 
-    BlockchainDatabase database;
+    /**
+     * The database interface.
+     */
+    protected BlockchainDatabase database;
 
-    List<Connection> neighbours; // TODO peers
+    /**
+     * The list of peers.
+     */
+    protected List<Connection> neighbours; // TODO peers
 
-    ScheduledExecutorService scheduler;
+    /**
+     * Scheduler.
+     */
+    protected ScheduledExecutorService scheduler;
 
     // TODO: discard connection if hasn't registered in time
     // (interrupt Thread)
 
+    /**
+     * 
+     * @param port the port of the service
+     * @param db the name of the sqlite database file
+     */
     public Node(int port, String db) {
         this.port = port;
         this.database = new BlockchainDatabaseImpl(db);
@@ -48,13 +68,13 @@ public abstract class Node extends Thread {
         this.scheduler = Executors.newScheduledThreadPool(5);
     }
 
+    /**
+     * 
+     * @param port the port of the service
+     */
     public Node(int port) {
         this(port, "blockchain_" + port + ".db");
     }
-
-    // TODO: don't ask seeder too many times
-    // if it responds with less than requested nodes
-    // (also peers?)
 
     abstract void broadcastTx(byte[] packet, Connection exclude);
     abstract void deployTx(byte[] packet);
@@ -82,6 +102,11 @@ public abstract class Node extends Thread {
         }
     }
 
+    /**
+     * Adds a peer to the list of peers.
+     * 
+     * @param connection the connection to register
+     */
     protected void registerNode(Connection connection) {
         neighbours.add(connection);
 
@@ -96,6 +121,9 @@ public abstract class Node extends Thread {
         database.cacheNode(connection.getServiceAddress());
     }
 
+    /**
+     * Tries to connect to the network.
+     */
     public void connect() {
         Logger.info("Connecting to blockchain");
 
@@ -113,6 +141,11 @@ public abstract class Node extends Thread {
         updateFromNeighbours();
     }
 
+    /**
+     * 
+     * @param address
+     * @return
+     */
     private boolean neighboursContain(InetSocketAddress address) {
         for (var neighbour : neighbours) {
             if (neighbour.getServiceAddress().equals(address)) {
@@ -123,6 +156,11 @@ public abstract class Node extends Thread {
         return false;
     }
 
+    /**
+     * 
+     * @param amount
+     * @return
+     */
     private InetSocketAddress[] querySeeders(int amount) {
         int start = (int) (Math.random() * Seeders.SEEDERS.length);
         for (var index : new CircularIterator(Seeders.SEEDERS.length, start)) {
@@ -147,6 +185,11 @@ public abstract class Node extends Thread {
         return new InetSocketAddress[0];
     }
 
+    /**
+     * 
+     * @param amount
+     * @return
+     */
     private InetSocketAddress[] queryNeighbours(int amount) {
         // Select random neighbour
         var neighbour = getRandomNeighbour();
@@ -158,6 +201,12 @@ public abstract class Node extends Thread {
         return neighbour.requestNodes(amount);
     }
 
+    /**
+     * 
+     * @param address
+     * @param port
+     * @return
+     */
     private Socket tryConnection(String address, int port) {
         try {
             return new Socket(address, port);
@@ -166,10 +215,19 @@ public abstract class Node extends Thread {
         }
     }
 
+    /**
+     * 
+     * @param address
+     * @return
+     */
     private Socket tryConnection(InetSocketAddress address) {
         return tryConnection(address.getHostString(), address.getPort());
     }
 
+    /**
+     * 
+     * @param connection
+     */
     public void disconnect(Connection connection) {
         neighbours.remove(connection);
         if (neighbours.size() == 0) {
@@ -178,6 +236,9 @@ public abstract class Node extends Thread {
         }
     }
 
+    /**
+     * 
+     */
     private void updateFromNeighbours() {
         int requested = 0;
         int received = 0;
@@ -204,6 +265,9 @@ public abstract class Node extends Thread {
         }
     }
 
+    /**
+     * 
+     */
     private void updateFromSeeder() {
         Logger.info("No active node found. Connecting to seeder");
 
@@ -236,6 +300,9 @@ public abstract class Node extends Thread {
         }
     }
 
+    /**
+     * 
+     */
     private void updateFromCache() {
         var nodes = database.getCachedNodes(); // TODO: ritorna [] + interface
         for (int i = 0; i < nodes.length && neighbours.size() < Protocol.Node.MIN_CONNECTIONS; i++) {
@@ -256,6 +323,9 @@ public abstract class Node extends Thread {
         }
     }
 
+    /**
+     * 
+     */
     private void initPeriodicUpdate() {
         schedule(
             () -> {
@@ -278,6 +348,9 @@ public abstract class Node extends Thread {
             TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * 
+     */
     private void initPeridicRegister() {
         schedule(
             () -> registerToSeeder(),
@@ -311,6 +384,11 @@ public abstract class Node extends Thread {
         Logger.error("No active seeder found");
     }
 
+    /**
+     * Draws a random peer.
+     * 
+     * @return a random peer
+     */
     private Connection getRandomNeighbour() {
         if (neighbours.size() == 0) {
             return null;
@@ -319,11 +397,17 @@ public abstract class Node extends Thread {
         return neighbours.get((int) (Math.random() * neighbours.size()));
     }
 
+    /**
+     * 
+     * @param amount
+     * @param exclude the <code>UUID</code> to exclude
+     * @return
+     */
     public InetSocketAddress[] drawNodes(int amount, UUID exclude) {
         synchronized (neighbours) {
             amount = Math.min(
                 Math.min(amount, neighbours.size()),
-                30 //MAX_REQUEST
+                30 //MAX_REQUEST TODO
             );
 
             int excludeIndex = 0;
@@ -352,6 +436,11 @@ public abstract class Node extends Thread {
         }
     }
 
+    /**
+     * 
+     * @param uuid
+     * @return
+     */
     private int getIndexFromUUID(UUID uuid) {
         int i = 0; // optimized iteration for LinkedList
         for (var neighbour : neighbours) {
@@ -364,6 +453,12 @@ public abstract class Node extends Thread {
         return -1;
     }
 
+    /**
+     * 
+     * @param arr
+     * @param val
+     * @return
+     */
     private static boolean contains(int[] arr, int val) {
         for (int v : arr) {
             if (v == val) {
@@ -374,6 +469,11 @@ public abstract class Node extends Thread {
         return false;
     }
 
+    /**
+     * 
+     * @param in
+     * @param out
+     */
     public void attachConsole(InputStream in, PrintStream out) {
         // Interactive console
         printHelp(out);
@@ -395,10 +495,21 @@ public abstract class Node extends Thread {
         }
     }
 
+    /**
+     * 
+     * @param command
+     * @param initialDelay
+     * @param delay
+     * @param unit
+     */
     protected void schedule(Runnable command, long initialDelay, long delay, TimeUnit unit) {
         scheduler.scheduleWithFixedDelay(command, initialDelay, delay, unit);
     }
 
+    /**
+     * 
+     * @param ps
+     */
     private void printNeighbours(PrintStream ps) {
         ps.println("Total neighbours (" + neighbours.size() + ")");
         for (var node : neighbours) {
@@ -407,6 +518,10 @@ public abstract class Node extends Thread {
         ps.println();
     }
 
+    /**
+     * 
+     * @param ps
+     */
     private void printHelp(PrintStream ps) {
         ps.println("""
             Node console - help

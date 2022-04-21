@@ -38,14 +38,21 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         """
         CREATE TABLE IF NOT EXISTS tx (
             block_id INT,
-            sender BINARY(32),
+            sender_pub BINARY(32),
             recipient BINARY(32),
             amount INT,
             timestamp DATETIME,
             last_tx_hash BINARY(32),
-            signature BINARY(32)
-        );     
-        """ // PRIMARY KEY (timestamp, sender) ?
+            signature BINARY(64) 
+        );
+        """, // PRIMARY KEY (timestamp, sender) ?
+             // giusta la dimensione di sig?
+        """
+        CREATE TABLE IF NOT EXISTS wallet (
+            address BINARY(32),
+            amount INT
+        )
+        """
     };
 
     /* Node cache */
@@ -194,12 +201,12 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public void addTx(int blockId, byte[] sender, byte[] recipient, long amount, long timestamp, byte[] lastTxHash, byte[] signature) {
+    public void addTx(int blockId, byte[] senderPublicKey, byte[] recipient, long amount, long timestamp, byte[] lastTxHash, byte[] signature) {
         var statement = connection.prepareStatement("INSERT INTO tx VALUES (?, ?, ?, ?, ?, ?, ?);");
 
         try {
             statement.setInt(1, blockId);
-            statement.setBytes(2, sender);
+            statement.setBytes(2, senderPublicKey);
             statement.setBytes(3, recipient);
             statement.setLong(4, amount);
             statement.setTimestamp(5, new Timestamp(timestamp));
@@ -209,6 +216,17 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+
+    @Override
+    public long getUTXO(byte[] address) {
+        return -1;
+    }
+
+    @Override
+    public void updateUTXO(byte[] address, long offset) {
+
     }
 
     private void init() {

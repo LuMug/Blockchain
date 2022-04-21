@@ -68,7 +68,7 @@ public class Forger {
 
         System.out.println("Amount:\t\t" + packet.getAmount());
         System.out.println("Recipient:\t" + cryptoUtils.toBase64(packet.getRecipient()));
-        System.out.println("Sender:\t\t" + cryptoUtils.toBase64(packet.getSender()));
+        System.out.println("Sender:\t\t" + cryptoUtils.toBase64(packet.getSenderPublicKey()));
         System.out.println("Signature:\t" + cryptoUtils.toBase64(packet.getSignature()));
         System.out.println("LastHash:\t" + cryptoUtils.toBase64(packet.getLastTransactionHash()));
     }
@@ -83,13 +83,12 @@ public class Forger {
         }
         
         var priv = loadPrivateKey(privKeyPath);
-        var pub = cryptoUtils.publicKeyFromPrivateKey(priv);
+        var senderPublicKey = cryptoUtils.publicKeyFromPrivateKey(priv).getEncoded();
         var recipient = cryptoUtils.fromBase64(to);
-        var sender = cryptoUtils.sha256(pub.getEncoded());
         
         // Forge transaction
 
-        var data = SendTransactionPacket.toSign(recipient, sender, amountLong, lastTxHash);
+        var data = SendTransactionPacket.toSign(recipient, senderPublicKey, amountLong, lastTxHash);
         
         byte[] signature = null;
         try {
@@ -98,7 +97,7 @@ public class Forger {
             System.err.println("Error while signing tx: " + e.getMessage());
         }
         
-        var packet = SendTransactionPacket.create(recipient, sender, amountLong, lastTxHash, signature);
+        var packet = SendTransactionPacket.create(recipient, senderPublicKey, amountLong, lastTxHash, signature);
         writeFile(outPath, packet);
 
         System.out.println("\nTransaction packet written to output\n");

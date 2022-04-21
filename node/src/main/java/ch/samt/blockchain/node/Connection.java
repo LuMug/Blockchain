@@ -18,13 +18,13 @@ import ch.samt.blockchain.common.utils.stream.PacketOutputStream;
 
 public abstract class Connection extends Thread {
 
-    UUID nodeUuid;
-    InetSocketAddress serviceAddress;
+    protected UUID nodeUuid;
+    protected InetSocketAddress serviceAddress;
 
-    Node node;
-    Socket socket;
-    PacketInputStream in;
-    PacketOutputStream out;
+    protected Node node;
+    protected Socket socket;
+    protected PacketInputStream in;
+    protected PacketOutputStream out;
 
     private BlockingQueue<InetSocketAddress[]> nodesRequestResponse = new ArrayBlockingQueue<>(1);
 

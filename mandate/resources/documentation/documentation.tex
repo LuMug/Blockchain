@@ -9,11 +9,19 @@
 \usepackage{xcolor} % colored text
 \usepackage{graphics} % images
 \usepackage{listings} % format code
-\usepackage{tikz-cd} % tikz-cd diagrams
+\usepackage{tikz} % tikz diagrams
+\usepackage{pgfgantt} % gantt charts https://github.com/skafdasschaf/latex-pgfgantt
 \usepackage{makecell} % cell scopes for tables
 \usepackage[normalem]{ulem} % authour strikethrough
 \usepackage{biblatex} % references
 \usepackage{subfiles} % project structure - best loaded last in the preamble
+
+\usetikzlibrary{ % tikz packages
+	matrix,
+	positioning,
+	fit,
+	cd % tikz-cd communitative diagrams
+}
 
 \hypersetup{
     colorlinks=true,
@@ -114,12 +122,78 @@
 
 \nocite{*} % cite all entries
 
+
 \printbibliography[type=online, heading=subbibliography, title=Sitography]
 
+\pagebreak
+
+%%%%%%%%%%%
+
+\section{Assets}
+
+Assets to use
+
+\begin{lstlisting}[style=sql]
+	CREATE TABLE IF NOT EXISTS block (
+		id INT PRIMARY KEY,
+		difficulty INT,
+		tx_hash BINARY(32),
+		nonce BINARY(32),
+		miner BINARY(32),
+		mined DATETIME
+	);
+\end{lstlisting}
+
+\begin{lstlisting}[style=sql]
+	CREATE TABLE IF NOT EXISTS tx (
+		block_id INT,
+		sender_pub BINARY(32),
+		recipient BINARY(32),
+		amount INT,
+		timestamp DATETIME,
+		last_tx_hash BINARY(32),
+		signature BINARY(64) 
+	);
+\end{lstlisting}
+
+\begin{lstlisting}[style=sql]
+	CREATE TABLE IF NOT EXISTS wallet (
+		address BINARY(32),
+		amount INT
+	)
+\end{lstlisting}
+
+
+\begin{ganttchart}[
+	vgrid,
+	]{1}{12}
+	\gantttitle{2015}{4}
+	\gantttitle{2016}{4}
+	\gantttitle{2017}{4}
+	% top nodes
+	\ganttbar[name=holiday-2015-top,bar/.style={fill=none, draw=none}]{}{1}{1}
+	\ganttbar[name=holiday-2016-top,bar/.style={fill=none, draw=none}]{}{5}{5}
+	\ganttbar[name=holiday-2017-top,bar/.style={fill=none, draw=none}]{}{9}{9} \\
+	
+	% gantt chart contents
+	\ganttgroup{Group 1}{1}{7} \\
+	\ganttbar{Task 1}{1}{2} \\
+	\ganttlinkedbar{Task 2}{3}{7} \ganttnewline
+	\ganttmilestone{Milestone}{7} \ganttnewline
+	\ganttbar{Final Task}{8}{12}
+	
+	% bottom nodes
+	\ganttbar[name=holiday-2015-bottom,bar/.style={fill=none, draw=none}]{}{1}{1}
+	\ganttbar[name=holiday-2016-bottom,bar/.style={fill=none, draw=none}]{}{5}{5}
+	\ganttbar[name=holiday-2017-bottom,bar/.style={fill=none, draw=none}]{}{9}{9}
+	
+	% shading
+	\begin{scope}
+	\draw [opacity=0.2,line width=12] (holiday-2015-top) -- ($(holiday-2015-bottom)+(0,-11pt)$);
+	\draw [opacity=0.2,line width=12] (holiday-2016-top) -- ($(holiday-2016-bottom)+(0,-11pt)$);
+	\draw [opacity=0.2,line width=12] (holiday-2017-top) -- ($(holiday-2017-bottom)+(0,-11pt)$);
+	\end{scope}
+	
+\end{ganttchart}
+
 \end{document}
-
-% COMPILE FROM ROOT
-% cd mandate/resources/documentation; lualatex documentation.tex; mv documentation.pdf ../..; cd ../../..;
-
-% COMPILE FROM ROOT (new references)
-% cd mandate/resources/documentation; lualatex documentation.tex; biber documentation; lualatex documentation.tex; lualatex documentation.tex; mv documentation.pdf ../..; cd ../../..;

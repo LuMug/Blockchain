@@ -9,7 +9,7 @@ public class SendTransactionPacket {
 
     private byte[] recipient;
 
-    private byte[] sender;
+    private byte[] senderPublicKey;
 
     private long amount;
 
@@ -26,8 +26,8 @@ public class SendTransactionPacket {
     public byte[] getRecipient() {
         return recipient;
     }
-    public byte[] getSender() {
-        return sender;
+    public byte[] getSenderPublicKey() {
+        return senderPublicKey;
     }
 
     public byte[] getSignature() {
@@ -42,14 +42,14 @@ public class SendTransactionPacket {
         Offset offset = new Offset(1);
         this.timestamp = readLongLE(packet, offset);
         this.recipient = readBlob(packet, offset);
-        this.sender = readBlob(packet, offset);
+        this.senderPublicKey = readBlob(packet, offset);
         this.amount = readLongLE(packet, offset);
         this.lastTransactionHash = readBlob(packet, offset);
         this.signature = readBlob(packet, offset);
     }
 
-    public static byte[] create(byte[] recipient, byte[] sender, long amount, byte[] lastTransactionHash, byte[] signature) {
-        int size = 33 + recipient.length + sender.length + lastTransactionHash.length + signature.length;
+    public static byte[] create(byte[] recipient, byte[] senderPublicKey, long amount, byte[] lastTransactionHash, byte[] signature) {
+        int size = 33 + recipient.length + senderPublicKey.length + lastTransactionHash.length + signature.length;
 
         byte[] packet = new byte[size];
         Offset offset = new Offset();
@@ -57,7 +57,7 @@ public class SendTransactionPacket {
         writeByte(packet, Protocol.SEND_TRANSACTION, offset);
         writeLongLE(packet, 0, offset);
         writeBlob(packet, recipient, offset);
-        writeBlob(packet, sender, offset);
+        writeBlob(packet, senderPublicKey, offset);
         writeLongLE(packet, amount, offset);
         writeBlob(packet, lastTransactionHash, offset);
         writeBlob(packet, signature, offset);
@@ -65,14 +65,14 @@ public class SendTransactionPacket {
         return packet;
     }
 
-    public static byte[] toSign(byte[] recipient, byte[] sender, long amount, byte[] lastTransactionHash) {
-        int size = 20 + recipient.length + sender.length + lastTransactionHash.length;
+    public static byte[] toSign(byte[] recipient, byte[] senderPublicKey, long amount, byte[] lastTransactionHash) {
+        int size = 20 + recipient.length + senderPublicKey.length + lastTransactionHash.length;
 
         byte[] packet = new byte[size];
         Offset offset = new Offset();
 
         writeBlob(packet, recipient, offset);
-        writeBlob(packet, sender, offset);
+        writeBlob(packet, senderPublicKey, offset);
         writeLongLE(packet, amount, offset);
         writeBlob(packet, lastTransactionHash, offset);
 

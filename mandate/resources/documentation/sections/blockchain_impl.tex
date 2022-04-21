@@ -86,7 +86,6 @@ Start with a random index, if that seeder is unreachable traverse the array in a
 until one is reachable.
 
 % Circular iterator
-
 \begin{center}
     \begin{tikzcd}
         &&& {\text{rnd}} \\
@@ -127,6 +126,107 @@ When a node receives a \packet{RequestNodes}
 it will try to randomly draw as many nodes as requested (max
 \const{MAX\_REQUEST}) excluding the requester itself.
 The \packet{ServeRequestNodes} response packet will be sent back.
+
+\pagebreak
+
+\subsection{Wallet}
+
+\subsubsection{Keypair}
+
+A wallet can be create by generating an \textbf{EdDSA}
+(Elliptic Curve Digital Signature Algorithm) keypair
+on the \textit{ed25519} curve.
+
+The public key can be retrieved given the private key.
+
+\subsubsection{Address}
+
+The public wallet address is given by the hash of the public key.
+
+\[
+    \text{address}=\text{SHA}_{256}(\text{key}_\text{priv})
+\]
+
+and the human-readable version
+
+\[
+    \text{address}_\text{UTF-8}=\text{base64}(\text{SHA}_{256}(\text{key}_\text{priv}))
+\]
+
+\subsection{Mining}
+
+A miner will try to compute the following:
+
+\[
+    \theta =
+    \text{SHA}_{256}(\text{height})
+    \oplus
+    \text{SHA}_{256}(\text{nonce})
+    \oplus
+    \underset{i}{\oplus}\,
+    \text{SHA}_{256}(\text{tx}_i)
+\]
+
+Where \(\oplus\) denotes the XOR operator and 
+\(\underset{i}{\oplus}\) denotes the XOR over a set,
+so \(0 \leq i < \text{length}(\text{tx})\).
+
+A block is mined if a value for \textit{nonce} such that
+
+\[
+    \Theta \text{TODO}
+\]
+
+is found.
+
+\subsection{Nodes}
+
+\begin{center}
+    \begin{tikzpicture}[font=\ttfamily,
+        mymatrix/.style={matrix of nodes, nodes=typetag, row sep=1em},
+        mycontainer/.style={draw=gray, inner sep=1ex},
+        typetag/.style={draw=gray, inner sep=1ex, anchor=west},
+        title/.style={draw=none, color=gray, inner sep=0pt}
+        ]
+        \matrix[mymatrix] (mx1) {
+            |[title]|API Node \phantom{g} \\ % \phantom{g} to add an invisible g
+                                             % otherwise m2 is taller
+            Full Node \\
+        };
+        \matrix[mymatrix, right=of mx1.north east, matrix anchor=north west] (mx2) {
+            |[title]|Mining Node \\
+            Full Node \\
+        };
+        \matrix[mymatrix, right=of mx2.north east, matrix anchor=north west] (mx3) {
+            |[title]|Full Node \\
+        };
+    
+        \node[mycontainer, fit=(mx1)] {};
+        \node[mycontainer, fit=(mx2)] {};
+        \node[mycontainer, fit=(mx3)] {};
+    \end{tikzpicture}
+\end{center}
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{center}
+    \begin{tabular}{ |c|c|c|c| }
+        \hline
+        &
+        \textbf{\makecell[c]{Makes new \\ blocks}} &
+        \textbf{\makecell[c]{Deploys \\ transactions}} &
+        \textbf{\makecell[c]{knows all \\ transactions}} \\
+        \hline
+        \makecell[l]{Full Node} & - & - & + \\
+        \hline
+        \makecell[l]{API Node} & - & + & + \\
+        \hline
+        \makecell[l]{Mining Node} & + & - & + \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
 
 \pagebreak
 
@@ -235,10 +335,5 @@ encoded as a Little-Endian 32-bit integer.
 \subsubsection{ServeNodesPacket}
 
 % TODO
-
-
-\subsection{Nodes}
-
-dik
 
 \end{document}

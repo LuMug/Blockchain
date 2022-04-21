@@ -50,10 +50,6 @@ public class CryptoUtils {
         }
     }
 
-    public byte[] SHA256(byte[] digest) {
-        return sha256Digest.digest(digest);
-    }
-
     public Ed25519PublicKeyParameters getPublicKey(AsymmetricCipherKeyPair keyPair) {
         return (Ed25519PublicKeyParameters) keyPair.getPublic();
     }
@@ -68,19 +64,27 @@ public class CryptoUtils {
 
     public byte[] sign(byte[] data, AsymmetricKeyParameter privKey)
             throws DataLengthException, CryptoException {
-        signer.init(true, privKey);
-        signer.update(data, 0, data.length);
-        return signer.generateSignature();
+        synchronized (signer) {
+            signer.init(true, privKey);
+            signer.update(data, 0, data.length);
+            return signer.generateSignature();
+        }
     }
 
     public boolean verify(byte[] sig, byte[] data, AsymmetricKeyParameter publicKey) {
-        verifier.init(false, publicKey);
-        verifier.update(data, 0, data.length);
-        return verifier.verifySignature(sig);
+        synchronized (verifier) {
+            verifier.init(false, publicKey);
+            verifier.update(data, 0, data.length);
+            return verifier.verifySignature(sig);
+        }
     }
 
     public Ed25519PrivateKeyParameters privateKeyFromEncoded(byte[] encoded) {
         return new Ed25519PrivateKeyParameters(encoded, 0);
+    }
+
+    public Ed25519PublicKeyParameters publicKeyFromEncoded(byte[] encoded) {
+        return new Ed25519PublicKeyParameters(encoded, 0);
     }
 
     public Ed25519PublicKeyParameters publicKeyFromPrivateKey(Ed25519PrivateKeyParameters privateKey) {
@@ -88,41 +92,23 @@ public class CryptoUtils {
     }
 
     public byte[] sha256(byte[] digest) {
-        sha256Digest.update(digest);
-        return sha256Digest.digest();
+        return sha256Digest.digest(digest);
     }
-
-    /*public static void main(String[] args) throws CryptoException {
-
-        var cu = new CryptoUtils();
-        var keypair = cu.generateKeyPair();
-
-        var data = "CIAOOO".getBytes();
-        
-        var sig = cu.sign(data, keypair.getPrivate());
-        var res = cu.verify(sig, data, keypair.getPublic());
-        System.out.println(res);
-
-        System.out.println(toBase64(cu.getPublicKey(keypair).getEncoded()));
-        var pub = cu.publicKeyFromPrivateKey(cu.getPrivateKey(keypair));
-        System.out.println(toBase64(pub.getEncoded()));
-    }
-*/
 
     public String getAddress(Ed25519PublicKeyParameters publicKey) {
         return toBase64(sha256(publicKey.getEncoded()));
     }
 
     public String toBase64(byte[] data) {
-        return Base64.getEncoder().encodeToString(data);
+        return base64Encoder.encodeToString(data);
     }
 
     public byte[] fromBase64(byte[] data) {
-        return Base64.getDecoder().decode(data);
+        return base64Decoder.decode(data);
     }
 
     public byte[] fromBase64(String data) {
-        return Base64.getDecoder().decode(data);
+        return base64Decoder.decode(data);
     }
 
 }

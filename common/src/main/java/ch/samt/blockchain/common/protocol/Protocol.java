@@ -1,5 +1,7 @@
 package ch.samt.blockchain.common.protocol;
 
+import ch.samt.blockchain.common.utils.crypto.CryptoUtils;
+
 public class Protocol {
     
     public final static byte REQUEST_NODES                      = 0;
@@ -12,6 +14,9 @@ public class Protocol {
     public final static byte SERVE_REQUEST_IF_HASH_EXISTS       = 7;
     public final static byte POW_SOLVED                         = 8;
     
+    // TODO usare Protocol.Crypto al posto che new CryptoUtils
+    public static final CryptoUtils CRYPTO = new CryptoUtils();
+
     public static class Database {
 
         /**
