@@ -1,5 +1,7 @@
 "use strict";
 
+const port = 6767;
+
 function redirect(name) {
     document.getElementById('frame').src = name;
 }
@@ -23,7 +25,7 @@ async function postData(url = '', data = {}) {
     let href = window.location.href;
     let index = href.indexOf('/', 8);
     href = href.substring(0, index); // compute once
-    url = href + ":6767" + url; /// port
+    url = href + ":" + port + url; /// port
 
     const response = await fetch(url, {
         method: 'POST',

@@ -111,4 +111,43 @@ public class CryptoUtils {
         return base64Decoder.decode(data);
     }
 
+    public byte[] hashBlock(int id, int difficulty, byte[] txHash, byte[] nonce, byte[] miner, byte[] lastHash, long timestamp) {
+        var result = sha256(toBytes(id));
+        xor(result, sha256(toBytes(difficulty)));
+        xor(result, sha256(txHash));
+        xor(result, sha256(nonce));
+        xor(result, sha256(miner));
+        xor(result, sha256(lastHash));
+        xor(result, sha256(toBytes(timestamp)));
+        return result;
+    }
+
+    private static byte[] toBytes(int v) {
+        return new byte[]{
+            (byte) ((v >> 030) & 255),
+            (byte) ((v >> 020) & 255),
+            (byte) ((v >> 010) & 255),
+            (byte) ((v >> 000) & 255)
+        };
+    }
+
+    private static byte[] toBytes(long v) {
+        return new byte[]{
+            (byte) ((v >> 070) & 255),
+            (byte) ((v >> 060) & 255),
+            (byte) ((v >> 050) & 255),
+            (byte) ((v >> 040) & 255),
+            (byte) ((v >> 030) & 255),
+            (byte) ((v >> 020) & 255),
+            (byte) ((v >> 010) & 255),
+            (byte) ((v >> 000) & 255)
+        };
+    }
+
+    private static void xor(byte[] arr1, byte[] arr2) {
+        for (int i = 0; i < arr1.length; i++) {
+            arr1[i] ^= arr2[i];
+        }
+    }
+
 }

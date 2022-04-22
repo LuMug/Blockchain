@@ -2,6 +2,8 @@ package ch.samt.blockchain.nodefull.database;
 
 import java.net.InetSocketAddress;
 
+import ch.samt.blockchain.nodefull.Block;
+
 public interface BlockchainDatabase {
 
     // Node cache
@@ -35,5 +37,7 @@ public interface BlockchainDatabase {
     long getUTXO(byte[] address);
 
     void updateUTXO(byte[] address, long offset);
+
+    Block getBlock(int id);
 
 }

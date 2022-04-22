@@ -1,5 +1,6 @@
 package ch.samt.blockchain.nodeapi;
 
+import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.nodefull.HighLevelNode;
 import spark.Route;
 import spark.Service;
@@ -41,7 +42,8 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
 
         http.post("/getLatestBlocks/:from/:to", getLatestBlocks());
         http.post("/getLatestTransactions/:from/:to", getLatestTransactions());
-        http.post("/getBlockchainSize", getBlockchainSize());
+        http.post("/getBlockchainHeight", getBlockchainHeight());
+        http.post("/getBlock/:id", getBlock());
     }
 
     private Route getLatestBlocks() {
@@ -107,16 +109,66 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
         };
     }
 
-    private Route getBlockchainSize() {
+    private Route getBlockchainHeight() {
         return (req, res) -> {
             res.type("application/json");
             res.status(200);
 
+            int height = super.database.getBlockchainLength();
+
             return """
                         {
-                            "size": "20 Mib"
+                            "height": %
                         }
-                    """;
+                    """.replace("%", Integer.toString(height));
+        };
+    }
+
+    private Route getBlock() {
+        return (req, res) -> {
+            res.type("application/json");
+            res.status(200);
+
+            var param = req.params("id");
+            int id = -1;
+
+            try {
+                id = Integer.parseInt(param);
+            } catch (NumberFormatException e) {
+                return """
+                    {
+                        "status": "Invalid ID"
+                    }        
+                """;
+            }
+
+            var block = super.database.getBlock(id);
+
+            if (block == null) {
+                return """
+                        {
+                            "status": "Not Found"
+                        }
+                """;
+            }
+
+            return """
+                {
+                    "status": "Ok",
+                    "nonce": "%nonce",
+                    "miner": "%miner",
+                    "timestamp": %timestamp,
+                    "last_hash": "%last_hash",
+                    "hash": "%hash",
+                    "nTx": %nTx
+                }
+            """
+                .replace("%nonce", Protocol.CRYPTO.toBase64(block.nonce()))
+                .replace("%miner", Protocol.CRYPTO.toBase64(block.miner()))
+                .replace("%timestamp", Long.toString(block.timestamp()))
+                .replace("%last_hash", Protocol.CRYPTO.toBase64(block.lastHash()))
+                .replace("%hash", Protocol.CRYPTO.toBase64(block.hash()))
+                .replace("%nTx", Integer.toString(block.nTx()));
         };
     }
 

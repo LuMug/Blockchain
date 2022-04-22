@@ -8,6 +8,7 @@ import java.sql.Timestamp;
 import org.tinylog.Logger;
 
 import ch.samt.blockchain.common.protocol.Protocol;
+import ch.samt.blockchain.nodefull.Block;
 
 public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
@@ -221,7 +222,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
     @Override
     public long getUTXO(byte[] address) {
-        var statement = connection.prepareStatement("SELECT utxo FROM wallet WHERE address=?");
+        var statement = connection.prepareStatement("SELECT utxo FROM wallet WHERE address=?;");
         try {
             statement.setBytes(1, address);
         } catch (SQLException e) {
@@ -253,7 +254,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
             }
         }
 
-        var statement = connection.prepareStatement("UPDATE wallet SET utxo=utxo+? WHERE address=?");
+        var statement = connection.prepareStatement("UPDATE wallet SET utxo=utxo+? WHERE address=?;");
         
         try {
             statement.setLong(1, offset);
@@ -262,6 +263,65 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public Block getBlock(int id) {
+        var statement = connection.prepareStatement("SELECT * FROM block WHERE id=?;");
+        try {
+            statement.setInt(1, id);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+        
+        int difficulty = 0;
+        byte[] txHash = null;
+        byte[] nonce = null;
+        byte[] miner = null;
+        byte[] lastHash = new byte[32]; //////////////////////////7
+        long timestamp = 0;
+        
+        try (var result = statement.getResultSet()) {
+            if (!result.next()) {
+                return null;
+            }
+
+            difficulty = result.getInt(2);
+            txHash = result.getBytes(3);
+            nonce = result.getBytes(4);
+            miner = result.getBytes(5);
+            timestamp = result.getTimestamp(6).getTime();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        byte[] hash = Protocol.CRYPTO.hashBlock(id, difficulty, txHash, nonce, miner, lastHash, timestamp);
+        int nTx = countTx(id);
+
+        return new Block(id, difficulty, txHash, nonce, miner, lastHash, timestamp, hash, nTx);
+    }
+
+    private int countTx(int id) {
+        var statement = connection.prepareStatement("SELECT COUNT(*) FROM tx WHERE block_id=?;");
+        try {
+            statement.setInt(1, id);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
+        }
+    
+        try (var result = statement.getResultSet()) {
+            if (!result.next()) {
+                return -1;
+            }
+            return result.getInt(1);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return -1;
     }
 
     private void init() {

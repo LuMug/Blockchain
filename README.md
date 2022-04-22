@@ -1,35 +1,39 @@
 # Blockchain
 
-## Start seeder
+## Installation
+
 ```bash
-gradle :seeder:build
-java -jar <port> seeder/build/libs/seeder.jar
+git clone https://github.com/LuMug/blockchain
+cd blockchain
 ```
 
-## Start node
-```bash
-gradle :node:build
-java -jar node/build/libs/node.jar
+### Unix
+
+There is a handy script to compile everything and generate
+unix executables in the `build/` folder
+
+```
+chmod +x scripts/build.sh
+scripts/build.sh
+cd build
 ```
 
-## Create wallet and transactions
-Generate wallet
-```bash
-java -jar forger.jar -gen -out ./key.priv
+This will generate a folder containing
+
+```
+api
+forger
+miner
+node
+seeder
+webserver
 ```
 
-Create transaction
-```bash
-java -jar forger.jar -priv ./key.priv -amount 10000 -out transaction.tx -to <address>
-```
+### Windows
 
-Create transaction (no HTTP request for lastHash)
-```bash
-java -jar forger.jar -priv ./key.priv -last ./last.tx -amount 10000 -out transaction.tx -to <address>
-java -jar forger.jar -priv ./key.priv -first -amount 10000 -out transaction.tx -to <address>
-```
+Compile using gradle and directly run the JARs
 
-Dump transaction file content
 ```bash
-java -jar forger.jar -dump ./transaction.tx
+./gradlew.bat build
+java -jar <module>/build/libs/<module>.jar
 ```

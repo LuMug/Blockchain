@@ -62,7 +62,7 @@ function update() {
                 div.appendChild(col3);
                 div.appendChild(col4);
 
-                div.onclick = _ => window.location.href = url + '/block=' + hash;
+                div.onclick = _ => window.location.href = url + '/block.html?id=' + id;
 
                 container.prepend(div);
             }

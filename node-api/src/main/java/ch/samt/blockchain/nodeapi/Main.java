@@ -65,7 +65,7 @@ public class Main {
             .ignite()
             .port(apiPort);
 
-        if (handler.any("keystore", "password")) {
+        if (handler.any("keystore", "password")) { // non va
             handler.assertAll("keystore", "password");
 
             http.secure(
@@ -75,9 +75,11 @@ public class Main {
                 null);
         }
 
-        HttpServer api = handler.isNull("db") ?
+        var api = handler.isNull("db") ?
             new BlockchainApi(http, nodePort) :
             new BlockchainApi(http, nodePort, handler.getArg("db"));
+
+        api.start();
 
         api.init();
 
