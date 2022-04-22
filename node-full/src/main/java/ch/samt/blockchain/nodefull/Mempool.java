@@ -9,6 +9,7 @@ import ch.samt.blockchain.common.protocol.SendTransactionPacket;
 
 public class Mempool {
     
+    // fast lookup
     private Set<byte[]> txSigHashTable = new HashSet<>();
 
     private List<SendTransactionPacket> transactions = new LinkedList<>();
@@ -17,14 +18,27 @@ public class Mempool {
         return txSigHashTable.contains(sig);
     }
 
+    public SendTransactionPacket drawOne() {
+        var tx = transactions.get(0);
+        transactions.remove(0);
+        txSigHashTable.remove(tx.getSignature());
+        return tx;
+    }
+
+    // TOOD using .sublist()
+
     public void add(SendTransactionPacket packet) {
         transactions.add(packet);
-        //transactions.subList(arg0, arg1)
+        txSigHashTable.add(packet.getSignature());
     }
 
     public void clear() {
         txSigHashTable.clear();
         transactions.clear();
+    }
+
+    public boolean isEmpty() {
+        return transactions.size() == 0;
     }
 
 }

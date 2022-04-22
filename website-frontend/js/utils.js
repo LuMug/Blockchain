@@ -23,7 +23,7 @@ async function postData(url = '', data = {}) {
     let href = window.location.href;
     let index = href.indexOf('/', 8);
     href = href.substring(0, index); // compute once
-    url = href + url;
+    url = href + ":6767" + url; /// port
 
     const response = await fetch(url, {
         method: 'POST',

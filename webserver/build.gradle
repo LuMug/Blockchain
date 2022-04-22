@@ -1,0 +1,43 @@
+plugins {
+    id 'application'
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'ch.samt.blockchain.webserver.Main'
+    }
+
+    from {
+
+        duplicatesStrategy(DuplicatesStrategy.EXCLUDE)
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+
+    {
+        exclude "META-INF/*.SF"
+        exclude "META-INF/*.DSA"
+        exclude "META-INF/*.RSA"
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':node-full')
+    implementation 'com.google.code.gson:gson:2.7'
+
+    implementation 'com.sparkjava:spark-core:2.9.3'
+    //implementation 'com.sparkjava:spark-template-velocity:2.7.1'
+
+    implementation 'org.apache.logging.log4j:log4j-api:2.11.0'
+    implementation 'org.apache.logging.log4j:log4j-core:2.11.0'
+    implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.11.0'
+    implementation 'org.slf4j:slf4j-api:1.7.5'
+    implementation 'org.slf4j:slf4j-log4j12:1.7.5'
+}
+
+application {
+    mainClass = 'ch.samt.blockchain.webserver.Main'
+}

@@ -9,16 +9,13 @@ public class BlockchainApi implements HttpServer {
 
     private Service http;
     private int port;
-    private String wwwPath;
 
-    public BlockchainApi(int port, String wwwPath) {
+    public BlockchainApi(int port) {
         this.port = port;
-        this.wwwPath = wwwPath;
     }
 
-    public BlockchainApi(Service http, String wwwPath) {
+    public BlockchainApi(Service http) {
         this.http = http;
-        this.wwwPath = wwwPath;
     }
 
     @Override
@@ -28,15 +25,6 @@ public class BlockchainApi implements HttpServer {
                     .port(port)
                     .threadPool(MAX_THREADS);
         }
-
-        http.staticFiles.externalLocation(wwwPath);
-
-        // Allow CORS
-        http.after((req, res) -> {
-            res.header("Access-Control-Allow-Origin", "*");
-            res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
-            res.header("Content-Security-Policy", "default-src 'none'");
-        });
 
         http.post("/getLatestBlocks/:from/:to", getLatestBlocks());
         http.post("/getLatestTransactions/:from/:to", getLatestTransactions());

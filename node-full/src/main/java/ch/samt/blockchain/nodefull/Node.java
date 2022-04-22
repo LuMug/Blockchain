@@ -77,8 +77,9 @@ public abstract class Node extends Thread {
     }
 
     public abstract void deployTx(byte[] packet);
-    abstract void broadcastTx(byte[] packet, Connection exclude);
-    abstract void powSolved(byte[] packet);
+    protected abstract void broadcastTx(byte[] packet, Connection exclude);
+    protected abstract boolean powSolved(byte[] packet);
+    protected abstract void broadcastPoW(byte[] packet, Connection exclude);
 
     public void broadcast(byte[] packet) {
         for (var peer : neighbours) {

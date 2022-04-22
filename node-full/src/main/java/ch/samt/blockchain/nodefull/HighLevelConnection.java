@@ -21,7 +21,7 @@ public class HighLevelConnection extends Connection {
     }
 
     private void processPoWSolvedPacket(byte[] data) {
-        super.node.powSolved(data);
+        super.node.broadcastPoW(data, this);
     }
 
     private void processSendTransactionPacket(byte[] data) {

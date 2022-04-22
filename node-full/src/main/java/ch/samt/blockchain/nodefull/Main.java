@@ -1,8 +1,5 @@
 package ch.samt.blockchain.nodefull;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 public class Main {
 
     public static void main(String[] args) throws Exception {
@@ -17,7 +14,7 @@ public class Main {
         try {
             port = Integer.parseInt(args[0]);
         } catch (NumberFormatException e) {
-            System.out.println("Invalid port: " + args[0]);
+            System.err.println("Invalid port: " + args[0]);
             return;
         }
         
@@ -26,12 +23,7 @@ public class Main {
         // Start service
         node.start();
 
-        if (port == 7777) {
-            var data = Files.readAllBytes(Path.of("/home/paolo/Scrivania/blockchain/test.tx"));
-            node.deployTx(data);
-        }
-
         // Interactive console
         node.attachConsole(System.in, System.out);
-    } // CHECK IF SERVICE ALREADY EXISTS
+    } // TODO CHECK IF SERVICE ALREADY EXISTS
 }

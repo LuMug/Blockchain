@@ -50,7 +50,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         """
         CREATE TABLE IF NOT EXISTS wallet (
             address BINARY(32),
-            amount INT
+            utxo INT
         )
         """
     };
@@ -221,12 +221,47 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
     @Override
     public long getUTXO(byte[] address) {
+        var statement = connection.prepareStatement("SELECT utxo FROM wallet WHERE address=?");
+        try {
+            statement.setBytes(1, address);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    
+        try (var result = statement.getResultSet(); statement) {
+            if (!result.next()) {
+                return -1;
+            }
+            return result.getLong(1);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         return -1;
     }
-
+    
     @Override
     public void updateUTXO(byte[] address, long offset) {
+        if (getUTXO(address) == -1) {
+            var statement = connection.prepareStatement("INSERT INTO wallet VALUES (?, ?);");
+            try {
+                statement.setBytes(1, address);
+                statement.setLong(2, 0);
+                statement.execute();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
 
+        var statement = connection.prepareStatement("UPDATE wallet SET utxo=utxo+? WHERE address=?");
+        
+        try {
+            statement.setLong(1, offset);
+            statement.setBytes(2, address);
+            statement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     private void init() {

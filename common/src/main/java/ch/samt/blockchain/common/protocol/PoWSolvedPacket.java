@@ -31,13 +31,14 @@ public class PoWSolvedPacket {
         return timestmap;
     }
 
-    public static byte[] create(byte[] nonce, byte[] miner) {
-        byte[] packet = new byte[3 + miner.length];
+    public static byte[] create(byte[] nonce, byte[] miner, long timestamp) {
+        byte[] packet = new byte[17 + miner.length + nonce.length];
         Offset offset = new Offset();
 
         writeByte(packet, Protocol.POW_SOLVED, offset);
         writeBlob(packet, nonce, offset);
         writeBlob(packet, miner, offset);
+        writeLongBE(packet, timestamp, offset);
 
         return packet;
     }

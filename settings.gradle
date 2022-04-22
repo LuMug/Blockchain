@@ -6,4 +6,5 @@ include(
     'common',
     'seeder',
     'forger',
+    'webserver',
     'piccions')

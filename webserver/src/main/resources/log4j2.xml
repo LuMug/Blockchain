@@ -1,0 +1,5 @@
+<Configuration name="ConfigTest" status="ERROR" monitorInterval="5">
+    <Appenders>
+        <Null name="null_appender" />
+    </Appenders>
+</Configuration>

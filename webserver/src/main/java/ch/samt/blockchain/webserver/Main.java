@@ -1,16 +1,16 @@
-package ch.samt.blockchain.nodeapi;
+package ch.samt.blockchain.webserver;
 
 import java.util.Scanner;
 
 import spark.Service;
 
 public class Main {
+    
+    public static final int PORT = 80;
 
-    public static final int PORT = 6767;
+    public static final String PATH = "/home/paolo/Scrivania/blockchain/website-frontend";
 
     public static void main(String[] args) {
-        // TODO params
-
         var http = Service
                 .ignite()
                 .port(PORT);
@@ -22,15 +22,15 @@ public class Main {
             http.secure(args[0], args[1], null, null);
         }
 
-        HttpServer api = new BlockchainApi(http);
+        HttpServer webserver = new Webserver(http, PATH);
 
-        api.init();
+        webserver.init();
 
         // terminal
         new Thread(() -> {
             try (Scanner scanner = new Scanner(System.in)) {
                 switch (scanner.next()) {
-                    case "exit", "stop" -> api.stop();
+                    case "exit", "stop" -> webserver.stop();
                 }
             }
         }).start();

@@ -10,6 +10,8 @@ public class HighLevelNode extends Node {
 
     private Mempool mempool = new Mempool();
     private Miner miner = new Miner();
+
+    private byte[] lastNonce;
     
     public HighLevelNode(int port, String db) {
         super(port, db);
@@ -24,12 +26,10 @@ public class HighLevelNode extends Node {
     }
 
     @Override
-    void broadcastTx(byte[] packet, Connection exclude) {
-        if (!registerTx(packet)) {
-            return;
+    protected void broadcastTx(byte[] packet, Connection exclude) {
+        if (registerTx(packet)) {
+            broadcast(packet, exclude);
         }
-
-        broadcast(packet, exclude);
     }
 
     @Override
@@ -44,34 +44,69 @@ public class HighLevelNode extends Node {
     }
 
     @Override
-    void powSolved(byte[] data) {
+    protected boolean powSolved(byte[] data) {
         var packet = new PoWSolvedPacket(data);
 
-        miner.setNonce(packet.getNonce());
-        if (!miner.isMined()) {
-            // Setting nonce again removes the nonce,
-            // Due to XOR property.
-            miner.setNonce(packet.getNonce());
-            Logger.info("Invalid PoW received");
-            return;
+        var nonce = packet.getNonce();
+
+        // Avoid flooding
+        if (lastNonce != null && eq(nonce, lastNonce)) {
+            System.out.println("sono uguali o nonulla");
+            return false;
         }
+
+        lastNonce = packet.getNonce();
+        
+        miner.setNonce(nonce);
+        if (!miner.isMined()) {
+            Logger.info("Invalid PoW received");
+            return false;
+        }
+
+        super.database.updateUTXO(packet.getMiner(), Protocol.Blockchain.BLOCK_REWARD);
 
         super.database.addBlock(
             50, // DIFFICULTY
             miner.getTxHash(),
-            packet.getNonce(),
+            nonce,
             packet.getMiner(),
             packet.getTimestamp()
         );
 
         newBlock();
+        return true;
     }
 
+    @Override
+    protected void broadcastPoW(byte[] packet, Connection exclude) {
+        if (powSolved(packet)) {
+            broadcast(packet, exclude);
+        }
+    }
+
+
     private void newBlock() {
-        Logger.info("New block");
-        miner.setHeight(super.database.getBlockchainLength() + 1);
+        Logger.info("New blockS");
+        
+        miner.clear();
+
+        int nextId = super.database.getBlockchainLength() + 1;
+
+        miner.setHeight(nextId);
 
         // mempool -> miner + database
+        for (int i = 0; i < 100 && !mempool.isEmpty(); i++) {
+            var tx = mempool.drawOne();
+            super.database.addTx(
+                nextId,
+                tx.getSenderPublicKey(),
+                tx.getRecipient(),
+                tx.getAmount(),
+                tx.getAmount(), 
+                tx.getLastTransactionHash(),
+                tx.getSignature()
+            );
+        }
     }
 
     private boolean registerTx(byte[] data) {
@@ -148,6 +183,16 @@ public class HighLevelNode extends Node {
                 peer.sendPacket(packet);
             }
         }
+    }
+
+    private static boolean eq(byte[] arr1, byte[] arr2) {
+        for (int i = 0; i < arr1.length; i++) {
+            if (arr1[i] != arr2[i]) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 }
