@@ -1,6 +1,7 @@
 package ch.samt.blockchain.nodeapi;
 
 import ch.samt.blockchain.common.protocol.Protocol;
+import ch.samt.blockchain.nodefull.Block;
 import ch.samt.blockchain.nodefull.HighLevelNode;
 import spark.Route;
 import spark.Service;
@@ -40,43 +41,9 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
                     .threadPool(MAX_THREADS);
         }
 
-        http.post("/getLatestBlocks/:from/:to", getLatestBlocks());
         http.post("/getLatestTransactions/:from/:to", getLatestTransactions());
         http.post("/getBlockchainHeight", getBlockchainHeight());
         http.post("/getBlock/:id", getBlock());
-    }
-
-    private Route getLatestBlocks() {
-        return (req, res) -> {
-            // Get the latest 10 blocks
-            // /getLatestBlocks/0/10
-
-            int from = 0;
-            int to = 0;
-
-            try {
-                from = Integer.parseInt(req.params(":from"));
-                to = Integer.parseInt(req.params(":to"));
-            } catch (NumberFormatException e) {
-                return "{}";
-            }
-
-            res.type("application/json");
-            res.status(200);
-
-            // Result example
-            long timestamp = System.currentTimeMillis();
-            return """
-                        {
-                            "blocks": [
-                                { "id": 0, "timestamp": %TIMESTAMP%, "hash": "aGFzaGRlbGJsb2Njb2hhc2hkZWxibG9jY28K", "nTx": 59 },
-                                { "id": 1, "timestamp": %TIMESTAMP%, "hash": "ZWFzdGVyZWdnZWFzdGVyZWdnZWFzdGVyQUFB", "nTx": 32 },
-                                { "id": 2, "timestamp": %TIMESTAMP%, "hash": "ZWRzdGVycmdnZWFmdGVyZWdzZWFzdmVyUkFB", "nTx": 3 }
-                            ]
-                        }
-                    """
-                    .replaceAll("%TIMESTAMP%", Long.toString(timestamp));
-        };
     }
 
     private Route getLatestTransactions() {
@@ -152,24 +119,28 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
                 """;
             }
 
-            return """
-                {
-                    "status": "Ok",
-                    "nonce": "%nonce",
-                    "miner": "%miner",
-                    "timestamp": %timestamp,
-                    "last_hash": "%last_hash",
-                    "hash": "%hash",
-                    "nTx": %nTx
-                }
-            """
-                .replace("%nonce", Protocol.CRYPTO.toBase64(block.nonce()))
-                .replace("%miner", Protocol.CRYPTO.toBase64(block.miner()))
-                .replace("%timestamp", Long.toString(block.timestamp()))
-                .replace("%last_hash", Protocol.CRYPTO.toBase64(block.lastHash()))
-                .replace("%hash", Protocol.CRYPTO.toBase64(block.hash()))
-                .replace("%nTx", Integer.toString(block.nTx()));
+            return serialize(block);
         };
+    }
+
+    private static String serialize(Block block) {
+        return """
+            {
+                "status": "Ok",
+                "nonce": "%nonce",
+                "miner": "%miner",
+                "timestamp": %timestamp,
+                "last_hash": "%last_hash",
+                "hash": "%hash",
+                "nTx": %nTx
+            }
+        """
+            .replace("%nonce", Protocol.CRYPTO.toBase64(block.nonce()))
+            .replace("%miner", Protocol.CRYPTO.toBase64(block.miner()))
+            .replace("%timestamp", Long.toString(block.timestamp()))
+            .replace("%last_hash", Protocol.CRYPTO.toBase64(block.lastHash()))
+            .replace("%hash", Protocol.CRYPTO.toBase64(block.hash()))
+            .replace("%nTx", Integer.toString(block.nTx()));
     }
 
     @Override

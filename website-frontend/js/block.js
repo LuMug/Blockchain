@@ -12,7 +12,7 @@ let id = window.location.href.substring(window.location.href.indexOf('?id=') + 4
 idContainer.innerHTML = id;
 
 postData('/getBlock/' + id)
-    .then(json => processJson(json));
+    .then(processJson);
 
 function processJson(json) {
     if (json.status != 'Ok') {
