@@ -8,14 +8,8 @@ let container;
 
 function initBlocksUpdate(el) {
     container = el;
-    update();
-    update();
-    update();
-    update();
-    update();
-    update();
-    update();
-    //setInterval(update, 1000);
+    update()
+    setInterval(update, 30000);
 }
 
 function update() {

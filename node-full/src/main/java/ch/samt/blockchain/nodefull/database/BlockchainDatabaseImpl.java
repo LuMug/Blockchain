@@ -229,7 +229,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
             e.printStackTrace();
         }
     
-        try (var result = statement.getResultSet(); statement) {
+        try (var result = statement.executeQuery()) {
             if (!result.next()) {
                 return -1;
             }
@@ -267,22 +267,23 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
     @Override
     public Block getBlock(int id) {
-        var statement = connection.prepareStatement("SELECT * FROM block WHERE id=?;");
+        var statement = connection.prepareStatement("SELECT * FROM 'block' WHERE id=?;");
+        
         try {
             statement.setInt(1, id);
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException e1) {
+            e1.printStackTrace();
             return null;
         }
-        
+
         int difficulty = 0;
         byte[] txHash = null;
         byte[] nonce = null;
         byte[] miner = null;
         byte[] lastHash = new byte[32]; //////////////////////////7
         long timestamp = 0;
-        
-        try (var result = statement.getResultSet()) {
+
+        try (var result = statement.executeQuery()) {
             if (!result.next()) {
                 return null;
             }
@@ -312,7 +313,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
             return -1;
         }
     
-        try (var result = statement.getResultSet()) {
+        try (var result = statement.executeQuery()) {
             if (!result.next()) {
                 return -1;
             }

@@ -12,6 +12,24 @@ let id = window.location.href.substring(window.location.href.indexOf('?id=') + 4
 idContainer.innerHTML = id;
 
 postData('/getBlock/' + id)
-    .then(json => {
-        console.log(json)
-    });
+    .then(json => processJson(json));
+
+function processJson(json) {
+    if (json.status != 'Ok') {
+        let container = document.getElementById('info');
+        container.innerHTML = "";
+
+        var status = document.createElement('h1');
+        var text = document.createTextNode(json.status);
+        status.appendChild(text);
+        container.appendChild(status);
+        return;
+    }
+
+    nonceContainer.innerHTML = json.nonce;
+    minerContainer.innerHTML = json.miner;
+    timestampContainer.innerHTML = new Date(json.timestamp * 1000);
+    lastHashContainer.innerHTML = json.last_hash;
+    hashContainer.innerHTML = json.hash;
+    nTxContainer.innerHTML = json.nTx;
+}
