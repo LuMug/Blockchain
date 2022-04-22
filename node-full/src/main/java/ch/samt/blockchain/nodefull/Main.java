@@ -1,29 +1,47 @@
 package ch.samt.blockchain.nodefull;
 
+import ch.samt.blockchain.common.utils.paramhandler.ParamHandler;
+
 public class Main {
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 1) {
-            System.out.println("Arguments: <port> [-db <file>]");
-            return;
-        }
+        var handler = new ParamHandler();
 
-        // TODO db param
+        handler.addArg("p", false, "port");
+        handler.addArg("db", false, "file");
+        handler.addFlag("h");
 
-        int port = 0;
         try {
-            port = Integer.parseInt(args[0]);
-        } catch (NumberFormatException e) {
-            System.err.println("Invalid port: " + args[0]);
+            handler.parse(args);
+        } catch (IllegalArgumentException e) {
+            System.err.print(e.getMessage());
             return;
         }
-        
-        var node = new HighLevelNode(port);
+
+        if (handler.getFlag("h")) {
+            System.out.println("Arguments: [-p <port>] [-db <file>] [-h]");
+            return;
+        }
+
+        int port = 5555; // Default port
+
+        if (!handler.isNull("p")) {
+            try {
+                port = Integer.parseInt(handler.getArg("p"));
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid port: " + handler.getArg("p"));
+                return;
+            }
+        }
+
+        var node = handler.isNull("db") ?
+            new HighLevelNode(port) :
+            new HighLevelNode(port, handler.getArg("db"));
 
         // Start service
         node.start();
 
         // Interactive console
         node.attachConsole(System.in, System.out);
-    } // TODO CHECK IF SERVICE ALREADY EXISTS
+    }
 }

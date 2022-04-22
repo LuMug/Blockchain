@@ -1,20 +1,33 @@
 package ch.samt.blockchain.nodeapi;
 
+import ch.samt.blockchain.nodefull.HighLevelNode;
 import spark.Route;
 import spark.Service;
 
-public class BlockchainApi implements HttpServer {
+public class BlockchainApi extends HighLevelNode implements HttpServer {
 
     public static final int MAX_THREADS = 20;
 
     private Service http;
     private int port;
 
-    public BlockchainApi(int port) {
-        this.port = port;
+    public BlockchainApi(int apiPort, int nodePort, String db) {
+        super(nodePort, db);
+        this.port = apiPort;
     }
 
-    public BlockchainApi(Service http) {
+    public BlockchainApi(Service http, int nodePort, String db) {
+        super(nodePort, db);
+        this.http = http;
+    }
+
+    public BlockchainApi(int apiPort, int nodePort) {
+        super(nodePort);
+        this.port = apiPort;
+    }
+
+    public BlockchainApi(Service http, int nodePort) {
+        super(nodePort);
         this.http = http;
     }
 
@@ -108,7 +121,7 @@ public class BlockchainApi implements HttpServer {
     }
 
     @Override
-    public void stop() {
+    public void terminate() {
         http.stop();
     }
 

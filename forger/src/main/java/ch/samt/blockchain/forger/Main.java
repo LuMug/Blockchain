@@ -22,11 +22,11 @@ public class Main {
         try {
             params.parse(args);
         } catch (IllegalArgumentException e) {
-            System.err.println(e.getMessage());
+            System.err.print(e.getMessage());
             return;
         }
 
-        if (params.getFlag("help")) {
+        if (params.getFlag("help") || args.length == 0) {
             System.out.println(params.help("java -jar forger.jar", "Work with transactions"));
             return;
         }

@@ -39,7 +39,7 @@ public class Webserver implements HttpServer {
     }
 
     @Override
-    public void stop() {
+    public void terminate() {
         http.stop();
     }
 

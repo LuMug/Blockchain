@@ -12,23 +12,31 @@ public class Main {
     public static void main(String[] args) {
         var handler = new ParamHandler();
 
-        handler.addArg("p", true, "port");
         handler.addArg("priv", true, "file");
+        handler.addArg("p", false, "port");
         handler.addArg("db", false, "file");
 
-        handler.parse(args);
-
+        try {
+            handler.parse(args);
+        } catch (IllegalArgumentException e) {
+            System.err.print(e.getMessage());
+            return;
+        }
+        
         if (!handler.isComplete()) {
-            System.out.println("Arguments: -p <port> -priv <file> [-db <file>]");
+            System.out.println("Arguments: -priv <file> [-p <port>] [-db <file>]");
             return;
         }
 
-        int port = 0;
-        try {
-            port = Integer.parseInt(handler.getArg("p"));
-        } catch (NumberFormatException e) {
-            System.err.println("Invalid port: " + handler.getArg("p"));
-            return;
+        int port = 5555; // Default prot
+
+        if (!handler.isNull("p")) {
+            try {
+                port = Integer.parseInt(handler.getArg("p"));
+            } catch (NumberFormatException e) {
+                System.err.println("Invalid port: " + handler.getArg("p"));
+                return;
+            }
         }
 
         byte[] priv = null;
