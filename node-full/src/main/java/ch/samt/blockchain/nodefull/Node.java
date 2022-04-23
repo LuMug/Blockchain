@@ -116,6 +116,12 @@ public abstract class Node extends Thread {
      * @param connection the connection to register
      */
     protected void registerNode(Connection connection) {
+        for (var peer : neighbours) {
+            if (peer.getServiceAddress().equals(connection.getServiceAddress())) {
+                disconnect(connection);
+            }
+        }
+
         neighbours.add(connection);
 
         if (neighbours.size() > Protocol.Node.MAX_CONNECTIONS) {

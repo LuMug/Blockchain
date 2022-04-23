@@ -1,5 +1,7 @@
 package ch.samt.blockchain.nodeapi;
 
+import java.io.IOException;
+import java.net.BindException;
 import java.util.Scanner;
 
 import ch.samt.blockchain.common.utils.paramhandler.ParamHandler;
@@ -62,8 +64,8 @@ public class Main {
         }
 
         var http = Service
-            .ignite()
-            .port(apiPort);
+                .ignite()
+                .port(apiPort);
 
         if (handler.any("keystore", "password")) { // non va
             handler.assertAll("keystore", "password");

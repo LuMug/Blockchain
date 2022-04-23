@@ -1,5 +1,6 @@
 package ch.samt.blockchain.webserver;
 
+import java.io.IOException;
 import java.util.Scanner;
 
 import ch.samt.blockchain.common.utils.paramhandler.ParamHandler;
@@ -46,10 +47,10 @@ public class Main {
                 return;
             }
         }
-        
-        var http = Service
-                .ignite()
-                .port(port);
+
+        Service http = Service
+            .ignite()
+            .port(port);
 
         if (handler.any("keystore", "password")) {
             handler.assertAll("keystore", "password");
@@ -65,8 +66,9 @@ public class Main {
 
         HttpServer webserver = new Webserver(http, path);
 
-        webserver.init();
 
+        webserver.init();
+        
         // terminal
         new Thread(() -> {
             try (Scanner scanner = new Scanner(System.in)) {

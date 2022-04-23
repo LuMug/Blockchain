@@ -36,7 +36,8 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
     @Override
     public void init() {
         if (http == null) {
-            this.http = Service.ignite()
+            this.http = Service
+                    .ignite()
                     .port(port)
                     .threadPool(MAX_THREADS);
         }
@@ -47,6 +48,7 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
         http.post("/getUTXO/:address", getUTXO());
     }
 
+    /*
     private Route getLatestTransactions() {
         return (req, res) -> {
             int from = 0;
@@ -75,7 +77,7 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
                     """
                     .replaceAll("%TIMESTAMP%", Long.toString(timestamp));
         };
-    }
+    }*/
 
     private Route getBlockchainHeight() {
         return (req, res) -> {

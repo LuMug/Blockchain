@@ -5,40 +5,62 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BGDS</title>
+    <title>Blockchain</title>
 
-    <link rel="stylesheet" href="css/page.css">
-    <link rel="stylesheet" href="css/transaction.css">
+    <link rel="stylesheet" href="css/Bootstrap/bootstrap.min.css">
     <link rel="icon" href="media/logo.ico" type="image/icon type">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+    <link rel="stylesheet" href="css/transaction.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 
+<body class="bg-primary">
+    <div class="container">
+        <nav class="navbar navbar-expand-md bg-primary navbar-dark mt-2">
+            <a class="navbar-brand" href="/">
+                <img src="media/logo.png" alt="" width="48" height="48">
+                <span style="font-size: 1em; vertical-align: middle;">
+                    Piccion
+                </span>
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="collapsibleNavbar">
+                <ul class="navbar-nav">
+                    <li class="nav-item p-2">
+                        <a class="nav-link active" href="wallet.html">Wallets</a>
+                    </li>
+                    <li class="nav-item p-2">
+                        <a class="nav-link active" href="blocks.html">Blocks</a>
+                    </li>
+                    <li class="nav-item p-2">
+                        <a class="nav-link active" href="stats.html">Analytics</a>
+                    </li>
+                    <li class="nav-">
+                        <button type="button" class="btn btn-primary rounded-pill p-2"><a class="nav-link active"
+                                href="transaction.html">Transaction</a></button>
+                    </li>
+                </ul>
+            </div>
+        </nav>
 
-<script src="js/func.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <br><br><br>
 
-<body>
-    <h1>Transaction</h1>
-    <hr>
 
-    <main id="transactionsTable">
-    </main>
+        <div id="dropzone" ondragover="dropHandler(event);">
+            <p>Drop</p>
+        </div>
+        <hr>
 
-    <div id="dropbox">
-        <button id="button">Select or Drop a .tx file</button>
-        <input id="file-input" type="file" name="name" style="display: none;" multiple />
-        <div>
+    </div>
 
-            <script>
-                $('#button').on('click', function () {
-                    $('#file-input').trigger('click');
-                });
-            </script>
+    <script src="js/post.js"></script>
+    <script src="js/transaction.js"></script>
+
 </body>
-
-<script src="js/func.js"></script>
-<script>
-    sendTransactionsRequest();
-    setInterval(sendTransactionsRequest, 15000);
-</script>
-
 </html>

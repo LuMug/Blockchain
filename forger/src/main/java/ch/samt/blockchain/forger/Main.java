@@ -27,7 +27,7 @@ public class Main {
         }
 
         if (params.getFlag("help") || args.length == 0) {
-            System.out.println(params.help("java -jar forger.jar", "Work with transactions"));
+            System.out.println(params.help("./forger", "Work with transactions"));
             return;
         }
 
@@ -71,17 +71,17 @@ public class Main {
     private static void printExamples() {
         System.out.println();
         System.out.println("Generate wallet");
-        System.out.println("\tjava -jar forger.jar -gen -out ./key.priv");
+        System.out.println("\t./forger -gen -out ./key.priv");
         System.out.println();
         System.out.println("Create transaction");
-        System.out.println("\tjava -jar forger.jar -priv ./key.priv -amount 10000 -out transaction.tx -to J2VY3W0oEZCBxBKAu4ufsOc4/Qjl5Kiu2ottLxQgrK4=");
+        System.out.println("\t./forger -priv ./key.priv -amount 10000 -out transaction.tx -to J2VY3W0oEZCBxBKAu4ufsOc4/Qjl5Kiu2ottLxQgrK4=");
         System.out.println();
         System.out.println("Create transaction (no HTTP request for lastHash)");
-        System.out.println("\tjava -jar forger.jar -priv ./key.priv -last ./last.tx -amount 10000 -out transaction.tx -to J2VY3W0oEZCBxBKAu4ufsOc4/Qjl5Kiu2ottLxQgrK4=");
-        System.out.println("\tjava -jar forger.jar -priv ./key.priv -first -amount 10000 -out transaction.tx -to J2VY3W0oEZCBxBKAu4ufsOc4/Qjl5Kiu2ottLxQgrK4=");
+        System.out.println("\t./forger -priv ./key.priv -last ./last.tx -amount 10000 -out transaction.tx -to J2VY3W0oEZCBxBKAu4ufsOc4/Qjl5Kiu2ottLxQgrK4=");
+        System.out.println("\t./forger -priv ./key.priv -first -amount 10000 -out transaction.tx -to J2VY3W0oEZCBxBKAu4ufsOc4/Qjl5Kiu2ottLxQgrK4=");
         System.out.println();
         System.out.println("Dump transaction file content");
-        System.out.println("\tjava -jar forger.jar -dump ./transaction.tx");
+        System.out.println("\t./forger -dump ./transaction.tx");
         System.out.println();
     }
 
