@@ -10,13 +10,14 @@ public class PoWSolvedPacket {
 
     private byte[] miner;
     
-    private long timestmap; /////////////////////////
+    private long timestamp; /////////////////////////
 
     public PoWSolvedPacket(byte[] packet) {
         Offset offset = new Offset(1);
 
         this.nonce = readBlob(packet, offset);
         this.miner = readBlob(packet, offset);
+        this.timestamp = readLongBE(packet, offset);
     }
 
     public byte[] getNonce() {
@@ -28,7 +29,7 @@ public class PoWSolvedPacket {
     }
 
     public long getTimestamp() {
-        return timestmap;
+        return timestamp;
     }
 
     public static byte[] create(byte[] nonce, byte[] miner, long timestamp) {

@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Scanner;
 
+import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.common.utils.paramhandler.ParamHandler;
 
 public class Main {
@@ -43,6 +44,7 @@ public class Main {
 
         try {
             priv = Files.readAllBytes(Path.of(handler.getArg("priv")));
+            priv = Protocol.CRYPTO.fromBase64(priv);
         } catch (IOException e) {
             System.err.println(e.getMessage());
             return;

@@ -21,10 +21,6 @@ public class HighLevelNode extends Node {
         super(port);
     }
 
-    {
-        newBlock();
-    }
-
     @Override
     protected boolean broadcastTx(byte[] packet, Connection exclude) {
         if (registerTx(packet)) {
@@ -93,8 +89,7 @@ public class HighLevelNode extends Node {
 
 
     private void newBlock() {
-        Logger.info("New blockS");
-        
+        Logger.info("New block");
         miner.clear();
 
         int nextId = super.database.getBlockchainLength() + 1;
@@ -137,7 +132,7 @@ public class HighLevelNode extends Node {
         long utxo = super.database.getUTXO(sender);
 
         if (amount > utxo) {
-            Logger.info("Insufficient UTXO");
+            Logger.info("Insufficient UTXO for " + Protocol.CRYPTO.toBase64(sender));
             return false;
         }
 

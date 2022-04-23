@@ -4,7 +4,7 @@ let addressContainer = document.getElementById('address');
 let utxoContainer = document.getElementById('utxo');
 
 let address = window.location.href.substring(window.location.href.indexOf('?address=') + 9)
-addressContainer.innerHTML = address;
+addressContainer.innerHTML = address.replaceAll('%2F', '/');
 
 postData('/getUTXO/' + address)
     .then(processJson);

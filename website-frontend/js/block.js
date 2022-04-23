@@ -27,7 +27,7 @@ function processJson(json) {
     }
 
     nonceContainer.innerHTML = json.nonce;
-    minerContainer.innerHTML = '<a href="wallet.html?address=' + json.miner + '">' + json.miner + '</a>';
+    minerContainer.innerHTML = '<a href="wallet.html?address=' + json.miner.replaceAll('/', '%2F') + '">' + json.miner + '</a>';
     timestampContainer.innerHTML = new Date(json.timestamp * 1000);
     lastHashContainer.innerHTML = json.last_hash;
     hashContainer.innerHTML = json.hash;

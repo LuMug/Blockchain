@@ -1,8 +1,6 @@
 package ch.samt.blockchain.forger;
 
 import java.nio.file.Path;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import org.bouncycastle.crypto.CryptoException;
 import org.bouncycastle.crypto.DataLengthException;
@@ -68,7 +66,7 @@ public class Forger {
 
         System.out.println("Amount:\t\t" + packet.getAmount());
         System.out.println("Recipient:\t" + cryptoUtils.toBase64(packet.getRecipient()));
-        System.out.println("Sender:\t\t" + cryptoUtils.toBase64(packet.getSenderPublicKey()));
+        System.out.println("Sender:\t\t" + cryptoUtils.getAddress(cryptoUtils.publicKeyFromEncoded(packet.getSenderPublicKey())));
         System.out.println("Signature:\t" + cryptoUtils.toBase64(packet.getSignature()));
         System.out.println("LastHash:\t" + cryptoUtils.toBase64(packet.getLastTransactionHash()));
     }

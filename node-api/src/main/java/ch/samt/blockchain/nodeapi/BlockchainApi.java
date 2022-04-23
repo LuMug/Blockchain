@@ -131,7 +131,7 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
             res.type("application/json");
             res.status(200);
 
-            var base64 = req.params("address");
+            var base64 = req.params("address").replaceAll("%2F", "/");
             byte[] address;
 
             try {
@@ -163,12 +163,6 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
             MultipartConfigElement multipartConfigElement = new MultipartConfigElement("");
  
             req.raw().setAttribute("org.eclipse.jetty.multipartConfig", multipartConfigElement);
-
-            for (var a : req.raw().getParts()) {
-                System.out.println(a.getContentType());
-                System.out.println(a.getName());
-                
-            }
 
             Part uploadedFile = req.raw().getPart("file");
 
