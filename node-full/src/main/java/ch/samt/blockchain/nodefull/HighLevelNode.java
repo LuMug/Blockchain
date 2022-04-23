@@ -26,10 +26,17 @@ public class HighLevelNode extends Node {
     }
 
     @Override
-    protected void broadcastTx(byte[] packet, Connection exclude) {
+    protected boolean broadcastTx(byte[] packet, Connection exclude) {
         if (registerTx(packet)) {
             broadcast(packet, exclude);
+            return true;
         }
+        return false;
+    }
+
+    @Override
+    protected boolean broadcastTx(byte[] packet) {
+        return broadcastTx(packet, null);
     }
 
     @Override

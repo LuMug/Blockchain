@@ -1,5 +1,12 @@
 package ch.samt.blockchain.nodeapi;
 
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
+import javax.servlet.MultipartConfigElement;
+import javax.servlet.http.Part;
+
 import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.nodefull.Block;
 import ch.samt.blockchain.nodefull.HighLevelNode;
@@ -46,6 +53,7 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
         http.post("/getBlockchainHeight", getBlockchainHeight());
         http.post("/getBlock/:id", getBlock());
         http.post("/getUTXO/:address", getUTXO());
+        http.post("/deploy", deploy());
     }
 
     /*
@@ -105,13 +113,13 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
             try {
                 id = Integer.parseInt(param);
             } catch (NumberFormatException e) {
-                return error("Invalid ID");
+                return status("Invalid ID");
             }
 
             var block = super.database.getBlock(id);
 
             if (block == null) {
-                return error("Not Found");
+                return status("Not Found");
             }
 
             return serialize(block);
@@ -129,13 +137,13 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
             try {
                 address = Protocol.CRYPTO.fromBase64(base64);
             } catch (IllegalArgumentException e) {
-                return error("Invalid Address");
+                return status("Invalid Address");
             }
 
             var utxo = super.database.getUTXO(address);
 
             if (utxo == -1) {
-                return error("Not Found");
+                return status("Not Found");
             }
 
             return """
@@ -146,6 +154,30 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
             """.replace("%utxo", Long.toString(utxo));
         };
     }
+
+    private Route deploy() {
+        return (req, res) -> {
+            res.type("application/json");
+            res.status(200);
+
+            MultipartConfigElement multipartConfigElement = new MultipartConfigElement("");
+ 
+            req.raw().setAttribute("org.eclipse.jetty.multipartConfig", multipartConfigElement);
+
+            for (var a : req.raw().getParts()) {
+                System.out.println(a.getContentType());
+                System.out.println(a.getName());
+                
+            }
+
+            Part uploadedFile = req.raw().getPart("file");
+
+            byte[] file = uploadedFile.getInputStream().readAllBytes();
+
+            return status(broadcastTx(file) ? "Ok" : "Invalid Transaction");
+        };
+    }
+
 
     private static String serialize(Block block) {
         return """
@@ -167,7 +199,7 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
             .replace("%nTx", Integer.toString(block.nTx()));
     }
 
-    private static String error(String status) {
+    private static String status(String status) {
         return "{\"status\":\"" + status + "\"}";
     }
 

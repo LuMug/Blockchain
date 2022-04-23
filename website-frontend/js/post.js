@@ -21,11 +21,12 @@ function uploadFiles() {
 
 // ----------------------------------
 
+let href = window.location.href;
+let index = href.indexOf('/', 8);
+href = href.substring(0, index);
+
 async function postData(url = '', data = {}) {
-    let href = window.location.href;
-    let index = href.indexOf('/', 8);
-    href = href.substring(0, index); // compute once
-    url = href + ":" + port + url; /// port
+    url = href + ":" + port + url;
 
     const response = await fetch(url, {
         method: 'POST',
