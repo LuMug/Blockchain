@@ -6,9 +6,9 @@ public record Block(
     byte[] txHash,
     byte[] nonce,
     byte[] miner,
-    byte[] lastHash,
     long timestamp,
     
+    byte[] lastHash,
     byte[] hash,
     int nTx) {
 

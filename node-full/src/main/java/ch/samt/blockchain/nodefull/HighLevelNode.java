@@ -54,7 +54,6 @@ public class HighLevelNode extends Node {
 
         // Avoid flooding
         if (lastNonce != null && eq(nonce, lastNonce)) {
-            System.out.println("sono uguali o nonulla");
             return false;
         }
 
@@ -66,14 +65,34 @@ public class HighLevelNode extends Node {
             return false;
         }
 
+        int height = super.database.getBlockchainLength();
+
         super.database.updateUTXO(packet.getMiner(), Protocol.Blockchain.BLOCK_REWARD);
+
+        var lastHash = super.database.getHash(height);
+
+        if (lastHash == null) {
+            lastHash = new byte[32];
+        }
+
+        byte[] hash = Protocol.CRYPTO.hashBlock(
+            height + 1,
+            50,
+            miner.getTxHash(),
+            nonce,
+            packet.getMiner(),
+            lastHash,
+            packet.getTimestamp()
+        );
 
         super.database.addBlock(
             50, // DIFFICULTY
             miner.getTxHash(),
             nonce,
             packet.getMiner(),
-            packet.getTimestamp()
+            packet.getTimestamp(),
+            lastHash,
+            hash
         );
 
         newBlock();
@@ -95,19 +114,34 @@ public class HighLevelNode extends Node {
         int nextId = super.database.getBlockchainLength() + 1;
 
         miner.setHeight(nextId);
-
-        // mempool -> miner + database
-        for (int i = 0; i < 100 && !mempool.isEmpty(); i++) {
+        
+        
+        //for (int i = 0; i < 100 && !mempool.isEmpty(); i++) {
+        while (!mempool.isEmpty()) {
             var tx = mempool.drawOne();
+
+            byte[] hash = Protocol.CRYPTO.hashTx(
+                nextId - 1,
+                tx.getSenderPublicKey(),
+                tx.getRecipient(),
+                tx.getAmount(),
+                tx.getTimestamp(),
+                tx.getLastTransactionHash(),
+                tx.getSignature()
+            );
+
             super.database.addTx(
                 nextId,
                 tx.getSenderPublicKey(),
                 tx.getRecipient(),
                 tx.getAmount(),
-                tx.getAmount(), 
+                tx.getTimestamp(), 
                 tx.getLastTransactionHash(),
-                tx.getSignature()
+                tx.getSignature(),
+                hash
             );
+
+            // miner.addTx(hash);
         }
     }
 
@@ -158,7 +192,8 @@ public class HighLevelNode extends Node {
 
         Logger.info("Received transaction");
 
-        int blockId = 0;
+        // no what
+        /*int blockId = 0;
 
         super.database.addTx(
             blockId,
@@ -167,14 +202,10 @@ public class HighLevelNode extends Node {
             packet.getAmount(),
             packet.getTimestamp(),
             packet.getLastTransactionHash(),
-            packet.getSignature());
+            packet.getSignature());*/
 
         super.database.updateUTXO(sender,                -amount);
         super.database.updateUTXO(packet.getRecipient(), +amount);
-
-        var txHash = Protocol.CRYPTO.sha256(data);
-
-        miner.addTx(txHash);
 
         return true;
     }

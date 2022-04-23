@@ -32,7 +32,10 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
             tx_hash BINARY(32),
             nonce BINARY(32),
             miner BINARY(32),
-            mined DATETIME
+            mined DATETIME,
+
+            last_hash BINARY(32),
+            hash BINARY(32)
         );
         """,
         // No foreign key for block_id since tx will be placed in future blocks
@@ -44,7 +47,8 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
             amount INT,
             timestamp DATETIME,
             last_tx_hash BINARY(32),
-            signature BINARY(64) 
+            signature BINARY(64),
+            hash BINARY(32)
         );
         """, // PRIMARY KEY (timestamp, sender) ?
              // giusta la dimensione di sig?
@@ -186,8 +190,8 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public void addBlock(int difficulty, byte[] tx_hash, byte[] nonce, byte[] miner, long mined) {
-        var statement = connection.prepareStatement("INSERT INTO block VALUES (?, ?, ?, ?, ?, ?);");
+    public void addBlock(int difficulty, byte[] tx_hash, byte[] nonce, byte[] miner, long mined, byte[] lastHash, byte[] hash) {
+        var statement = connection.prepareStatement("INSERT INTO block VALUES (?, ?, ?, ?, ?, ?, ?, ?);");
 
         try {
             statement.setInt(1, ++blockchainLength);
@@ -196,6 +200,8 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
             statement.setBytes(4, nonce);
             statement.setBytes(5, miner);
             statement.setTimestamp(6, new Timestamp(mined));
+            statement.setBytes(7, lastHash);
+            statement.setBytes(8, hash);
             statement.execute();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -203,8 +209,8 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public void addTx(int blockId, byte[] senderPublicKey, byte[] recipient, long amount, long timestamp, byte[] lastTxHash, byte[] signature) {
-        var statement = connection.prepareStatement("INSERT INTO tx VALUES (?, ?, ?, ?, ?, ?, ?);");
+    public void addTx(int blockId, byte[] senderPublicKey, byte[] recipient, long amount, long timestamp, byte[] lastTxHash, byte[] signature, byte[] hash) {
+        var statement = connection.prepareStatement("INSERT INTO tx VALUES (?, ?, ?, ?, ?, ?, ?, ?);");
 
         try {
             statement.setInt(1, blockId);
@@ -214,6 +220,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
             statement.setTimestamp(5, new Timestamp(timestamp));
             statement.setBytes(6, lastTxHash);
             statement.setBytes(7, signature);
+            statement.setBytes(8, hash);
             statement.execute();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -268,21 +275,22 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
     @Override
     public Block getBlock(int id) {
-        var statement = connection.prepareStatement("SELECT * FROM 'block' WHERE id=?;");
+        var statement = connection.prepareStatement("SELECT * FROM block WHERE id=?;");
         
         try {
             statement.setInt(1, id);
-        } catch (SQLException e1) {
-            e1.printStackTrace();
+        } catch (SQLException e) {
+            e.printStackTrace();
             return null;
         }
 
-        int difficulty = 0;
-        byte[] txHash = null;
-        byte[] nonce = null;
-        byte[] miner = null;
-        byte[] lastHash = new byte[32]; //////////////////////////7
-        long timestamp = 0;
+        int difficulty;
+        byte[] txHash;
+        byte[] nonce;
+        byte[] miner;
+        long timestamp;
+        byte[] lastHash;
+        byte[] hash;
 
         try (var result = statement.executeQuery()) {
             if (!result.next()) {
@@ -294,15 +302,43 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
             nonce = result.getBytes(4);
             miner = result.getBytes(5);
             timestamp = result.getTimestamp(6).getTime();
+            lastHash = result.getBytes(7);
+            hash = result.getBytes(8);
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
         }
 
-        byte[] hash = Protocol.CRYPTO.hashBlock(id, difficulty, txHash, nonce, miner, lastHash, timestamp);
         int nTx = countTx(id);
 
-        return new Block(id, difficulty, txHash, nonce, miner, lastHash, timestamp, hash, nTx);
+        return new Block(id, difficulty, txHash, nonce, miner, timestamp, lastHash, hash, nTx);
+    }
+
+    @Override
+    public byte[] getHash(int id) {
+        var statement = connection.prepareStatement("SELECT hash FROM block WHERE id=?;");
+        
+        try {
+            statement.setInt(1, id);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        byte[] hash;
+
+        try (var result = statement.executeQuery()) {
+            if (!result.next()) {
+                return null;
+            }
+
+            hash = result.getBytes(1);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return hash;
     }
 
     private int countTx(int id) {

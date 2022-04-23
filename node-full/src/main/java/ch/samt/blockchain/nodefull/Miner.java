@@ -7,6 +7,7 @@ public class Miner {
     private byte[] txHash = new byte[32];
     private byte[] nonceHash = new byte[32];
     private byte[] heightHash = new byte[32];
+    private byte[] lastHash = new byte[32];
 
     public synchronized void addTx(byte[] hash) {
         for (int i = 0; i < txHash.length; i++) {
@@ -15,11 +16,15 @@ public class Miner {
     }
     
     public void setNonce(byte[] nonce) {
-        nonceHash = Protocol.CRYPTO.sha256(nonce);
+        this.nonceHash = Protocol.CRYPTO.sha256(nonce);
     }
 
     public void setHeight(int height) {
-        heightHash = Protocol.CRYPTO.sha256(toBytes(height));
+        this.heightHash = Protocol.CRYPTO.sha256(toBytes(height));
+    }
+
+    public void setLastHash(byte[] lastHash) {
+        this.lastHash = lastHash;
     }
     
     public byte[] getTxHash() {
@@ -28,7 +33,7 @@ public class Miner {
 
     public void clear() {
         for (int i = 0; i < txHash.length; i++) {
-            txHash[i] = nonceHash[i] = heightHash[i] = 0;
+            txHash[i] = nonceHash[i] = heightHash[i] = lastHash[i] = 0;
         }
     }
 

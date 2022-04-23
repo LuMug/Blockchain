@@ -30,14 +30,16 @@ public interface BlockchainDatabase {
 
     int getBlockchainLength();
     
-    void addBlock(int difficulty, byte[] tx_hash, byte[] nonce, byte[] miner, long mined);
+    void addBlock(int difficulty, byte[] txHash, byte[] nonce, byte[] miner, long mined, byte[] lastHash, byte[] hash);
 
-    void addTx(int blockId, byte[] senderPublicKey, byte[] recipient, long amount, long timestamp, byte[] lastTxHash, byte[] signature);
+    void addTx(int blockId, byte[] senderPublicKey, byte[] recipient, long amount, long timestamp, byte[] lastTxHash, byte[] signature, byte[] hash);
 
     long getUTXO(byte[] address);
 
     void updateUTXO(byte[] address, long offset);
 
     Block getBlock(int id);
+
+    byte[] getHash(int id);
 
 }
