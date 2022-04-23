@@ -92,7 +92,9 @@ public class CryptoUtils {
     }
 
     public byte[] sha256(byte[] digest) {
-        return sha256Digest.digest(digest);
+        synchronized (sha256Digest) {
+            return sha256Digest.digest(digest);
+        }
     }
 
     public String getAddress(Ed25519PublicKeyParameters publicKey) {

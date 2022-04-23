@@ -85,13 +85,13 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         if (!isNodeCached(address, port)) {
             var statement = connection.prepareStatement("INSERT INTO node VALUES (?,?,?);");
             long timestamp = System.currentTimeMillis();
-            try {
+            try (statement) {
                 statement.setString(1, address);
                 statement.setInt(2, port);
                 statement.setTimestamp(3, new Timestamp(timestamp));
                 statement.execute();
             } catch (SQLException e) {
-                e.printStackTrace();
+                e.printStackTrace(); // this could happen
             }
         }
         
@@ -150,8 +150,9 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
     @Override
     public int countCachedNodes() {
-        try {
-            return connection.query("SELECT COUNT(*) FROM node;").getInt(1);
+        var result = connection.query("SELECT COUNT(*) FROM node;");
+        try (result) {
+            return result.getInt(1);
         } catch (SQLException e) {
             e.printStackTrace();
         }

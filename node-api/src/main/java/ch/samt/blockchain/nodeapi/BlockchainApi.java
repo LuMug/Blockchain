@@ -41,9 +41,10 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
                     .threadPool(MAX_THREADS);
         }
 
-        http.post("/getLatestTransactions/:from/:to", getLatestTransactions());
+        //http.post("/getLatestTransactions/:from/:to", getLatestTransactions());
         http.post("/getBlockchainHeight", getBlockchainHeight());
         http.post("/getBlock/:id", getBlock());
+        http.post("/getUTXO/:address", getUTXO());
     }
 
     private Route getLatestTransactions() {
@@ -102,24 +103,45 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
             try {
                 id = Integer.parseInt(param);
             } catch (NumberFormatException e) {
-                return """
-                    {
-                        "status": "Invalid ID"
-                    }        
-                """;
+                return error("Invalid ID");
             }
 
             var block = super.database.getBlock(id);
 
             if (block == null) {
-                return """
-                        {
-                            "status": "Not Found"
-                        }
-                """;
+                return error("Not Found");
             }
 
             return serialize(block);
+        };
+    }
+
+    private Route getUTXO() {
+        return (req, res) -> {
+            res.type("application/json");
+            res.status(200);
+
+            var base64 = req.params("address");
+            byte[] address;
+
+            try {
+                address = Protocol.CRYPTO.fromBase64(base64);
+            } catch (IllegalArgumentException e) {
+                return error("Invalid Address");
+            }
+
+            var utxo = super.database.getUTXO(address);
+
+            if (utxo == -1) {
+                return error("Not Found");
+            }
+
+            return """
+                {
+                    "status": "Ok",
+                    "utxo": %utxo
+                }        
+            """.replace("%utxo", Long.toString(utxo));
         };
     }
 
@@ -141,6 +163,10 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
             .replace("%last_hash", Protocol.CRYPTO.toBase64(block.lastHash()))
             .replace("%hash", Protocol.CRYPTO.toBase64(block.hash()))
             .replace("%nTx", Integer.toString(block.nTx()));
+    }
+
+    private static String error(String status) {
+        return "{\"status\":\"" + status + "\"}";
     }
 
     @Override
