@@ -8,7 +8,8 @@ import java.sql.Timestamp;
 import org.tinylog.Logger;
 
 import ch.samt.blockchain.common.protocol.Protocol;
-import ch.samt.blockchain.nodefull.Block;
+import ch.samt.blockchain.nodefull.database.models.Block;
+import ch.samt.blockchain.nodefull.database.models.Transaction;
 
 public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
@@ -33,7 +34,6 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
             nonce BINARY(32),
             miner BINARY(32),
             mined DATETIME,
-
             last_hash BINARY(32),
             hash BINARY(32)
         );
@@ -274,6 +274,33 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
+    public byte[] getHash(int id) {
+        var statement = connection.prepareStatement("SELECT hash FROM block WHERE id=?;");
+        
+        try {
+            statement.setInt(1, id);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        byte[] hash;
+
+        try (var result = statement.executeQuery()) {
+            if (!result.next()) {
+                return null;
+            }
+
+            hash = result.getBytes(1);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return hash;
+    }
+
+    @Override
     public Block getBlock(int id) {
         var statement = connection.prepareStatement("SELECT * FROM block WHERE id=?;");
         
@@ -315,30 +342,42 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public byte[] getHash(int id) {
-        var statement = connection.prepareStatement("SELECT hash FROM block WHERE id=?;");
+    public Transaction getTransaction(byte[] hash) {
+        var statement = connection.prepareStatement("SELECT * FROM tx WHERE hash=?;");
         
         try {
-            statement.setInt(1, id);
+            statement.setBytes(1, hash);
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
         }
 
-        byte[] hash;
+        int blockId;
+        byte[] senderPub;
+        byte[] recipient;
+        long amount;
+        long timestamp;
+        byte[] lastTxHash;
+        byte[] signature;
 
         try (var result = statement.executeQuery()) {
             if (!result.next()) {
                 return null;
             }
 
-            hash = result.getBytes(1);
+            blockId = result.getInt(1);
+            senderPub = result.getBytes(2);
+            recipient = result.getBytes(3);
+            amount = result.getLong(4);
+            timestamp = result.getTimestamp(5).getTime();
+            lastTxHash = result.getBytes(6);
+            signature = result.getBytes(7);
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
         }
 
-        return hash;
+        return new Transaction(blockId, senderPub, recipient, amount, timestamp, lastTxHash, signature, hash);
     }
 
     private int countTx(int id) {

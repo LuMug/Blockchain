@@ -22,8 +22,8 @@ function uploadFiles() {
 // ----------------------------------
 
 let href = window.location.href;
-let index = href.indexOf('/', 8);
-href = href.substring(0, index);
+let startIndex = href.indexOf('/', 8);
+href = href.substring(0, startIndex);
 
 async function postData(url = '', data = {}) {
     url = href + ":" + port + url;

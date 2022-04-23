@@ -1,15 +1,12 @@
 package ch.samt.blockchain.nodeapi;
 
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
 import javax.servlet.MultipartConfigElement;
 import javax.servlet.http.Part;
 
 import ch.samt.blockchain.common.protocol.Protocol;
-import ch.samt.blockchain.nodefull.Block;
 import ch.samt.blockchain.nodefull.HighLevelNode;
+import ch.samt.blockchain.nodefull.database.models.Block;
+import ch.samt.blockchain.nodefull.database.models.Transaction;
 import spark.Route;
 import spark.Service;
 
@@ -53,6 +50,7 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
         http.post("/getBlockchainHeight", getBlockchainHeight());
         http.post("/getBlock/:id", getBlock());
         http.post("/getUTXO/:address", getUTXO());
+        http.post("/getTx/:hash", getTx());
         http.post("/deploy", deploy());
     }
 
@@ -155,6 +153,30 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
         };
     }
 
+    private Route getTx() {
+        return (req, res) -> {
+            res.type("application/json");
+            res.status(200);
+
+            var base64 = req.params("hash").replaceAll("%2F", "/");
+            byte[] hash;
+
+            try {
+                hash = Protocol.CRYPTO.fromBase64(base64);
+            } catch (IllegalArgumentException e) {
+                return status("Invalid Hash");
+            }
+
+            var tx = super.database.getTransaction(hash);
+
+            if (tx == null) {
+                return status("Not Found");
+            }
+
+            return serialize(tx);
+        };
+    }
+
     private Route deploy() {
         return (req, res) -> {
             res.type("application/json");
@@ -191,6 +213,31 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
             .replace("%last_hash", Protocol.CRYPTO.toBase64(block.lastHash()))
             .replace("%hash", Protocol.CRYPTO.toBase64(block.hash()))
             .replace("%nTx", Integer.toString(block.nTx()));
+    }
+
+    private static String serialize(Transaction tx) {
+        return """
+            {
+                "status": "Ok",
+                "blockId": %blockId,
+                "sender": "%sender",
+                "recipient": "%recipient",
+                "amount": %amount,
+                "timestamp": %timestamp,
+                "lastTxHash": "%lastTxHash",
+                "signature": "%signature",
+                "hash": "%hash"
+            }
+        """
+            .replace("%blockId", Integer.toString(tx.blockId()))
+            .replace("%sender", Protocol.CRYPTO.toBase64(Protocol.CRYPTO.sha256(tx.senderPub())))
+            .replace("%recipient", Protocol.CRYPTO.toBase64(tx.recipient()))
+            .replace("%amount", Long.toString(tx.amount()))
+            .replace("%timestamp", Long.toString(tx.timestamp()))
+            .replace("%lastTxHash", Protocol.CRYPTO.toBase64(tx.lastTxHash()))
+            .replace("%signature", Protocol.CRYPTO.toBase64(tx.signature()))
+            .replace("%hash", Protocol.CRYPTO.toBase64(tx.hash()));
+        // http://localhost/transaction.html?hash=8xDLh2xsMOZzJA1U2nFuSqfwyChVuo9ddR0DO1SfF+M=
     }
 
     private static String status(String status) {

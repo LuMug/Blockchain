@@ -1,7 +1,5 @@
 package ch.samt.blockchain.nodeapi;
 
-import java.io.IOException;
-import java.net.BindException;
 import java.util.Scanner;
 
 import ch.samt.blockchain.common.utils.paramhandler.ParamHandler;

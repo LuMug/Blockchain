@@ -8,21 +8,41 @@ let lastHashContainer = document.getElementById('last-hash');
 let hashContainer = document.getElementById('hash');
 let nTxContainer = document.getElementById('nTx');
 
-let id = window.location.href.substring(window.location.href.indexOf('?id=') + 4)
-idContainer.innerHTML = id;
+init();
 
-postData('/getBlock/' + id)
-    .then(processJson);
+function init() {
+    let index = window.location.href.indexOf('?id=');
+    
+    if (index == -1) {
+        error('Bad URL');
+        return;
+    }
+
+    let id = window.location.href.substring(index + 4);
+
+    if (id === '') {
+        error('Bad URL');
+        return;
+    }
+
+    idContainer.innerHTML = id;
+
+    postData('/getBlock/' + id)
+        .then(processJson);
+}
+
+function error(msg) {
+    let container = document.getElementById('info');
+    let title = document.createElement('h1');
+    let text = document.createTextNode(msg);
+    title.appendChild(text);
+    container.innerHTML = '';
+    container.appendChild(title);
+}
 
 function processJson(json) {
     if (json.status != 'Ok') {
-        let container = document.getElementById('info');
-        container.innerHTML = "";
-
-        var status = document.createElement('h1');
-        var text = document.createTextNode(json.status);
-        status.appendChild(text);
-        container.appendChild(status);
+        error(json.status);
         return;
     }
 

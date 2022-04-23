@@ -141,6 +141,8 @@ public class HighLevelNode extends Node {
                 hash
             );
 
+            System.out.println("Adding tx to db for next block: " + Protocol.CRYPTO.toBase64(hash));
+
             // miner.addTx(hash);
         }
     }
@@ -170,7 +172,7 @@ public class HighLevelNode extends Node {
             return false;
         }
 
-        // TODO: Check last hash
+        // TODO: Check last hash (and if it is the first)
 
         // Check signature
 
@@ -191,18 +193,6 @@ public class HighLevelNode extends Node {
         mempool.add(packet);
 
         Logger.info("Received transaction");
-
-        // no what
-        /*int blockId = 0;
-
-        super.database.addTx(
-            blockId,
-            packet.getSenderPublicKey(),
-            packet.getRecipient(),
-            packet.getAmount(),
-            packet.getTimestamp(),
-            packet.getLastTransactionHash(),
-            packet.getSignature());*/
 
         super.database.updateUTXO(sender,                -amount);
         super.database.updateUTXO(packet.getRecipient(), +amount);

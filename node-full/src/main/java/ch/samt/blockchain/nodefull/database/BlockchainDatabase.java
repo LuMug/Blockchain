@@ -2,7 +2,7 @@ package ch.samt.blockchain.nodefull.database;
 
 import java.net.InetSocketAddress;
 
-import ch.samt.blockchain.nodefull.Block;
+import ch.samt.blockchain.nodefull.database.models.*;
 
 public interface BlockchainDatabase {
 
@@ -38,8 +38,10 @@ public interface BlockchainDatabase {
 
     void updateUTXO(byte[] address, long offset);
 
+    byte[] getHash(int id);
+    
     Block getBlock(int id);
 
-    byte[] getHash(int id);
+    Transaction getTransaction(byte[] hash);
 
 }
