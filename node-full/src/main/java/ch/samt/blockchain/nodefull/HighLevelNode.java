@@ -194,6 +194,8 @@ public class HighLevelNode extends Node {
 
         Logger.info("Received transaction");
 
+        super.database.cacheKey(packet.getSenderPublicKey(), sender);
+
         super.database.updateUTXO(sender,                -amount);
         super.database.updateUTXO(packet.getRecipient(), +amount);
 

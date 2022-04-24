@@ -7,6 +7,8 @@ let url = window.location.href.substring(0, window.location.href.indexOf('/', 8)
 let container;
 let height = 0;
 
+initBlocksUpdate(document.getElementById('blocks'));
+
 function initBlocksUpdate(el) {
     container = el;
     

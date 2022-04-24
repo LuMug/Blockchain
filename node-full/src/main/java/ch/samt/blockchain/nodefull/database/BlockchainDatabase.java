@@ -1,6 +1,7 @@
 package ch.samt.blockchain.nodefull.database;
 
 import java.net.InetSocketAddress;
+import java.util.List;
 
 import ch.samt.blockchain.nodefull.database.models.*;
 
@@ -43,5 +44,11 @@ public interface BlockchainDatabase {
     Block getBlock(int id);
 
     Transaction getTransaction(byte[] hash);
+
+    List<Transaction> getTransactions(byte[] address);
+
+    void cacheKey(byte[] key, byte[] address);
+
+    byte[] getPub(byte[] address);
 
 }

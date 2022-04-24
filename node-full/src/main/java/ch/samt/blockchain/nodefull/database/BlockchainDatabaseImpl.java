@@ -4,6 +4,8 @@ import java.net.InetSocketAddress;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.LinkedList;
+import java.util.List;
 
 import org.tinylog.Logger;
 
@@ -56,6 +58,12 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         CREATE TABLE IF NOT EXISTS wallet (
             address BINARY(32),
             utxo INT
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS keyCache (
+            pub_key BINARY(32),
+            address BINARY(32)
         )
         """
     };
@@ -378,6 +386,82 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         }
 
         return new Transaction(blockId, senderPub, recipient, amount, timestamp, lastTxHash, signature, hash);
+    }
+
+    @Override
+    public List<Transaction> getTransactions(byte[] address) {
+        var pub = getPub(address);
+        var statement = connection.prepareStatement("SELECT * FROM tx WHERE sender_pub=? OR recipient=?;");
+        
+        try {
+            statement.setBytes(1, pub);
+            statement.setBytes(2, address);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        List<Transaction> txs = new LinkedList<>();
+
+        try (var result = statement.executeQuery()) {
+            while (result.next()) {
+                int blockId = result.getInt(1);
+                byte[] senderPub = result.getBytes(2);
+                byte[] recipient = result.getBytes(3);
+                long amount = result.getLong(4);
+                long timestamp = result.getTimestamp(5).getTime();
+                byte[] lastTxHash = result.getBytes(6);
+                byte[] signature = result.getBytes(7);
+                byte[] hash = result.getBytes(8);
+
+                var tx = new Transaction(blockId, senderPub, recipient, amount, timestamp, lastTxHash, signature, hash);
+                txs.add(tx);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return txs;
+    }
+
+    @Override
+    public byte[] getPub(byte[] address) {
+        var statement = connection.prepareStatement("SELECT pub_key FROM keyCache WHERE address=?;");
+
+        try {
+            statement.setBytes(1, address);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        try (var result = statement.executeQuery()) {
+            if (!result.next()) {
+                return null;
+            }
+
+            return result.getBytes(1);
+        } catch (SQLException e) {
+            return null;
+        }
+    }
+
+    @Override
+    public void cacheKey(byte[] key, byte[] address) {
+        if (getPub(address) != null) {
+            return;
+        }
+
+        var statement = connection.prepareStatement("INSERT INTO keyCache VALUES (?, ?);");
+
+        try (statement) {
+            statement.setBytes(1, key);
+            statement.setBytes(2, address);
+            statement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     private int countTx(int id) {

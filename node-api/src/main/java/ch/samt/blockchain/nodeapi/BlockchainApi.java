@@ -1,5 +1,7 @@
 package ch.samt.blockchain.nodeapi;
 
+import java.util.List;
+
 import javax.servlet.MultipartConfigElement;
 import javax.servlet.http.Part;
 
@@ -46,44 +48,13 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
                     .threadPool(MAX_THREADS);
         }
 
-        //http.post("/getLatestTransactions/:from/:to", getLatestTransactions());
         http.post("/getBlockchainHeight", getBlockchainHeight());
         http.post("/getBlock/:id", getBlock());
         http.post("/getUTXO/:address", getUTXO());
         http.post("/getTx/:hash", getTx());
         http.post("/deploy", deploy());
+        http.post("/getTxs/:address", getTxs());
     }
-
-    /*
-    private Route getLatestTransactions() {
-        return (req, res) -> {
-            int from = 0;
-            int to = 0;
-
-            try {
-                from = Integer.parseInt(req.params(":from"));
-                to = Integer.parseInt(req.params(":to"));
-            } catch (NumberFormatException e) {
-                return "{}";
-            }
-
-            res.type("application/json");
-            res.status(200);
-
-            // Result example
-            long timestamp = System.currentTimeMillis();
-            return """
-                        {
-                            "transactions": [
-                                { "from": "ZWFzdGVyZWdnZWFzdGVyZWdnZWFzdGVyQUFB", "to": "ZWRzdGVycmdnZWFmdGVyZWdzZWFzdmVyUkFB", "amount": 15000, "timestamp": %TIMESTAMP% },
-                                { "from": "ZWFzdGVyZWdnZWFzdGVyZWdnZWFzdGVyQUFB", "to": "ZWRzdGVycmdnZWFmdGVyZWdzZWFzdmVyUkFB", "amount": 15000, "timestamp": %TIMESTAMP% },
-                                { "from": "ZWFzdGVyZWdnZWFzdGVyZWdnZWFzdGVyQUFB", "to": "ZWRzdGVycmdnZWFmdGVyZWdzZWFzdmVyUkFB", "amount": 15000, "timestamp": %TIMESTAMP% }
-                            ]
-                        }
-                    """
-                    .replaceAll("%TIMESTAMP%", Long.toString(timestamp));
-        };
-    }*/
 
     private Route getBlockchainHeight() {
         return (req, res) -> {
@@ -120,7 +91,7 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
                 return status("Not Found");
             }
 
-            return serialize(block);
+            return "{\"status\":\"Ok\"," + serialize(block) + "}";
         };
     }
 
@@ -173,7 +144,43 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
                 return status("Not Found");
             }
 
-            return serialize(tx);
+            return "{\"status\":\"Ok\"," + serialize(tx) + "}";
+        };
+    }
+
+    private Route getTxs() {
+        return (req, res) -> {
+            res.type("application/json");
+            res.status(200);
+
+            var base64 = req.params("address").replaceAll("%2F", "/");
+            byte[] address;
+
+            try {
+                address = Protocol.CRYPTO.fromBase64(base64);
+            } catch (IllegalArgumentException e) {
+                return status("Invalid Address");
+            }
+
+            List<Transaction> txs = super.database.getTransactions(address);
+
+            if (txs == null) {
+                return status("Not Found");
+            }
+
+            var json = new StringBuilder("\"txs\":[");
+
+            int i = 0;
+            for (var tx : txs) {
+                json.append("{" + serialize(tx) + "}");
+                if (++i != txs.size()) {
+                    json.append(",");
+                }
+            }
+
+            json.append("]");
+
+            return "{\"status\":\"Ok\"," + json.toString() + "}";
         };
     }
 
@@ -197,15 +204,12 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
 
     private static String serialize(Block block) {
         return """
-            {
-                "status": "Ok",
-                "nonce": "%nonce",
-                "miner": "%miner",
-                "timestamp": %timestamp,
-                "last_hash": "%last_hash",
-                "hash": "%hash",
-                "nTx": %nTx
-            }
+            "nonce": "%nonce",
+            "miner": "%miner",
+            "timestamp": %timestamp,
+            "last_hash": "%last_hash",
+            "hash": "%hash",
+            "nTx": %nTx
         """
             .replace("%nonce", Protocol.CRYPTO.toBase64(block.nonce()))
             .replace("%miner", Protocol.CRYPTO.toBase64(block.miner()))
@@ -217,17 +221,14 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
 
     private static String serialize(Transaction tx) {
         return """
-            {
-                "status": "Ok",
-                "blockId": %blockId,
-                "sender": "%sender",
-                "recipient": "%recipient",
-                "amount": %amount,
-                "timestamp": %timestamp,
-                "lastTxHash": "%lastTxHash",
-                "signature": "%signature",
-                "hash": "%hash"
-            }
+            "blockId": %blockId,
+            "sender": "%sender",
+            "recipient": "%recipient",
+            "amount": %amount,
+            "timestamp": %timestamp,
+            "lastTxHash": "%lastTxHash",
+            "signature": "%signature",
+            "hash": "%hash"
         """
             .replace("%blockId", Integer.toString(tx.blockId()))
             .replace("%sender", Protocol.CRYPTO.toBase64(Protocol.CRYPTO.sha256(tx.senderPub())))
@@ -237,7 +238,6 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
             .replace("%lastTxHash", Protocol.CRYPTO.toBase64(tx.lastTxHash()))
             .replace("%signature", Protocol.CRYPTO.toBase64(tx.signature()))
             .replace("%hash", Protocol.CRYPTO.toBase64(tx.hash()));
-        // http://localhost/transaction.html?hash=8xDLh2xsMOZzJA1U2nFuSqfwyChVuo9ddR0DO1SfF+M=
     }
 
     private static String status(String status) {

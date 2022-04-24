@@ -1,0 +1,11 @@
+#txs {
+    height: 250px;
+
+    overflow: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+}
+
+.tx:hover {
+    cursor: pointer;
+}
