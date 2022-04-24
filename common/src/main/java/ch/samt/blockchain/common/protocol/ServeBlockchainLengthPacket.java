@@ -20,7 +20,7 @@ public class ServeBlockchainLengthPacket {
 
         Offset offset = new Offset();
 
-        writeByte(packet, Protocol.SERVE_REQUEST_BLOCKCHAIN_LENGTH, offset);
+        writeByte(packet, Protocol.SERVE_BLOCKCHAIN_LENGTH, offset);
         writeIntLE(packet, length, offset);
 
         return packet;

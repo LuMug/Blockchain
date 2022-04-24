@@ -10,8 +10,8 @@ import java.util.List;
 import org.tinylog.Logger;
 
 import ch.samt.blockchain.common.protocol.Protocol;
-import ch.samt.blockchain.nodefull.database.models.Block;
-import ch.samt.blockchain.nodefull.database.models.Transaction;
+import ch.samt.blockchain.nodefull.models.Block;
+import ch.samt.blockchain.nodefull.models.Transaction;
 
 public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
@@ -93,7 +93,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public void cacheNode(String address, int port) {
+    public synchronized void cacheNode(String address, int port) {
         if (!isNodeCached(address, port)) {
             var statement = connection.prepareStatement("INSERT INTO node VALUES (?,?,?);");
             long timestamp = System.currentTimeMillis();
@@ -115,7 +115,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public boolean isNodeCached(String address, int port) {
+    public synchronized boolean isNodeCached(String address, int port) {
         var result = connection.query("SELECT port FROM node WHERE address='" + address + "' AND port=" + port + ";");
         try (result) {
             return result.next();
@@ -126,12 +126,12 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public void updateLastSeen(InetSocketAddress node) {
+    public synchronized void updateLastSeen(InetSocketAddress node) {
         updateLastSeen(node.getAddress().toString(), node.getPort());
     }
 
     @Override
-    public void updateLastSeen(String address, int port) {
+    public synchronized void updateLastSeen(String address, int port) {
         var statement = connection.prepareStatement("UPDATE node SET last_seen_alive=?;");
         long timestamp = System.currentTimeMillis();
         try {
@@ -142,7 +142,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public InetSocketAddress[] getCachedNodes() {
+    public synchronized InetSocketAddress[] getCachedNodes() {
         InetSocketAddress[] nodes = new InetSocketAddress[countCachedNodes()];
         ResultSet rs = connection.query("SELECT address, port FROM node;");
 
@@ -161,7 +161,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public int countCachedNodes() {
+    public synchronized int countCachedNodes() {
         var result = connection.query("SELECT COUNT(*) FROM node;");
         try (result) {
             return result.getInt(1);
@@ -172,7 +172,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public boolean isNodeCacheEmpty() {
+    public synchronized boolean isNodeCacheEmpty() {
         var result = connection.query("SELECT address FROM node LIMIT 1;");
         try (result) {
             return !result.next();
@@ -183,7 +183,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public void removeOldest() {
+    public synchronized void removeOldest() {
         connection.execute(
             "DELETE FROM node WHERE last_seen_alive=(SELECT last_seen_alive FROM node ORDER BY last_seen_alive DESC);");
     }
@@ -193,12 +193,12 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     private int blockchainLength = 0;
 
     @Override
-    public int getBlockchainLength() {
+    public synchronized int getBlockchainLength() {
         return blockchainLength;
     }
 
     @Override
-    public void addBlock(int difficulty, byte[] tx_hash, byte[] nonce, byte[] miner, long mined, byte[] lastHash, byte[] hash) {
+    public synchronized void addBlock(int difficulty, byte[] tx_hash, byte[] nonce, byte[] miner, long mined, byte[] lastHash, byte[] hash) {
         var statement = connection.prepareStatement("INSERT INTO block VALUES (?, ?, ?, ?, ?, ?, ?, ?);");
 
         try {
@@ -217,7 +217,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public void addTx(int blockId, byte[] senderPublicKey, byte[] recipient, long amount, long timestamp, byte[] lastTxHash, byte[] signature, byte[] hash) {
+    public synchronized void addTx(int blockId, byte[] senderPublicKey, byte[] recipient, long amount, long timestamp, byte[] lastTxHash, byte[] signature, byte[] hash) {
         var statement = connection.prepareStatement("INSERT INTO tx VALUES (?, ?, ?, ?, ?, ?, ?, ?);");
 
         try {
@@ -237,7 +237,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
 
     @Override
-    public long getUTXO(byte[] address) {
+    public synchronized long getUTXO(byte[] address) {
         var statement = connection.prepareStatement("SELECT utxo FROM wallet WHERE address=?;");
         try {
             statement.setBytes(1, address);
@@ -258,7 +258,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
     
     @Override
-    public void updateUTXO(byte[] address, long offset) {
+    public synchronized void updateUTXO(byte[] address, long offset) {
         if (getUTXO(address) == -1) {
             var statement = connection.prepareStatement("INSERT INTO wallet VALUES (?, ?);");
             try {
@@ -282,7 +282,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public byte[] getHash(int id) {
+    public synchronized byte[] getHash(int id) {
         var statement = connection.prepareStatement("SELECT hash FROM block WHERE id=?;");
         
         try {
@@ -309,7 +309,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public Block getBlock(int id) {
+    public synchronized Block getBlock(int id) {
         var statement = connection.prepareStatement("SELECT * FROM block WHERE id=?;");
         
         try {
@@ -350,7 +350,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public Transaction getTransaction(byte[] hash) {
+    public synchronized Transaction getTransaction(byte[] hash) {
         var statement = connection.prepareStatement("SELECT * FROM tx WHERE hash=?;");
         
         try {
@@ -389,7 +389,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public List<Transaction> getTransactions(byte[] address) {
+    public synchronized List<Transaction> getTransactions(byte[] address) {
         var pub = getPub(address);
         var statement = connection.prepareStatement("SELECT * FROM tx WHERE sender_pub=? OR recipient=?;");
         
@@ -427,7 +427,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public byte[] getPub(byte[] address) {
+    public synchronized byte[] getPub(byte[] address) {
         var statement = connection.prepareStatement("SELECT pub_key FROM keyCache WHERE address=?;");
 
         try {
@@ -448,7 +448,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public void cacheKey(byte[] key, byte[] address) {
+    public synchronized void cacheKey(byte[] key, byte[] address) {
         if (getPub(address) != null) {
             return;
         }
@@ -464,7 +464,18 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         }
     }
 
-    private int countTx(int id) {
+    @Override
+    public synchronized int getId(byte[] hash) {
+        var statement = connection.prepareStatement("SELECT id FROM block WHERE hash=?;");
+
+        try (var result = statement.executeQuery()) {
+            return result.getInt(1);
+        } catch (SQLException e) {
+            return -1;
+        }
+    }
+
+    private synchronized int countTx(int id) {
         var statement = connection.prepareStatement("SELECT COUNT(*) FROM tx WHERE block_id=?;");
         try {
             statement.setInt(1, id);
@@ -485,7 +496,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         return -1;
     }
 
-    private void init() {
+    private synchronized void init() {
         var result = connection.query("SELECT COUNT(id) FROM block;");
         try (result) {
             result.next();

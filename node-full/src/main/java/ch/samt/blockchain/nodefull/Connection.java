@@ -33,6 +33,9 @@ public abstract class Connection extends Thread {
         this.socket = socket;
     }
 
+    public abstract int requestIfHashExists(byte[] hash);
+    public abstract int requestBlockchainLength();
+
     @Override
     public void run() {
         try {

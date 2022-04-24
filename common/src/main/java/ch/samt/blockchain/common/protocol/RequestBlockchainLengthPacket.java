@@ -7,7 +7,7 @@ public class RequestBlockchainLengthPacket{
 
     private RequestBlockchainLengthPacket() {}
 
-    public static byte[] create(int length) {
+    public static byte[] create() {
         byte[] packet = new byte[1];
 
         Offset offset = new Offset();

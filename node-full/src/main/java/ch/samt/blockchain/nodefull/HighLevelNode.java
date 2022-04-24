@@ -1,5 +1,7 @@
 package ch.samt.blockchain.nodefull;
 
+import java.util.concurrent.TimeUnit;
+
 import org.tinylog.Logger;
 
 import ch.samt.blockchain.common.protocol.PoWSolvedPacket;
@@ -19,6 +21,12 @@ public class HighLevelNode extends Node {
 
     public HighLevelNode(int port) {
         super(port);
+    }
+
+    @Override
+    protected void init() {
+        System.out.println("INIT");
+        initPeriodicDownload();
     }
 
     @Override
@@ -106,6 +114,10 @@ public class HighLevelNode extends Node {
         }
     }
 
+    @Override
+    public int getBlockchainLength() {
+        return super.database.getBlockchainLength();
+    }
 
     private void newBlock() {
         Logger.info("New block");
@@ -200,6 +212,43 @@ public class HighLevelNode extends Node {
         super.database.updateUTXO(packet.getRecipient(), +amount);
 
         return true;
+    }
+
+    @Override
+    public int getIdByHash(byte[] hash) {
+        return super.database.getId(hash);
+    }
+
+    private void initPeriodicDownload() {
+        System.out.println("SCHEDING");
+        schedule(
+            () -> downloadBlockchain(),
+            40000, // const
+            40000, // const
+            TimeUnit.MILLISECONDS);
+    }
+
+    private void downloadBlockchain() {
+        var height = super.database.getBlockchainLength();
+        
+        if (height == 0) {
+            downloadBlockchain(1);
+            return;
+        }
+
+        int maxHeight = 0;
+        Connection maxConnection = null;
+        for (var peer : neighbours) {
+            int _height = peer.requestBlockchainLength();
+            System.out.println("His length: " + _height);
+        }
+
+        if (maxHeight > height) {
+            downloadBlockchain(maxHeight);
+        }
+    }
+
+    private void downloadBlockchain(int startId) {
     }
 
     private void broadcast(byte[] packet, Connection exclude) {

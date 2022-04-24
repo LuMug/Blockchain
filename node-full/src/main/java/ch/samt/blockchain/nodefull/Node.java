@@ -77,10 +77,14 @@ public abstract class Node extends Thread {
     }
 
     public abstract void deployTx(byte[] packet);
+    public abstract int getIdByHash(byte[] hash);
+    public abstract int getBlockchainLength();
     protected abstract boolean broadcastTx(byte[] packet, Connection exclude);
     protected abstract boolean broadcastTx(byte[] packet);
     protected abstract boolean powSolved(byte[] packet);
     protected abstract void broadcastPoW(byte[] packet, Connection exclude);
+    
+    protected abstract void init();
 
     public void broadcast(byte[] packet) {
         for (var peer : neighbours) {
@@ -91,9 +95,12 @@ public abstract class Node extends Thread {
     @Override
     public void run() {
         connect();
-
+        
         initPeriodicUpdate();
         initPeridicRegister();
+        
+        System.out.println("INIT");
+        init();
 
         try (ServerSocket server = new ServerSocket(port)) {
             while (true) {

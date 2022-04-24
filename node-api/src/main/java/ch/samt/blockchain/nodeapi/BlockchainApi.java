@@ -7,8 +7,8 @@ import javax.servlet.http.Part;
 
 import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.nodefull.HighLevelNode;
-import ch.samt.blockchain.nodefull.database.models.Block;
-import ch.samt.blockchain.nodefull.database.models.Transaction;
+import ch.samt.blockchain.nodefull.models.Block;
+import ch.samt.blockchain.nodefull.models.Transaction;
 import spark.Route;
 import spark.Service;
 

@@ -75,7 +75,7 @@ public class Main {
                 null);
         }
 
-        var api = handler.isNull("db") ?
+        BlockchainApi api = handler.isNull("db") ?
             new BlockchainApi(http, nodePort) :
             new BlockchainApi(http, nodePort, handler.getArg("db"));
 

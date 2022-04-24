@@ -4,24 +4,24 @@ import ch.samt.blockchain.common.utils.byteutils.Offset;
 
 public class ServeIfHashExistsPacket {
 
-    private boolean result;
+    private int id;
 
     public ServeIfHashExistsPacket(byte[] packet) {
         Offset offset = new Offset(1);
-        this.result = readByte(packet, offset) == 1;
+        this.id = readIntLE(packet, offset);
     }
 
-    public boolean getResult() {
-        return result;
+    public int getId() {
+        return id;
     }
 
-    public static byte[] create(boolean result) {
-        byte[] packet = new byte[2];
+    public static byte[] create(int id) {
+        byte[] packet = new byte[5];
 
         Offset offset = new Offset();
 
-        writeByte(packet, Protocol.SERVE_REQUEST_IF_HASH_EXISTS, offset);
-        writeByte(packet, result ? (byte) 1 : (byte) 0, offset);
+        writeByte(packet, Protocol.SERVE_IF_HASH_EXISTS, offset);
+        writeIntLE(packet, id, offset);
 
         return packet;
     }

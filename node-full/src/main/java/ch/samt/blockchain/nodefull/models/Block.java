@@ -1,4 +1,4 @@
-package ch.samt.blockchain.nodefull.database.models;
+package ch.samt.blockchain.nodefull.models;
 
 public record Block(
     int id,

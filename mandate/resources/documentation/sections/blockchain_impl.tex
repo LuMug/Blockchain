@@ -159,6 +159,8 @@ A miner will try to compute the following:
 
 \[
     \theta =
+    \text{hash}_\text{last}
+    \oplus
     \text{SHA}_{256}(\text{height})
     \oplus
     \text{SHA}_{256}(\text{nonce})
@@ -174,7 +176,10 @@ so \(0 \leq i < \text{length}(\text{tx})\).
 A block is mined if a value for \textit{nonce} such that
 
 \[
-    \Theta \text{TODO}
+    0 = \sum_{n=0}^{\text{difficulty}}
+    \Big(
+        \text{SHA}_{256}(\theta \oplus n) \mod{2}
+    \Big)
 \]
 
 is found.
