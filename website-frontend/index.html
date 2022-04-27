@@ -30,6 +30,7 @@
             </button>
             <div class="collapse navbar-collapse justify-content-end" id="collapsibleNavbar">
                 <ul class="navbar-nav">
+
                     <li class="nav-item p-2">
                         <a class="nav-link active" href="wallet.html">Wallets</a>
                     </li>
@@ -47,14 +48,17 @@
             </div>
         </nav>
 
+
+
+
         <div class="row bg-primary">
             <div class="col-lg-6 col-xxl-6 col-xl-8">
                 <div class="row">
                     <div class="col-lg-6 col-md-8 bg-primary mt-5">
                         <div class="bg-info rounded-pill">
-                            <span class="badge rounded-pill text-dark bg-light">
+                            <button class="badge rounded-pill text-dark bg-light">
                                 <h1 class="fs-6">Click here</h1>
-                            </span>
+                            </button>
                             <span class="badge text-light bg-info ml-0">
                                 <h1 class="display-1 fs-6">To deploy a transaction</h1>
                             </span>
@@ -209,35 +213,38 @@
 
 
 
-        <h1 class="text-center mt-5 text-dark">Blockchain features</h1>
+        <h1 class="text-center mt-5 text-dark">Search into Blockchain</h1>
         <div class="d-flex justify-content-around text-center mt-5">
             <div class="card text-white bg-primary mb-3 pb-5" style="max-width: 18rem;">
-                <div class="card-header">Header</div>
                 <div class="card-body">
-                    <h5 class="card-title">Primary card title</h5>
-                    <p class="card-text">Some quick example text to build on the card title and make up the bulk
-                        of
-                        the card's content.</p>
+                    <h5 class="card-title">Search a Wallet</h5>
+                    <p class="card-text">
+                        Search a specific wallet into blockchain.
+                    </p><br>
+                    <span class="d-flex">
+                        <input class="form-control me-2" type="search" placeholder="Wallet Address" aria-label="Search"
+                            id="wallet">
+                        <button class="btn btn-outline-primary" type="submit" onclick="searchWallet()">
+                            Search
+                        </button>
+                    </span>
                 </div>
             </div>
 
-            <div class="card text-white bg-primary mb-3" style="max-width: 18rem;">
-                <div class="card-header">Header</div>
+            <div class=" card text-white bg-primary mb-3" style="max-width: 18rem;">
                 <div class="card-body">
-                    <h5 class="card-title">Primary card title</h5>
-                    <p class="card-text">Some quick example text to build on the card title and make up the bulk
-                        of
-                        the card's content.</p>
-                </div>
-            </div>
+                    <h5 class="card-title">Search a Transaction</h5>
+                    <p class="card-text">
+                        Search a specific transaction into blockchain
+                    </p><br>
+                    <span class="d-flex">
+                        <input class="form-control me-2" type="search" placeholder="Transaction Hash"
+                            aria-label="Search">
 
-            <div class="card text-white bg-primary mb-3" style="max-width: 18rem;">
-                <div class="card-header">Header</div>
-                <div class="card-body">
-                    <h5 class="card-title">Primary card title</h5>
-                    <p class="card-text">Some quick example text to build on the card title and make up the bulk
-                        of
-                        the card's content.</p>
+                        <button class="btn btn-outline-primary" type="submit" href="transaction.html?hash=<input>">
+                            Search
+                        </button>
+                    </span>
                 </div>
             </div>
         </div>
@@ -290,7 +297,9 @@
             </div>
         </div>
 
+
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="js/index.js"></script>
 </body>
 
 </html>
