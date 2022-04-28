@@ -1,0 +1,10 @@
+#dropzone {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    height: 34em;
+
+    border: 1px solid white;
+    border-radius: 0.25em;
+}
