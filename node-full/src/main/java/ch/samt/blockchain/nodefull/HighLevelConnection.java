@@ -6,8 +6,10 @@ import java.util.concurrent.BlockingQueue;
 
 import org.tinylog.Logger;
 
+import ch.samt.blockchain.common.protocol.DownloadDonePacket;
 import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.common.protocol.RequestBlockchainLengthPacket;
+import ch.samt.blockchain.common.protocol.RequestDownloadPacket;
 import ch.samt.blockchain.common.protocol.RequestIfHashExistsPacket;
 import ch.samt.blockchain.common.protocol.ServeBlockchainLengthPacket;
 import ch.samt.blockchain.common.protocol.ServeIfHashExistsPacket;
@@ -16,6 +18,7 @@ public class HighLevelConnection extends Connection {
 
     private BlockingQueue<Integer> requestedId = new ArrayBlockingQueue<>(1);
     private BlockingQueue<Integer> requestedLength = new ArrayBlockingQueue<>(1);
+    //private BlockingQueue<byte[]> requestedLastHash = new ArrayBlockingQueue<>(1);
 
     public HighLevelConnection(Node node, Socket socket) {
         super(node, socket);
@@ -32,7 +35,7 @@ public class HighLevelConnection extends Connection {
             case Protocol.REQUEST_DOWNLOAD            -> processRequestDownloadPacket(data);
             case Protocol.SERVE_OLD_TX                -> processServeOldTransactionPacket(data);
             case Protocol.SERVE_OLD_POW               -> processServeOldPoWPacket(data);
-            case Protocol.SERVE_DOWNLOAD_AVAILAVILITY -> processServeDownloadAvailabilityPacket(data);
+            case Protocol.DOWNLOAD_DONE               -> processDownloadEndedPacket(data);
             default -> Logger.info("Unknown packet: " + data[0]);
         }
     }
@@ -66,16 +69,17 @@ public class HighLevelConnection extends Connection {
     }
 
     @Override
-    public void initDownload() {
-        
+    public void initDownload(int startId) {
+        var packet = RequestDownloadPacket.create(startId);
+        super.sendPacket(packet);
     }
 
     private void processPoWSolvedPacket(byte[] data) {
-        super.node.broadcastPoW(data, this);
+        super.node.broadcastPoW(data, this, true);
     }
     
     private void processSendTransactionPacket(byte[] data) {
-        super.node.broadcastTx(data, this);
+        super.node.broadcastTx(data, this, true);
     }
 
     private void processServeIfHashExistsPacket(byte[] data) {
@@ -99,25 +103,24 @@ public class HighLevelConnection extends Connection {
         sendPacket(ServeBlockchainLengthPacket.create(length));
     }
 
-    private void processRequestDownloadPacket(byte[] data) {
-
-    }
-
-    private void processServeDownloadAvailabilityPacket(byte[] data) {
-
+    private void processDownloadEndedPacket(byte[] data) {
+        super.node.downloadEnded(this);
     }
 
     private void processServeOldTransactionPacket(byte[] data) {
-
+        super.node.broadcastTx(data, this, false);
     }
-
+    
     private void processServeOldPoWPacket(byte[] data) {
-
+        super.node.broadcastPoW(data, this, false);
     }
-
 
     protected void onRegistration() {
         //
+    }
+
+    private void processRequestDownloadPacket(byte[] data) {
+        Logger.info("Receive download request from a peer");
     }
 
 }

@@ -9,7 +9,7 @@ public class ServeOldPoWPacket {
 
     private byte[] miner;
     
-    private long timestamp; /////////////////////////
+    private long timestamp;
 
     public ServeOldPoWPacket(byte[] packet) {
         Offset offset = new Offset(1);

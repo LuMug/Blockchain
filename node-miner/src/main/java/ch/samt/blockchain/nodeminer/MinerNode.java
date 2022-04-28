@@ -31,7 +31,8 @@ public class MinerNode extends HighLevelNode {
 
         broadcastPoW(
             PoWSolvedPacket.create(nonce, wallet, System.currentTimeMillis()),
-            null
+            null,
+            true
         );        
     }
 

@@ -1,0 +1,17 @@
+blocks.html  block are unordered (because of async requests)
+un readme per ogni tool
+pow effettivo
+i nodi periodicamente fanno il download dai peer 
+documentazione:
+    rifare req
+    test case
+    risultati test case 
+    aggiungere teoria a blockchain
+    blockchain impl
+        pow
+        mempool
+        download from peer
+    programming language impl 
+    website impl (dipendenze etc.)
+salvare gli offset delle transazioni in una mappa e non aggiornare subito il db
+controllare prima di startare il download

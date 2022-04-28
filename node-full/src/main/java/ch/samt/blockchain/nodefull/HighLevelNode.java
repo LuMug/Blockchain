@@ -33,8 +33,12 @@ public class HighLevelNode extends Node {
     }
 
     @Override
-    protected boolean broadcastTx(byte[] packet, Connection exclude) {
-        if (registerTx(packet)) {
+    protected boolean broadcastTx(byte[] packet, Connection exclude, boolean live) {
+        if (downloading() && live) {
+            return false;
+        }
+
+        if (registerTx(packet, live) && live) {
             broadcast(packet, exclude);
             return true;
         }
@@ -42,15 +46,26 @@ public class HighLevelNode extends Node {
     }
 
     @Override
+    protected void broadcastPoW(byte[] packet, Connection exclude, boolean live) {
+        if (downloading() && live) {
+            return;
+        }
+
+        if (powSolved(packet, true) && live) {
+            broadcast(packet, exclude);
+        }
+    }
+
+    @Override
     protected boolean broadcastTx(byte[] packet) {
-        return broadcastTx(packet, null);
+        return broadcastTx(packet, null, true);
     }
 
     @Override
     public void deployTx(byte[] packet) {
         SendTransactionPacket.setTimestamp(packet, System.currentTimeMillis());
         
-        if (registerTx(packet)) {
+        if (registerTx(packet, true)) {
             for (var peer : super.neighbours) {
                 peer.sendPacket(packet);
             }
@@ -58,7 +73,7 @@ public class HighLevelNode extends Node {
     }
 
     @Override
-    protected boolean powSolved(byte[] data) {
+    protected boolean powSolved(byte[] data, boolean live) {
         var packet = new PoWSolvedPacket(data);
 
         var nonce = packet.getNonce();
@@ -111,13 +126,6 @@ public class HighLevelNode extends Node {
     }
 
     @Override
-    protected void broadcastPoW(byte[] packet, Connection exclude) {
-        if (powSolved(packet)) {
-            broadcast(packet, exclude);
-        }
-    }
-
-    @Override
     public int getBlockchainLength() {
         return super.database.getBlockchainLength();
     }
@@ -162,7 +170,7 @@ public class HighLevelNode extends Node {
         }
     }
 
-    private boolean registerTx(byte[] data) {
+    private boolean registerTx(byte[] data, boolean live) {
         var packet = new SendTransactionPacket(data);
 
         // TODO if late MAX 5 seconds, add to currently minign block
@@ -227,8 +235,10 @@ public class HighLevelNode extends Node {
     }
 
     private void initPeriodicDownload() {
+        downloadBlockchain(true);
+
         schedule(
-            () -> downloadBlockchain(),
+            () -> downloadBlockchain(false),
             40000, // const
             40000, // const
             TimeUnit.MILLISECONDS);
@@ -236,7 +246,7 @@ public class HighLevelNode extends Node {
 
 
 
-    private void downloadBlockchain() {
+    private void downloadBlockchain(boolean forceIfSameLength) {
         var height = super.database.getBlockchainLength();
 
         int maxHeight = 0;
@@ -257,14 +267,12 @@ public class HighLevelNode extends Node {
             return;
         }
 
-        if (maxHeight <= height) {
-            return;
-        }
-
         // TODO, some trust check/consensus form other peers.
         // e.g. ask all maxConnections if their last hash is the same
 
-        downloadBlockchain(maxConnections.get(0));
+        if (maxHeight > height || forceIfSameLength) {
+            downloadBlockchain(maxConnections.get(0));
+        }
     }
 
     // force download even if same length at startup
@@ -288,24 +296,21 @@ public class HighLevelNode extends Node {
         }
 
         blockchainSeeder = peer;
-        blockchainSeeder.initDownload();
+        mempool.clear();
+        miner.clear();
+        blockchainSeeder.initDownload(startId);
+        Logger.info("Downloading blockchain from peer");
     }
 
     @Override
-    public void serveOldBlock(Connection from, byte[] packet) {
-        if (!downloading() || from != blockchainSeeder) {
-            return;
+    public void downloadEnded(Connection from) {
+        if (from == blockchainSeeder) {
+            blockchainSeeder = null;
         }
-
-
     }
 
     @Override
-    public void serveOldTx(Connection from, byte[] packet) {
-        if (!downloading() || from != blockchainSeeder) {
-            return;
-        }
-
+    public void oldTx(byte[] data) {
 
     }
 

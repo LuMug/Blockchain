@@ -35,7 +35,7 @@ public abstract class Connection extends Thread {
 
     public abstract int requestIfHashExists(byte[] hash);
     public abstract int requestBlockchainLength();
-    abstract void initDownload();
+    abstract void initDownload(int startId);
 
     @Override
     public void run() {

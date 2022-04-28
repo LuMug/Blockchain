@@ -49,19 +49,18 @@ public class ServeOldTransactionPacket {
     }
 
     public static byte[] create(byte[] recipient, byte[] senderPublicKey, long amount, byte[] lastTransactionHash, byte[] signature, long timestamp) {
-        int size = 41 + recipient.length + senderPublicKey.length + lastTransactionHash.length + signature.length;
+        int size = 33 + recipient.length + senderPublicKey.length + lastTransactionHash.length + signature.length;
 
         byte[] packet = new byte[size];
         Offset offset = new Offset();
 
         writeByte(packet, Protocol.SERVE_OLD_TX, offset);
-        writeLongLE(packet, 0, offset);
+        writeLongLE(packet, timestamp, offset);
         writeBlob(packet, recipient, offset);
         writeBlob(packet, senderPublicKey, offset);
         writeLongLE(packet, amount, offset);
         writeBlob(packet, lastTransactionHash, offset);
         writeBlob(packet, signature, offset);
-        writeLongLE(packet, timestamp, offset);
 
         return packet;
     }

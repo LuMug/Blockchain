@@ -1,22 +1,5 @@
 \documentclass{article}
 
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{array}
-\usepackage{parskip} % skip line
-\usepackage{fullpage} % margins
-\usepackage{hyperref} % hyper references and document setup
-\usepackage{xcolor} % colored text
-\usepackage{graphics} % images
-\usepackage{listings} % format code
-\usepackage{tikz} % tikz diagrams
-\usepackage{pgfgantt} % gantt charts https://github.com/skafdasschaf/latex-pgfgantt
-\usepackage{makecell} % cell scopes for tables
-\usepackage[normalem]{ulem} % authour strikethrough
-\usepackage{biblatex} % references
-\usepackage{fancybox} % oval boxes
-\usepackage{subfiles} % project structure - best loaded last in the preamble
-
 \usetikzlibrary{ % tikz packages
 	matrix,
 	positioning,
@@ -204,29 +187,11 @@ Assets to use
 	)
 \end{lstlisting}
 
-
-\begin{ganttchart}[
-	vgrid,
-	]{1}{12}
-	\gantttitle{2022}{12}
-	% top nodes
-	\ganttbar[name=holiday-2022-top,bar/.style={fill=none, draw=none}]{}{1}{1}
-	
-	% gantt chart contents
-	\ganttgroup{Group 1}{1}{7} \\
-	\ganttbar{Task 1}{1}{2} \\
-	\ganttlinkedbar{Task 2}{3}{7} \ganttnewline
-	\ganttmilestone{Milestone}{7} \ganttnewline
-	\ganttbar{Final Task}{8}{12}
-	
-	% bottom nodes
-	\ganttbar[name=holiday-2022-bottom,bar/.style={fill=none, draw=none}]{}{1}{1}
-	
-	% shading
-	\begin{scope}
-	\draw [opacity=0.2,line width=12] (holiday-2022-top) -- ($(holiday-2022-bottom)+(0,-11pt)$);
-	\end{scope}
-	
-\end{ganttchart}
+\begin{lstlisting}[style=sql]
+	CREATE TABLE IF NOT EXISTS keyCache (
+		pub_key BINARY(32),
+		address BINARY(32)
+	)
+\end{lstlisting}
 
 \end{document}

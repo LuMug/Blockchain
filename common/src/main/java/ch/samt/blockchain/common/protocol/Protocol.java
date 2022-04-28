@@ -4,20 +4,19 @@ import ch.samt.blockchain.common.utils.crypto.CryptoUtils;
 
 public class Protocol {
     
-    public final static byte REQUEST_NODES                      = 0;
-    public final static byte SERVE_NODES                        = 1;
-    public final static byte REGISTER_NODE                      = 2;
-    public final static byte SEND_TRANSACTION                   = 3;
-    public final static byte REQUEST_BLOCKCHAIN_LENGTH          = 4;
-    public final static byte SERVE_BLOCKCHAIN_LENGTH            = 5;
-    public final static byte REQUEST_IF_HASH_EXISTS             = 6;
-    public final static byte SERVE_IF_HASH_EXISTS               = 7;
-    public final static byte POW_SOLVED                         = 8;
-    public final static byte REQUEST_DOWNLOAD                   = 9;
-    public final static byte SERVE_OLD_TX                       = 10;
-    public final static byte SERVE_OLD_POW                      = 11;
-    public final static byte SERVE_DOWNLOAD_AVAILAVILITY        = 12;
-    public final static byte DOWNLOAD_DONE                      = 13;
+    public final static byte REQUEST_NODES                      = 0x0;
+    public final static byte SERVE_NODES                        = 0x1;
+    public final static byte REGISTER_NODE                      = 0x2;
+    public final static byte SEND_TRANSACTION                   = 0x3;
+    public final static byte REQUEST_BLOCKCHAIN_LENGTH          = 0x4;
+    public final static byte SERVE_BLOCKCHAIN_LENGTH            = 0x5;
+    public final static byte REQUEST_IF_HASH_EXISTS             = 0x6;
+    public final static byte SERVE_IF_HASH_EXISTS               = 0x7;
+    public final static byte POW_SOLVED                         = 0x8;
+    public final static byte REQUEST_DOWNLOAD                   = 0x9;
+    public final static byte SERVE_OLD_TX                       = 0xA;
+    public final static byte SERVE_OLD_POW                      = 0xB;
+    public final static byte DOWNLOAD_DONE                      = 0xC;
     
     // TODO usare Protocol.Crypto al posto che new CryptoUtils
     public static final CryptoUtils CRYPTO = new CryptoUtils();

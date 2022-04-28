@@ -79,12 +79,12 @@ public abstract class Node extends Thread {
     public abstract void deployTx(byte[] packet);
     public abstract int getIdByHash(byte[] hash);
     public abstract int getBlockchainLength();
-    protected abstract boolean broadcastTx(byte[] packet, Connection exclude);
+    protected abstract boolean broadcastTx(byte[] packet, Connection exclude, boolean live);
     protected abstract boolean broadcastTx(byte[] packet);
-    protected abstract boolean powSolved(byte[] packet);
-    protected abstract void broadcastPoW(byte[] packet, Connection exclude);
-    public abstract void serveOldBlock(Connection from, byte[] packet);
-    public abstract void serveOldTx(Connection from, byte[] packet);
+    protected abstract boolean powSolved(byte[] packet, boolean live);
+    protected abstract void broadcastPoW(byte[] packet, Connection exclude, boolean live);
+    public abstract void downloadEnded(Connection from);
+    public abstract void oldTx(byte[] packet);
     
     protected abstract void initHighLevelNode();
 
@@ -101,7 +101,6 @@ public abstract class Node extends Thread {
         initPeriodicUpdate();
         initPeridicRegister();
         
-        System.out.println("INIT");
         initHighLevelNode();
 
         try (ServerSocket server = new ServerSocket(port)) {
