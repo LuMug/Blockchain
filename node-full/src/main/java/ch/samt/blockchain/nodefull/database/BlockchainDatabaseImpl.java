@@ -521,10 +521,11 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         }
     }
 
-    private synchronized int countTx(int id) {
+    private synchronized int countTx(int blockId) {
         var statement = connection.prepareStatement("SELECT COUNT(*) FROM tx WHERE block_id=?;");
+        
         try {
-            statement.setInt(1, id);
+            statement.setInt(1, blockId);
         } catch (SQLException e) {
             e.printStackTrace();
             return -1;
@@ -540,6 +541,18 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         }
 
         return -1;
+    }
+
+    @Override
+    public void deleteBlocksFrom(int blockId) {
+        var statement = connection.prepareStatement("DELETE FROM block WHERE id>=?;");
+
+        try (statement) {
+            statement.setInt(1, blockId);
+            statement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     private synchronized void init() {

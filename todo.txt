@@ -17,3 +17,4 @@ salvare gli offset delle transazioni in una mappa e non aggiornare subito il db
 controllare prima di startare il download
 forger http request
 CORS
+downloading blocks give wrong hashes

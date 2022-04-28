@@ -141,6 +141,7 @@ public class HighLevelNode extends Node {
         int nextId = super.database.getBlockchainLength() + 1;
 
         miner.setHeight(nextId);
+        updateLastHash();
         
         
         //for (int i = 0; i < 100 && !mempool.isEmpty(); i++) {
@@ -171,6 +172,15 @@ public class HighLevelNode extends Node {
             System.out.println("Adding tx to db for next block: " + Protocol.CRYPTO.toBase64(hash));
 
             // miner.addTx(hash);
+        }
+    }
+
+    private void updateLastHash() {
+        int height = super.database.getBlockchainLength();
+        var lastBlock = super.database.getBlock(height);
+        
+        if (lastBlock != null) {
+            miner.setLastHash(lastBlock.hash());
         }
     }
 
@@ -287,14 +297,10 @@ public class HighLevelNode extends Node {
         
         int startId = 0;
 
-        System.out.println("max: " + max);
-
         if (max > 0) {
             for (int i = 0; i < max; i++) { // constant
                 var req = super.database.getHash(height - i);
                 int id = peer.requestIfHashExists(req);
-
-                System.out.println("hash exists at : " + id);
 
                 if (id != -1) {
                     startId = id;
@@ -303,19 +309,21 @@ public class HighLevelNode extends Node {
             }
         }
 
-        System.out.println("startId: " + startId);
+        Logger.info("Downloading blockchain from peer");
 
         blockchainSeeder = peer;
         mempool.clear();
         miner.clear();
-        // TODO set lastHash
+        updateLastHash();
+        
+        System.out.println("startId: " + startId + " height: " + height);
         
         if (startId < height) {
+            super.database.deleteBlocksFrom(startId + 1);
             Logger.info("Adopting another blockchain branch");
         }
         
         blockchainSeeder.initDownload(startId);
-        Logger.info("Downloading blockchain from peer");
     }
 
     @Override

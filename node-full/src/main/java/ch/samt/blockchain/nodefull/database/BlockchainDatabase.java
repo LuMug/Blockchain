@@ -55,4 +55,6 @@ public interface BlockchainDatabase {
 
     byte[] getPub(byte[] address);
 
+    void deleteBlocksFrom(int blockId);
+
 }
