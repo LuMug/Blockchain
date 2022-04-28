@@ -49,6 +49,8 @@ public interface BlockchainDatabase {
 
     List<Transaction> getTransactions(byte[] address);
 
+    List<Transaction> getTransactions(int blockId);
+
     void cacheKey(byte[] key, byte[] address);
 
     byte[] getPub(byte[] address);

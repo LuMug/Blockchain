@@ -4,15 +4,14 @@ import java.net.Socket;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import org.tinylog.Logger;
-
-import ch.samt.blockchain.common.protocol.DownloadDonePacket;
 import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.common.protocol.RequestBlockchainLengthPacket;
 import ch.samt.blockchain.common.protocol.RequestDownloadPacket;
 import ch.samt.blockchain.common.protocol.RequestIfHashExistsPacket;
 import ch.samt.blockchain.common.protocol.ServeBlockchainLengthPacket;
 import ch.samt.blockchain.common.protocol.ServeIfHashExistsPacket;
+
+import org.tinylog.Logger;
 
 public class HighLevelConnection extends Connection {
 
@@ -121,6 +120,8 @@ public class HighLevelConnection extends Connection {
 
     private void processRequestDownloadPacket(byte[] data) {
         Logger.info("Receive download request from a peer");
+
+        super.node.serveBlockchain(data, this);
     }
 
 }

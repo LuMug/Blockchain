@@ -8,7 +8,10 @@ import org.tinylog.Logger;
 
 import ch.samt.blockchain.common.protocol.PoWSolvedPacket;
 import ch.samt.blockchain.common.protocol.Protocol;
+import ch.samt.blockchain.common.protocol.RequestDownloadPacket;
 import ch.samt.blockchain.common.protocol.SendTransactionPacket;
+import ch.samt.blockchain.common.protocol.ServeOldPoWPacket;
+import ch.samt.blockchain.common.protocol.ServeOldTransactionPacket;
 
 public class HighLevelNode extends Node {
 
@@ -244,8 +247,6 @@ public class HighLevelNode extends Node {
             TimeUnit.MILLISECONDS);
     }
 
-
-
     private void downloadBlockchain(boolean forceIfSameLength) {
         var height = super.database.getBlockchainLength();
 
@@ -284,16 +285,23 @@ public class HighLevelNode extends Node {
         
         int startId = 0;
 
+        System.out.println("max: " + max);
+
         if (max > 0) {
             for (int i = 0; i < max; i++) { // constant
                 var req = super.database.getHash(height - i);
                 int id = peer.requestIfHashExists(req);
+
+                System.out.println("hash exists at : " + id);
+
                 if (id != -1) {
                     startId = id;
                     break;
                 }
             }
         }
+
+        System.out.println("startId: " + startId);
 
         blockchainSeeder = peer;
         mempool.clear();
@@ -318,9 +326,53 @@ public class HighLevelNode extends Node {
         return blockchainSeeder != null;
     }
 
+    @Override
+    public void serveBlockchain(byte[] data, Connection to) {
+        super.scheduler.execute(() -> {
+            var packet = new RequestDownloadPacket(data);
 
+            int id = Math.max(1, packet.getStartId());
 
+            // e.g.
+            // Send all tx of block 2
+            // Send PoW of block 1
+            // Send all tx of block 3
+            // Send PoW of block 2 
 
+            while (id <= super.database.getBlockchainLength()) {
+                // send transactions
+                var txs = super.database.getTransactions(id + 1); // order by timestamp
+
+                for (var tx : txs) {
+                    var toSend = ServeOldTransactionPacket.create(
+                        tx.recipient(),
+                        tx.senderPub(),
+                        tx.amount(),
+                        tx.lastTxHash(),
+                        tx.signature(),
+                        tx.timestamp());
+                    
+                    to.sendPacket(toSend);
+                }
+
+                // send pow
+                var pow = super.database.getBlock(id);
+
+                var toSend = ServeOldPoWPacket.create(
+                    pow.nonce(),
+                    pow.miner(),
+                    pow.timestamp()
+                );
+                
+                to.sendPacket(toSend);
+
+                ++id;
+            }
+
+            // send mempool
+            // TODO
+        });
+    }
 
     private void broadcast(byte[] packet, Connection exclude) {
         for (var peer : super.neighbours) {

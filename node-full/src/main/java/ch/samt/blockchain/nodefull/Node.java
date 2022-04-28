@@ -85,6 +85,7 @@ public abstract class Node extends Thread {
     protected abstract void broadcastPoW(byte[] packet, Connection exclude, boolean live);
     public abstract void downloadEnded(Connection from);
     public abstract void oldTx(byte[] packet);
+    public abstract void serveBlockchain(byte[] packet, Connection to);
     
     protected abstract void initHighLevelNode();
 

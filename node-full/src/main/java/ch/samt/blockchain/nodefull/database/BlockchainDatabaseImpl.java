@@ -389,6 +389,41 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
+    public synchronized List<Transaction> getTransactions(int blockId) {
+        var statement = connection.prepareStatement("SELECT * FROM tx WHERE block_id=?;");
+        
+        try {
+            statement.setInt(1, blockId);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        List<Transaction> txs = new LinkedList<>();
+
+        try (var result = statement.executeQuery()) {
+            while (result.next()) {
+                byte[] senderPub = result.getBytes(2);
+                byte[] recipient = result.getBytes(3);
+                long amount = result.getLong(4);
+                long timestamp = result.getTimestamp(5).getTime();
+                byte[] lastTxHash = result.getBytes(6);
+                byte[] signature = result.getBytes(7);
+                byte[] hash = result.getBytes(8);
+
+                var tx = new Transaction(blockId, senderPub, recipient, amount, timestamp, lastTxHash, signature, hash);
+                txs.add(tx);
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return txs;
+    }
+
+    @Override
     public synchronized List<Transaction> getTransactions(byte[] address) {
         var pub = getPub(address);
         var statement = connection.prepareStatement("SELECT * FROM tx WHERE sender_pub=? OR recipient=?;");
