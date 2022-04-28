@@ -7,10 +7,10 @@ git clone https://github.com/LuMug/blockchain
 cd blockchain
 ```
 
-### Unix
+### Linux
 
 There is a handy script to compile everything and generate
-unix executables in the `build/` folder
+linux executables in the `build/` folder
 
 ```
 chmod +x scripts/build.sh

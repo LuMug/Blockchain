@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.tinylog.Logger;
 
+import ch.samt.blockchain.common.protocol.DownloadDonePacket;
 import ch.samt.blockchain.common.protocol.PoWSolvedPacket;
 import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.common.protocol.RequestDownloadPacket;
@@ -37,7 +38,7 @@ public class HighLevelNode extends Node {
 
     @Override
     protected boolean broadcastTx(byte[] packet, Connection exclude, boolean live) {
-        if (downloading() && live) {
+        if (downloading() ^ !live) {
             return false;
         }
 
@@ -50,7 +51,7 @@ public class HighLevelNode extends Node {
 
     @Override
     protected void broadcastPoW(byte[] packet, Connection exclude, boolean live) {
-        if (downloading() && live) {
+        if (downloading() ^ !live) {
             return;
         }
 
@@ -248,6 +249,7 @@ public class HighLevelNode extends Node {
     }
 
     private void downloadBlockchain(boolean forceIfSameLength) {
+        Logger.info("Checking peers blockchain lengths");
         var height = super.database.getBlockchainLength();
 
         int maxHeight = 0;
@@ -271,7 +273,7 @@ public class HighLevelNode extends Node {
         // TODO, some trust check/consensus form other peers.
         // e.g. ask all maxConnections if their last hash is the same
 
-        if (maxHeight > height || forceIfSameLength) {
+        if (maxHeight > height || (maxHeight == height && forceIfSameLength)) {
             downloadBlockchain(maxConnections.get(0));
         }
     }
@@ -306,6 +308,12 @@ public class HighLevelNode extends Node {
         blockchainSeeder = peer;
         mempool.clear();
         miner.clear();
+        // TODO set lastHash
+        
+        if (startId < height) {
+            Logger.info("Adopting another blockchain branch");
+        }
+        
         blockchainSeeder.initDownload(startId);
         Logger.info("Downloading blockchain from peer");
     }
@@ -331,7 +339,7 @@ public class HighLevelNode extends Node {
         super.scheduler.execute(() -> {
             var packet = new RequestDownloadPacket(data);
 
-            int id = Math.max(1, packet.getStartId());
+            int id = packet.getStartId() + 1;
 
             // e.g.
             // Send all tx of block 2
@@ -371,6 +379,8 @@ public class HighLevelNode extends Node {
 
             // send mempool
             // TODO
+ 
+            to.sendPacket(DownloadDonePacket.create());
         });
     }
 

@@ -1,6 +1,5 @@
 package ch.samt.blockchain.webserver;
 
-import java.io.IOException;
 import java.util.Scanner;
 
 import ch.samt.blockchain.common.utils.paramhandler.ParamHandler;

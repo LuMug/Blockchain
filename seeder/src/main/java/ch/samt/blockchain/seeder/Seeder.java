@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.tinylog.Logger;
 
@@ -23,6 +25,8 @@ public class Seeder extends Thread {
 
     // Quick indexing
     private Map<InetSocketAddress, Node> hashtable = new HashMap<>();
+
+    private ExecutorService scheduler = Executors.newFixedThreadPool(20);
 
     private int port;
 
@@ -39,7 +43,8 @@ public class Seeder extends Thread {
                     var socket = server.accept();
                     var connection = new Connection(this, socket);
                     Logger.info("Connection incoming " + socket.getRemoteSocketAddress());
-                    new Thread(connection).start();
+                    
+                    scheduler.execute(connection);
                 } catch (IOException e) {}
             }
         } catch (IOException e) {

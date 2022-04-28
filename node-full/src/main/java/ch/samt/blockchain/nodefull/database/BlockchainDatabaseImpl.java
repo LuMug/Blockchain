@@ -503,9 +503,20 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     public synchronized int getId(byte[] hash) {
         var statement = connection.prepareStatement("SELECT id FROM block WHERE hash=?;");
 
+        try {
+            statement.setBytes(1, hash);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         try (var result = statement.executeQuery()) {
+            if (!result.next()) {
+                return -1;
+            }
+            
             return result.getInt(1);
         } catch (SQLException e) {
+            e.printStackTrace();
             return -1;
         }
     }
