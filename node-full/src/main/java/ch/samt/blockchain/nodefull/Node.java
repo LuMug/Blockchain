@@ -83,8 +83,10 @@ public abstract class Node extends Thread {
     protected abstract boolean broadcastTx(byte[] packet);
     protected abstract boolean powSolved(byte[] packet);
     protected abstract void broadcastPoW(byte[] packet, Connection exclude);
+    public abstract void serveOldBlock(Connection from, byte[] packet);
+    public abstract void serveOldTx(Connection from, byte[] packet);
     
-    protected abstract void init();
+    protected abstract void initHighLevelNode();
 
     public void broadcast(byte[] packet) {
         for (var peer : neighbours) {
@@ -100,7 +102,7 @@ public abstract class Node extends Thread {
         initPeridicRegister();
         
         System.out.println("INIT");
-        init();
+        initHighLevelNode();
 
         try (ServerSocket server = new ServerSocket(port)) {
             while (true) {

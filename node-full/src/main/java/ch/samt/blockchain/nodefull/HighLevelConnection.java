@@ -23,12 +23,16 @@ public class HighLevelConnection extends Connection {
 
     protected void processHighLevelPacket(byte[] data) {
         switch (data[0]) {
-            case Protocol.SEND_TRANSACTION -> processSendTransactionPacket(data);
-            case Protocol.POW_SOLVED -> processPoWSolvedPacket(data);
-            case Protocol.REQUEST_IF_HASH_EXISTS -> processRequestIfHashExists(data);
-            case Protocol.SERVE_IF_HASH_EXISTS -> processServeIfHashExists(data);
-            case Protocol.REQUEST_BLOCKCHAIN_LENGTH -> processRequestBlockchainLength(data);
-            case Protocol.SERVE_BLOCKCHAIN_LENGTH -> processServeBlockchainLength(data);
+            case Protocol.SEND_TRANSACTION            -> processSendTransactionPacket(data);
+            case Protocol.POW_SOLVED                  -> processPoWSolvedPacket(data);
+            case Protocol.REQUEST_IF_HASH_EXISTS      -> processRequestIfHashExistsPacket(data);
+            case Protocol.SERVE_IF_HASH_EXISTS        -> processServeIfHashExistsPacket(data);
+            case Protocol.REQUEST_BLOCKCHAIN_LENGTH   -> processRequestBlockchainLengthPacket(data);
+            case Protocol.SERVE_BLOCKCHAIN_LENGTH     -> processServeBlockchainLengthPacket(data);
+            case Protocol.REQUEST_DOWNLOAD            -> processRequestDownloadPacket(data);
+            case Protocol.SERVE_OLD_TX                -> processServeOldTransactionPacket(data);
+            case Protocol.SERVE_OLD_POW               -> processServeOldPoWPacket(data);
+            case Protocol.SERVE_DOWNLOAD_AVAILAVILITY -> processServeDownloadAvailabilityPacket(data);
             default -> Logger.info("Unknown packet: " + data[0]);
         }
     }
@@ -61,6 +65,11 @@ public class HighLevelConnection extends Connection {
         return 0;
     }
 
+    @Override
+    public void initDownload() {
+        
+    }
+
     private void processPoWSolvedPacket(byte[] data) {
         super.node.broadcastPoW(data, this);
     }
@@ -69,26 +78,43 @@ public class HighLevelConnection extends Connection {
         super.node.broadcastTx(data, this);
     }
 
-    private void processServeIfHashExists(byte[] data) {
+    private void processServeIfHashExistsPacket(byte[] data) {
         var packet = new ServeIfHashExistsPacket(data);
         requestedId.add(packet.getId());
     }
 
-    private void processServeBlockchainLength(byte[] data) {
+    private void processServeBlockchainLengthPacket(byte[] data) {
         var packet = new ServeBlockchainLengthPacket(data);
         requestedLength.add(packet.getLength());
     }
 
-    private void processRequestIfHashExists(byte[] data) {
+    private void processRequestIfHashExistsPacket(byte[] data) {
         var packet = new RequestIfHashExistsPacket(data);
         int id = super.node.getIdByHash(packet.getHash());
         sendPacket(ServeIfHashExistsPacket.create(id));
     }
 
-    private void processRequestBlockchainLength(byte[] data) {
+    private void processRequestBlockchainLengthPacket(byte[] data) {
         int length = super.node.getBlockchainLength();
         sendPacket(ServeBlockchainLengthPacket.create(length));
     }
+
+    private void processRequestDownloadPacket(byte[] data) {
+
+    }
+
+    private void processServeDownloadAvailabilityPacket(byte[] data) {
+
+    }
+
+    private void processServeOldTransactionPacket(byte[] data) {
+
+    }
+
+    private void processServeOldPoWPacket(byte[] data) {
+
+    }
+
 
     protected void onRegistration() {
         //

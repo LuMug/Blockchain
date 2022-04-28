@@ -13,6 +13,11 @@ public class Protocol {
     public final static byte REQUEST_IF_HASH_EXISTS             = 6;
     public final static byte SERVE_IF_HASH_EXISTS               = 7;
     public final static byte POW_SOLVED                         = 8;
+    public final static byte REQUEST_DOWNLOAD                   = 9;
+    public final static byte SERVE_OLD_TX                       = 10;
+    public final static byte SERVE_OLD_POW                      = 11;
+    public final static byte SERVE_DOWNLOAD_AVAILAVILITY        = 12;
+    public final static byte DOWNLOAD_DONE                      = 13;
     
     // TODO usare Protocol.Crypto al posto che new CryptoUtils
     public static final CryptoUtils CRYPTO = new CryptoUtils();

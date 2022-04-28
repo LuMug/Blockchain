@@ -1,5 +1,7 @@
 package ch.samt.blockchain.nodefull;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import org.tinylog.Logger;
@@ -13,6 +15,8 @@ public class HighLevelNode extends Node {
     private Mempool mempool = new Mempool();
     private Miner miner = new Miner();
 
+    private Connection blockchainSeeder;
+
     private byte[] lastNonce;
     
     public HighLevelNode(int port, String db) {
@@ -24,8 +28,7 @@ public class HighLevelNode extends Node {
     }
 
     @Override
-    protected void init() {
-        System.out.println("INIT");
+    protected void initHighLevelNode() {
         initPeriodicDownload();
     }
 
@@ -162,6 +165,8 @@ public class HighLevelNode extends Node {
     private boolean registerTx(byte[] data) {
         var packet = new SendTransactionPacket(data);
 
+        // TODO if late MAX 5 seconds, add to currently minign block
+
         if (mempool.contains(packet.getSignature())) {
             return false;
         }
@@ -208,6 +213,8 @@ public class HighLevelNode extends Node {
 
         super.database.cacheKey(packet.getSenderPublicKey(), sender);
 
+        // TODO, do this only when adding tx to db, put these offsets
+        // in a map
         super.database.updateUTXO(sender,                -amount);
         super.database.updateUTXO(packet.getRecipient(), +amount);
 
@@ -220,7 +227,6 @@ public class HighLevelNode extends Node {
     }
 
     private void initPeriodicDownload() {
-        System.out.println("SCHEDING");
         schedule(
             () -> downloadBlockchain(),
             40000, // const
@@ -228,28 +234,88 @@ public class HighLevelNode extends Node {
             TimeUnit.MILLISECONDS);
     }
 
+
+
     private void downloadBlockchain() {
         var height = super.database.getBlockchainLength();
-        
-        if (height == 0) {
-            downloadBlockchain(1);
+
+        int maxHeight = 0;
+        List<Connection> maxConnections = new LinkedList<>();
+        for (var peer : neighbours) {
+            int _height = peer.requestBlockchainLength();
+            if (_height > maxHeight) {
+                maxHeight = _height;
+                maxConnections.clear();
+                maxConnections.add(peer);
+            } else if (_height == maxHeight) {
+                maxConnections.add(peer);
+            }
+        }
+
+        if (maxConnections.size() == 0) {
+            Logger.warn("No peer to check blockchain length with");
             return;
         }
 
-        int maxHeight = 0;
-        Connection maxConnection = null;
-        for (var peer : neighbours) {
-            int _height = peer.requestBlockchainLength();
-            System.out.println("His length: " + _height);
+        if (maxHeight <= height) {
+            return;
         }
 
-        if (maxHeight > height) {
-            downloadBlockchain(maxHeight);
-        }
+        // TODO, some trust check/consensus form other peers.
+        // e.g. ask all maxConnections if their last hash is the same
+
+        downloadBlockchain(maxConnections.get(0));
     }
 
-    private void downloadBlockchain(int startId) {
+    // force download even if same length at startup
+
+    private void downloadBlockchain(Connection peer) {
+        var height = super.database.getBlockchainLength();
+        
+        int max = Math.min(height, 5);
+        
+        int startId = 0;
+
+        if (max > 0) {
+            for (int i = 0; i < max; i++) { // constant
+                var req = super.database.getHash(height - i);
+                int id = peer.requestIfHashExists(req);
+                if (id != -1) {
+                    startId = id;
+                    break;
+                }
+            }
+        }
+
+        blockchainSeeder = peer;
+        blockchainSeeder.initDownload();
     }
+
+    @Override
+    public void serveOldBlock(Connection from, byte[] packet) {
+        if (!downloading() || from != blockchainSeeder) {
+            return;
+        }
+
+
+    }
+
+    @Override
+    public void serveOldTx(Connection from, byte[] packet) {
+        if (!downloading() || from != blockchainSeeder) {
+            return;
+        }
+
+
+    }
+
+    public boolean downloading() {
+        return blockchainSeeder != null;
+    }
+
+
+
+
 
     private void broadcast(byte[] packet, Connection exclude) {
         for (var peer : super.neighbours) {

@@ -1,9 +1,9 @@
 package ch.samt.blockchain.common.protocol;
 
-import static ch.samt.blockchain.common.utils.byteutils.ByteUtils.*;
 import ch.samt.blockchain.common.utils.byteutils.Offset;
+import static ch.samt.blockchain.common.utils.byteutils.ByteUtils.*;
 
-public class PoWSolvedPacket {
+public class ServeOldPoWPacket {
     
     private byte[] nonce;
 
@@ -11,7 +11,7 @@ public class PoWSolvedPacket {
     
     private long timestamp; /////////////////////////
 
-    public PoWSolvedPacket(byte[] packet) {
+    public ServeOldPoWPacket(byte[] packet) {
         Offset offset = new Offset(1);
 
         this.nonce = readBlob(packet, offset);
@@ -35,7 +35,7 @@ public class PoWSolvedPacket {
         byte[] packet = new byte[17 + miner.length + nonce.length];
         Offset offset = new Offset();
 
-        writeByte(packet, Protocol.POW_SOLVED, offset);
+        writeByte(packet, Protocol.SERVE_OLD_POW, offset);
         writeBlob(packet, nonce, offset);
         writeBlob(packet, miner, offset);
         writeLongBE(packet, timestamp, offset);
