@@ -314,14 +314,20 @@ public class HighLevelNode extends Node {
         blockchainSeeder = peer;
         mempool.clear();
         miner.clear();
-        updateLastHash();
         
         System.out.println("startId: " + startId + " height: " + height);
         
         if (startId < height) {
-            super.database.deleteBlocksFrom(startId + 1);
+            if (startId == 0) {
+                super.database.deleteBlocksFrom(startId + 1);
+                // TODO: deleteAll function
+            } else {
+                super.database.deleteBlocksFrom(startId + 1);
+            }
             Logger.info("Adopting another blockchain branch");
         }
+
+        updateLastHash();
         
         blockchainSeeder.initDownload(startId);
     }

@@ -544,15 +544,32 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public void deleteBlocksFrom(int blockId) {
-        var statement = connection.prepareStatement("DELETE FROM block WHERE id>=?;");
+    public synchronized void deleteBlocksFrom(int blockId) {
+        // TODO reverse transaction and block reqrds
 
-        try (statement) {
-            statement.setInt(1, blockId);
-            statement.execute();
+        // Delete all blocks
+
+        var deleteBlocksStatement = connection.prepareStatement("DELETE FROM block WHERE id>=?;");
+
+        try (deleteBlocksStatement) {
+            deleteBlocksStatement.setInt(1, blockId);
+            deleteBlocksStatement.execute();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        // Delete all transactions
+
+        var deleteTxsStatement = connection.prepareStatement("DELETE FROM tx WHERE block_id>=?;");
+
+        try (deleteTxsStatement) {
+            deleteTxsStatement.setInt(1, blockId);
+            deleteTxsStatement.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        blockchainLength = blockId - 1;
     }
 
     private synchronized void init() {

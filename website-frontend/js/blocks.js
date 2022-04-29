@@ -29,16 +29,25 @@ function update() {
                 height = newHeight - diff;
             }
 
-            // Use await
-            for (let i = 0; i < diff; i++) {
-                let id = height + i + 1;
-                postData('/getBlock/' + id)
-                    .then(json => processBlock(json, id));
+            if (diff != 0) {
+                let id = height + 1;
+                reqBlocks(id, id + diff);
             }
+
 
             height += diff;
         });
+}
 
+function reqBlocks(id, endId) {
+    postData('/getBlock/' + id)
+        .then(json => processBlock(json, id))
+        .then(() => {
+            ++id;
+            if (id != endId) {
+                reqBlocks(id, endId);
+            }
+        });
 }
 
 function processBlock(json, id) {
