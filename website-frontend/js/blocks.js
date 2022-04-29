@@ -60,8 +60,6 @@ function processBlock(json, id) {
         </div>
     */
 
-    // il bordino rotondo dei blocchi non si vede
-
     let timestamp = json.timestamp;
     let hash = json.hash;
     let nTx = json.nTx;
@@ -75,7 +73,7 @@ function processBlock(json, id) {
 
     let col2 = document.createElement('div');
     col2.className = 'col-3';
-    col2.appendChild(document.createTextNode(timestamp));
+    col2.appendChild(document.createTextNode(new Date(timestamp).toLocaleString()));
     
     let col3 = document.createElement('div');
     col3.className = 'col-7';

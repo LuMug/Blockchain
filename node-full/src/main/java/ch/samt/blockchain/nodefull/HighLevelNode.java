@@ -315,12 +315,9 @@ public class HighLevelNode extends Node {
         mempool.clear();
         miner.clear();
         
-        System.out.println("startId: " + startId + " height: " + height);
-        
         if (startId < height) {
             if (startId == 0) {
-                super.database.deleteBlocksFrom(startId + 1);
-                // TODO: deleteAll function
+                super.database.clear(); // faster to just wipe everything
             } else {
                 super.database.deleteBlocksFrom(startId + 1);
             }

@@ -95,7 +95,7 @@ function processTxsJson(json) {
         
         let col4 = document.createElement('div');
         col4.className = 'col-3';
-        col4.appendChild(document.createTextNode(new Date(timestmap * 1000)));
+        col4.appendChild(document.createTextNode(new Date(timestmap).toLocaleString()));
         
         div.appendChild(col1);
         div.appendChild(col2);

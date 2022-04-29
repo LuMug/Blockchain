@@ -17,8 +17,6 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
     private DatabaseConnection connection;
 
-    // TODO ? Index on tx.block_id
-
     private static final String[] SQL = {
         """
         CREATE TABLE IF NOT EXISTS node (
@@ -545,7 +543,13 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
     @Override
     public synchronized void deleteBlocksFrom(int blockId) {
-        // TODO reverse transaction and block reqrds
+        // TODO reverse transaction and block rewards
+
+        // UPDATE wallet SET utxo=utxo-1000*(SELECT count(id) FROM block WHERE miner=wallet.address AND id>=N);
+
+        // da testare
+        // UPDATE wallet SET utxo=utxo-(SELECT sum(amount) FROM tx WHERE recipient=wallet.address);
+        // UPDATE wallet SET utxo=utxo+(SELECT sum(amount) FROM tx WHERE sender_pub=(SELECT address FROM keyCache WHERE pub_key=wallet.address));
 
         // Delete all blocks
 
@@ -570,6 +574,33 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         }
 
         blockchainLength = blockId - 1;
+    }
+
+    @Override
+    public synchronized void clear() {
+        var delete1 = connection.prepareStatement("DELETE FROM block;");
+
+        try (delete1) {
+            delete1.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        var delete2 = connection.prepareStatement("DELETE FROM wallet;");
+        
+        try (delete2) {
+            delete2.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        var delete3 = connection.prepareStatement("DELETE FROM tx;");
+
+        try (delete3) {
+            delete3.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     private synchronized void init() {

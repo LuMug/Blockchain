@@ -29,12 +29,13 @@ public class Webserver implements HttpServer {
         }
 
         http.staticFiles.externalLocation(wwwPath);
-
+        
         // Allow CORS
-        http.after((req, res) -> {
+        
+        http.staticFiles.header("Access-Control-Allow-Origin", "*");
+
+        http.before((req, res) -> {
             res.header("Access-Control-Allow-Origin", "*");
-            res.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
-            res.header("Content-Security-Policy", "default-src 'none'");
         });
     }
 

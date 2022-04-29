@@ -48,6 +48,28 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
                     .threadPool(MAX_THREADS);
         }
 
+        http.options("/*", (req, res) -> {
+            String accessControlRequestHeaders = req.headers("Access-Control-Request-Headers");
+            if (accessControlRequestHeaders != null) {
+                res.header("Access-Control-Allow-Headers", accessControlRequestHeaders);
+            }
+    
+            String accessControlRequestMethod = req.headers("Access-Control-Request-Method");
+            if (accessControlRequestMethod != null) {
+                res.header("Access-Control-Allow-Methods", accessControlRequestMethod);
+            }
+    
+            return "OK";
+        });
+
+        http.before((req, res) -> {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Cache-Control", "no-cache");
+            res.header("Access-Control-Allow-Headers", "Content-Type, Accept");
+            res.header("Access-Control-Allow-Methods", "*");
+            res.header("Access-Control-Max-Age", "1728000");
+        });
+
         http.post("/getBlockchainHeight", getBlockchainHeight());
         http.post("/getBlock/:id", getBlock());
         http.post("/getUTXO/:address", getUTXO());
