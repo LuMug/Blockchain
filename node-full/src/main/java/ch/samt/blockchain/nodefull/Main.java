@@ -9,7 +9,7 @@ public class Main {
 
         handler.addArg("p", false, "port");
         handler.addArg("db", false, "file");
-        handler.addFlag("h");
+        handler.addFlag("help");
 
         try {
             handler.parse(args);
@@ -18,7 +18,7 @@ public class Main {
             return;
         }
 
-        if (handler.getFlag("h")) {
+        if (handler.getFlag("help")) {
             System.out.println("Arguments: [-p <port>] [-db <file>] [-h]");
             return;
         }

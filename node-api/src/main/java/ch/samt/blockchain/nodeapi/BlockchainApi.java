@@ -219,7 +219,14 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
 
             byte[] file = uploadedFile.getInputStream().readAllBytes();
 
-            return status(broadcastTx(file) ? "Ok" : "Invalid Transaction");
+            var result = true;
+            try {
+                result = deployTx(file);
+            } catch (Exception e) {
+                result = false;
+            }
+
+            return status(result ? "Ok" : "Invalid Transaction");
         };
     }
 

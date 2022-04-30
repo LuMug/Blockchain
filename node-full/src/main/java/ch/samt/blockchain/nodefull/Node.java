@@ -76,7 +76,7 @@ public abstract class Node extends Thread {
         this(port, "blockchain_" + port + ".db");
     }
 
-    public abstract void deployTx(byte[] packet);
+    public abstract boolean deployTx(byte[] packet);
     public abstract int getIdByHash(byte[] hash);
     public abstract int getBlockchainLength();
     protected abstract boolean broadcastTx(byte[] packet, Connection exclude, boolean live);

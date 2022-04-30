@@ -66,14 +66,16 @@ public class HighLevelNode extends Node {
     }
 
     @Override
-    public void deployTx(byte[] packet) {
+    public boolean deployTx(byte[] packet) {
         SendTransactionPacket.setTimestamp(packet, System.currentTimeMillis());
         
         if (registerTx(packet, true)) {
             for (var peer : super.neighbours) {
                 peer.sendPacket(packet);
             }
+            return true;
         }
+        return false;
     }
 
     @Override
@@ -389,7 +391,27 @@ public class HighLevelNode extends Node {
             }
 
             // send mempool
-            // TODO
+            
+            // wait until active download ends
+            while (downloading()) {
+                try {
+                    Thread.sleep(250);
+                } catch (InterruptedException e) {}
+            }
+
+            synchronized (mempool) {
+                for (var tx : mempool.getTransactions()) {
+                    var toSend = ServeOldTransactionPacket.create(
+                        tx.getRecipient(),
+                        tx.getSenderPublicKey(),
+                        tx.getAmount(),
+                        tx.getLastTransactionHash(),
+                        tx.getSignature(),
+                        tx.getTimestamp());
+
+                    to.sendPacket(toSend);
+                }
+            }
  
             to.sendPacket(DownloadDonePacket.create());
         });

@@ -19,7 +19,7 @@ public class Main {
         handler.addArg("db", false, "file");
         handler.addArg("keystore", false, "file");
         handler.addArg("password", false, "pass");
-        handler.addFlag("h");
+        handler.addFlag("help");
 
         try {
             handler.parse(args);
@@ -28,7 +28,7 @@ public class Main {
             return;
         }
 
-        if (handler.getFlag("h")) {
+        if (handler.getFlag("help")) {
             System.out.println("""
                 Arguments: [-nodeport <port>]
                            [-apiport <port>]

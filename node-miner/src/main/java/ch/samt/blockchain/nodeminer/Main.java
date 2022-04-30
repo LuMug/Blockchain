@@ -16,6 +16,7 @@ public class Main {
         handler.addArg("priv", true, "file");
         handler.addArg("p", false, "port");
         handler.addArg("db", false, "file");
+        handler.addFlag("help");
 
         try {
             handler.parse(args);
@@ -24,8 +25,8 @@ public class Main {
             return;
         }
         
-        if (!handler.isComplete()) {
-            System.out.println("Arguments: -priv <file> [-p <port>] [-db <file>]");
+        if (!handler.isComplete() || handler.getFlag("help")) {
+            System.out.println("Arguments: -priv <file> [-p <port>] [-db <file>] [-help]");
             return;
         }
 

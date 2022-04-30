@@ -56,7 +56,7 @@ function processJson(json) {
     senderContainer.innerHTML = '<a href="wallet.html?address=' + json.sender.replaceAll('/', '%2F') + '">' + json.sender + '</a>';
     recipientContainer.innerHTML = '<a href="wallet.html?address=' + json.recipient.replaceAll('/', '%2F') + '">' + json.recipient + '</a>';
     amounContainert.innerHTML = json.amount;
-    timestampContainer.innerHTML = new Date(json.timestamp * 1000);
+    timestampContainer.innerHTML = new Date(json.timestamp).toLocaleString();
     lastTxHashContainer.innerHTML = '<a href="transaction.html?hash=' + json.lastTxHash.replaceAll('/', '%2F') + '">' + json.lastTxHash + '</a>';
     signatureContainer.innerHTML = json.signature;
 }

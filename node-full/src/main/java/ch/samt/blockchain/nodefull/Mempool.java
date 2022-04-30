@@ -41,4 +41,8 @@ public class Mempool {
         return transactions.size() == 0;
     }
 
+    public List<SendTransactionPacket> getTransactions() {
+        return transactions;
+    }
+
 }
