@@ -42,7 +42,7 @@ public class HighLevelNode extends Node {
             return false;
         }
 
-        if (registerTx(packet, live) && live) {
+        if (registerTx(packet) && live) {
             broadcast(packet, exclude);
             return true;
         }
@@ -69,7 +69,7 @@ public class HighLevelNode extends Node {
     public boolean deployTx(byte[] packet) {
         SendTransactionPacket.setTimestamp(packet, System.currentTimeMillis());
         
-        if (registerTx(packet, true)) {
+        if (registerTx(packet)) {
             for (var peer : super.neighbours) {
                 peer.sendPacket(packet);
             }
@@ -151,11 +151,9 @@ public class HighLevelNode extends Node {
             var tx = mempool.drawOne();
 
             byte[] hash = Protocol.CRYPTO.hashTx(
-                nextId - 1,
                 tx.getSenderPublicKey(),
                 tx.getRecipient(),
                 tx.getAmount(),
-                tx.getTimestamp(),
                 tx.getLastTransactionHash(),
                 tx.getSignature()
             );
@@ -186,7 +184,7 @@ public class HighLevelNode extends Node {
         }
     }
 
-    private boolean registerTx(byte[] data, boolean live) {
+    private boolean registerTx(byte[] data) {
         var packet = new SendTransactionPacket(data);
 
         // TODO if late MAX 5 seconds, add to currently minign block
@@ -199,12 +197,14 @@ public class HighLevelNode extends Node {
 
         long amount = packet.getAmount();
 
-        if (amount < 0) {
-            Logger.info("Transaction with negative amount");
+        if (amount < 1) {
+            Logger.info("Transaction with amount less than 1");
             return false;
         }
 
-        byte[] sender = Protocol.CRYPTO.sha256(packet.getSenderPublicKey());
+        var pubKey = packet.getSenderPublicKey();
+
+        byte[] sender = Protocol.CRYPTO.sha256(pubKey);
 
         long utxo = super.database.getUTXO(sender);
 
@@ -213,18 +213,24 @@ public class HighLevelNode extends Node {
             return false;
         }
 
-        // TODO: Check last hash (and if it is the first)
+        var lastHash = packet.getLastTransactionHash();
+        var actualLastHash = super.database.getLastTransactionHash(sender);
+
+        if (!eq(lastHash, actualLastHash)) {
+            Logger.info("Transaction with wrong lastHash");
+            return false;
+        }
 
         // Check signature
 
         byte[] toSig = SendTransactionPacket.toSign(
             packet.getRecipient(),
-            packet.getSenderPublicKey(),
+            pubKey,
             amount,
-            packet.getLastTransactionHash()
+            lastHash
         );
 
-        var pub = Protocol.CRYPTO.publicKeyFromEncoded(packet.getSenderPublicKey());
+        var pub = Protocol.CRYPTO.publicKeyFromEncoded(pubKey);
 
         if (!Protocol.CRYPTO.verify(packet.getSignature(), toSig, pub)) {
             Logger.warn("Transaction with invalid signature");

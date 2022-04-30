@@ -124,12 +124,10 @@ public class CryptoUtils {
         return result;
     }
 
-    public byte[] hashTx(int blockId, byte[] senderPub, byte[] recipient, long amount, long timestamp, byte[] lastTxHash, byte[] signature) {
-        var result = sha256(toBytes(blockId));
-        xor(result, sha256(senderPub));
+    public byte[] hashTx(byte[] senderPub, byte[] recipient, long amount, byte[] lastTxHash, byte[] signature) {
+        var result = sha256(senderPub);
         xor(result, sha256(recipient));
         xor(result, sha256(toBytes(amount)));
-        xor(result, sha256(toBytes(timestamp)));
         xor(result, sha256(lastTxHash));
         xor(result, sha256(signature));
         return result;

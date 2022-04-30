@@ -76,6 +76,7 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
         http.post("/getTx/:hash", getTx());
         http.post("/deploy", deploy());
         http.post("/getTxs/:address", getTxs());
+        http.post("/getLastTx/:address", getLastTxHash());
     }
 
     private Route getBlockchainHeight() {
@@ -87,6 +88,7 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
 
             return """
                         {
+                            "status": "Ok",
                             "height": %
                         }
                     """.replace("%", Integer.toString(height));
@@ -230,6 +232,29 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
         };
     }
 
+    private Route getLastTxHash() {
+        return (req, res) -> {
+            res.type("application/json");
+            res.status(200);
+
+            var base64 = req.params("address").replaceAll("%2F", "/");
+            byte[] address;
+
+            try {
+                address = Protocol.CRYPTO.fromBase64(base64);
+            } catch (IllegalArgumentException e) {
+                return status("Invalid Address");
+            }
+
+            var tx = super.database.getLastTransaction(address);
+
+            if (tx == null) {
+                return status("Not Found");
+            }
+
+            return "{\"status\":\"Ok\"," + serialize(tx) + "}";
+        };
+    }
 
     private static String serialize(Block block) {
         return """

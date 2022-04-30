@@ -1,5 +1,10 @@
 package ch.samt.blockchain.webserver;
 
+import java.io.IOException;
+import java.net.BindException;
+
+import org.tinylog.Logger;
+
 import spark.Service;
 
 public class Webserver implements HttpServer {
@@ -27,6 +32,14 @@ public class Webserver implements HttpServer {
                     .port(port)
                     .threadPool(MAX_THREADS);
         }
+
+        http.initExceptionHandler(ex -> {
+            Logger.error("Ignite failed: " + ex.getMessage());
+            if (http.port() == 80) {
+                System.err.println("You probably forgot to give permission");
+                System.exit(100);
+            }
+        });
 
         http.staticFiles.externalLocation(wwwPath);
         

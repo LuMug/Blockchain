@@ -4,6 +4,9 @@ import ch.samt.blockchain.common.utils.paramhandler.ParamHandler;
 
 public class Main {
     
+    public static final String DEFAULT_API_IP = "127.0.0.1";
+    public static final int DEFAULT_API_PORT = 6767;
+
     public static void main(String[] args) {
         var params = new ParamHandler();
         params
@@ -17,7 +20,10 @@ public class Main {
             .addFlag("examples", ParamHandler.propertyOf("Descritpion", "Displays some examples"))
             .addFlag("first", ParamHandler.propertyOf("Descritpion", "First transaction"))
             .addArg("dump", false, "path", ParamHandler.propertyOf("Descritpion", "Displays this message"))
-            .addArg("last", false, "path", ParamHandler.propertyOf("Descritpion", "Last transaction"));
+            .addArg("last", false, "path", ParamHandler.propertyOf("Descritpion", "Last transaction"))
+            .addArg("ip", false, "ip", "localhost", ParamHandler.propertyOf("Descritpion", "API Server IP"))
+            .addArg("port", false, "port", "6767", ParamHandler.propertyOf("Descritpion", "API Server port"));
+
 
         try {
             params.parse(args);
@@ -56,10 +62,31 @@ public class Main {
             var out = params.getArg("out");
             var last = params.getArg("last");
 
+            int port = DEFAULT_API_PORT; // TOOD move to Protocol
+            String ip = DEFAULT_API_IP;
+
+            if (!params.isNull("ip")) {
+                ip = params.getArg("ip");
+            }
+
+            if (!params.isNull("port")) {
+                try {
+                    port = Integer.parseInt(params.getArg("port"));
+                } catch (NumberFormatException e) {
+                    System.err.println("Invalid port: " + params.getArg("port"));
+                    return;
+                }
+
+                if (port < 0 || port > 65535) {
+                    System.err.println("Invalid port value");
+                    return;
+                }
+            }
+
             if (params.getFlag("first")) {
                 Forger.tx(priv, to, amount, out, true);
             } else if (params.isNull("last")) {
-                Forger.tx(priv, to, amount, out);
+                Forger.tx(priv, to, amount, out, ip, port);
             } else {
                 Forger.tx(priv, to, amount, out, last);
             }

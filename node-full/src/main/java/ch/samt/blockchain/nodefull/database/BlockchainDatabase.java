@@ -161,6 +161,22 @@ public interface BlockchainDatabase {
     Transaction getTransaction(byte[] hash);
 
     /**
+     * Retrives the last spent transaction of a wallet.
+     * 
+     * @param address the wallet address
+     * @return the transaction
+     */
+    Transaction getLastTransaction(byte[] address);
+
+    /**
+     * Retrives the hash of the last spent transaction of a wallet.
+     * 
+     * @param address the wallet address
+     * @return the transaction
+     */
+    byte[] getLastTransactionHash(byte[] address);
+
+    /**
      * Retrieves a list of all the transaction received or spent by an address.
      * 
      * @param address the address to search

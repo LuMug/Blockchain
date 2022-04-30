@@ -2,26 +2,28 @@ package ch.samt.blockchain.forger;
 
 import java.nio.file.Path;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonParser;
+
 import org.bouncycastle.crypto.CryptoException;
 import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters;
 
+import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.common.protocol.SendTransactionPacket;
-import ch.samt.blockchain.common.utils.crypto.CryptoUtils;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 
 public class Forger {
 
     public static final String DEFAULT_KEY_FILE = "key.priv";
 
-    private static CryptoUtils cryptoUtils;
-
-    static {
-        cryptoUtils = new CryptoUtils();
-    }
-    
     public static void gen(String path) {
         var file = Path.of(path);
 
@@ -29,17 +31,17 @@ public class Forger {
             file = Path.of(path, DEFAULT_KEY_FILE);
         }
 
-        var keyPair = cryptoUtils.generateKeyPair();
+        var keyPair = Protocol.CRYPTO.generateKeyPair();
 
-        var raw = cryptoUtils.getPrivateKey(keyPair).getEncoded();
-        var content = cryptoUtils.toBase64(raw);
+        var raw = Protocol.CRYPTO.getPrivateKey(keyPair).getEncoded();
+        var content = Protocol.CRYPTO.toBase64(raw);
 
         writeFile(file, content.getBytes());
 
         System.out.println("\nPrivate key written to output\n");
 
-        var pub = cryptoUtils.getPublicKey(keyPair);
-        var address = cryptoUtils.getAddress(pub);
+        var pub = Protocol.CRYPTO.getPublicKey(keyPair);
+        var address = Protocol.CRYPTO.getAddress(pub);
 
         System.out.println("Wallet Address: " + address);
         System.out.println();
@@ -65,13 +67,13 @@ public class Forger {
         }
 
         System.out.println("Amount:\t\t" + packet.getAmount());
-        System.out.println("Recipient:\t" + cryptoUtils.toBase64(packet.getRecipient()));
-        System.out.println("Sender:\t\t" + cryptoUtils.getAddress(cryptoUtils.publicKeyFromEncoded(packet.getSenderPublicKey())));
-        System.out.println("Signature:\t" + cryptoUtils.toBase64(packet.getSignature()));
-        System.out.println("LastHash:\t" + cryptoUtils.toBase64(packet.getLastTransactionHash()));
+        System.out.println("Recipient:\t" + Protocol.CRYPTO.toBase64(packet.getRecipient()));
+        System.out.println("Sender:\t\t" + Protocol.CRYPTO.getAddress(Protocol.CRYPTO.publicKeyFromEncoded(packet.getSenderPublicKey())));
+        System.out.println("Signature:\t" + Protocol.CRYPTO.toBase64(packet.getSignature()));
+        System.out.println("LastHash:\t" + Protocol.CRYPTO.toBase64(packet.getLastTransactionHash()));
     }
 
-    public static void tx(String privKeyPath, String to, String amount, String outPath, byte[] lastTxHash) {
+    public static void tx(Ed25519PrivateKeyParameters priv, String to, String amount, String outPath, byte[] lastTxHash) {
         var amountLong = 0L;
         try {
             amountLong = Long.parseLong(amount);
@@ -80,9 +82,8 @@ public class Forger {
             return;
         }
         
-        var priv = loadPrivateKey(privKeyPath);
-        var senderPublicKey = cryptoUtils.publicKeyFromPrivateKey(priv).getEncoded();
-        var recipient = cryptoUtils.fromBase64(to);
+        var senderPublicKey = Protocol.CRYPTO.publicKeyFromPrivateKey(priv).getEncoded();
+        var recipient = Protocol.CRYPTO.fromBase64(to);
         
         // Forge transaction
 
@@ -90,7 +91,7 @@ public class Forger {
         
         byte[] signature = null;
         try {
-            signature = cryptoUtils.sign(data, priv);
+            signature = Protocol.CRYPTO.sign(data, priv);
         } catch (DataLengthException | CryptoException e) {
             System.err.println("Error while signing tx: " + e.getMessage());
         }
@@ -102,25 +103,95 @@ public class Forger {
     }
 
     public static void tx(String privkeyPath, String to, String amount, String outPath, String lastTxPath) {
-        var lastTx = readFile(lastTxPath);
+        var raw = readFile(lastTxPath);
 
-        tx(privkeyPath, to, amount, outPath, cryptoUtils.sha256(lastTx));
+        var lastTxPacket = new SendTransactionPacket(raw);
+
+        var lastHash = Protocol.CRYPTO.hashTx(
+            lastTxPacket.getSenderPublicKey(),
+            lastTxPacket.getRecipient(),
+            lastTxPacket.getAmount(),
+            lastTxPacket.getLastTransactionHash(),
+            lastTxPacket.getSignature());
+
+        var priv = loadPrivateKey(privkeyPath);
+
+        tx(priv, to, amount, outPath, lastHash);
     }
 
-    public static void tx(String privkeyPath, String to, String amount, String outPath) {
-        // http request to get lastTx
-        System.out.println("Not implemented yet");
+    public static void tx(String privkeyPath, String to, String amount, String outPath, String server, int port) {
+        String res;
+        
+        var priv = loadPrivateKey(privkeyPath);
+
+        var address = Protocol.CRYPTO.getAddress(Protocol.CRYPTO.publicKeyFromPrivateKey(priv));
+
+        try {
+            var client = HttpClient.newHttpClient();
+            var request = HttpRequest
+                .newBuilder()
+                .uri(URI.create("http://" + server + ":" + port + "/getLastTx/" + address.replaceAll("\\/", "%2F")))
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .header("Accept", "application/json")
+                .build();
+
+            var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            res = response.body();
+        } catch (IOException | InterruptedException e) {
+            System.err.println("Couldn't request last_tx_hash from server: " + e.getMessage());
+            return;
+        }
+
+        JsonObject obj;
+
+        try {
+            obj = JsonParser.parseString(res).getAsJsonObject();
+        } catch (JsonParseException e) {
+            System.err.println("Invalid JSON response from server");
+            return;
+        }
+        
+        var status = obj.get("status");
+        if (status == null) {
+            System.err.println("Invalid JSON response from server");
+            return;
+        }
+
+        var v = status.getAsString();
+
+        byte[] raw;
+
+        if (v.equals("Not Found")) {
+            raw = new byte[32];
+        } else {
+            if (!v.equals("Ok")) {
+                System.err.println("Error response for last hash request: " + v);
+                return;
+            }
+    
+            var lastHash = obj.get("hash");
+    
+            if (lastHash == null) {
+                System.err.println("Invalid JSON response from server");
+                return;
+            }
+
+            raw = Protocol.CRYPTO.fromBase64(lastHash.getAsString());
+        }
+
+        tx(priv, to, amount, outPath, raw);
     }
 
     public static void tx(String privkeyPath, String to, String amount, String outPath, boolean first) {
-        tx(privkeyPath, to, amount, outPath, new byte[32]);
+        tx(loadPrivateKey(privkeyPath), to, amount, outPath, new byte[32]);
     }
 
     private static Ed25519PrivateKeyParameters loadPrivateKey(String path) {
         byte[] raw = readFile(path);
-        byte[] encoded = cryptoUtils.fromBase64(raw);
+        byte[] encoded = Protocol.CRYPTO.fromBase64(raw);
 
-        var priv = cryptoUtils.privateKeyFromEncoded(encoded);
+        var priv = Protocol.CRYPTO.privateKeyFromEncoded(encoded);
 
         return priv;
     }

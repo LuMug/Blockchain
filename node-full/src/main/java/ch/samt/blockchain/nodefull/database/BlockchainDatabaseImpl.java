@@ -236,7 +236,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
     @Override
     public synchronized long getUTXO(byte[] address) {
-        var statement = connection.prepareStatement("SELECT utxo FROM wallet WHERE address=?;");
+        var statement = connection.prepareStatement("SELECT utxo FROM wallet WHERE address=? LIMIT 1;");
         try {
             statement.setBytes(1, address);
         } catch (SQLException e) {
@@ -281,7 +281,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
     @Override
     public synchronized byte[] getHash(int id) {
-        var statement = connection.prepareStatement("SELECT hash FROM block WHERE id=?;");
+        var statement = connection.prepareStatement("SELECT hash FROM block WHERE id=? LIMIT 1;");
         
         try {
             statement.setInt(1, id);
@@ -308,7 +308,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
     @Override
     public synchronized Block getBlock(int id) {
-        var statement = connection.prepareStatement("SELECT * FROM block WHERE id=?;");
+        var statement = connection.prepareStatement("SELECT * FROM block WHERE id=? LIMIT 1;");
         
         try {
             statement.setInt(1, id);
@@ -349,7 +349,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
     @Override
     public synchronized Transaction getTransaction(byte[] hash) {
-        var statement = connection.prepareStatement("SELECT * FROM tx WHERE hash=?;");
+        var statement = connection.prepareStatement("SELECT * FROM tx WHERE hash=? LIMIT 1;");
         
         try {
             statement.setBytes(1, hash);
@@ -388,7 +388,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
     @Override
     public synchronized List<Transaction> getTransactions(int blockId) {
-        var statement = connection.prepareStatement("SELECT * FROM tx WHERE block_id=?;");
+        var statement = connection.prepareStatement("SELECT * FROM tx WHERE block_id=? LIMIT 1;");
         
         try {
             statement.setInt(1, blockId);
@@ -461,7 +461,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
     @Override
     public synchronized byte[] getPub(byte[] address) {
-        var statement = connection.prepareStatement("SELECT pub_key FROM keyCache WHERE address=?;");
+        var statement = connection.prepareStatement("SELECT pub_key FROM keyCache WHERE address=? LIMIT 1;");
 
         try {
             statement.setBytes(1, address);
@@ -499,7 +499,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
     @Override
     public synchronized int getId(byte[] hash) {
-        var statement = connection.prepareStatement("SELECT id FROM block WHERE hash=?;");
+        var statement = connection.prepareStatement("SELECT id FROM block WHERE hash=? LIMIT 1;");
 
         try {
             statement.setBytes(1, hash);
@@ -543,12 +543,20 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
 
     @Override
     public synchronized void deleteBlocksFrom(int blockId) {
-        // TODO reverse transaction and block rewards
+        // Reverse block rewatds
+        
+        var removeRewards = connection.prepareStatement("UPDATE wallet SET utxo=utxo-1000*(SELECT count(id) FROM block WHERE miner=wallet.address AND id>=?);");
 
-        // UPDATE wallet SET utxo=utxo-1000*(SELECT count(id) FROM block WHERE miner=wallet.address AND id>=N);
+        try (removeRewards) {
+            removeRewards.setInt(1, blockId);
+            removeRewards.execute();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
-        // da testare
-        // UPDATE wallet SET utxo=utxo-(SELECT sum(amount) FROM tx WHERE recipient=wallet.address);
+        // TODO
+        // reverse all txs
+        // UPDATE wallet as w SET utxo=utxo-(SELECT sum(amount) FROM tx WHERE recipient=w.address);
         // UPDATE wallet SET utxo=utxo+(SELECT sum(amount) FROM tx WHERE sender_pub=(SELECT address FROM keyCache WHERE pub_key=wallet.address));
 
         // Delete all blocks
@@ -601,6 +609,69 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    public synchronized Transaction getLastTransaction(byte[] address) {
+        var statement = connection.prepareStatement("SELECT * FROM tx WHERE sender_pub=(SELECT pub_key FROM keyCache WHERE address=?) ORDER BY timestamp DESC LIMIT 1;");
+        
+        try {
+            statement.setBytes(1, address);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        int blockId;
+        byte[] senderPub;
+        byte[] recipient;
+        long amount;
+        long timestamp;
+        byte[] lastTxHash;
+        byte[] signature;
+        byte[] hash;
+
+        try (var result = statement.executeQuery()) {
+            if (!result.next()) {
+                return null;
+            }
+
+            blockId = result.getInt(1);
+            senderPub = result.getBytes(2);
+            recipient = result.getBytes(3);
+            amount = result.getLong(4);
+            timestamp = result.getTimestamp(5).getTime();
+            lastTxHash = result.getBytes(6);
+            signature = result.getBytes(7);
+            hash = result.getBytes(8);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        return new Transaction(blockId, senderPub, recipient, amount, timestamp, lastTxHash, signature, hash);
+    }
+
+    @Override
+    public synchronized byte[] getLastTransactionHash(byte[] address) {
+        var statement = connection.prepareStatement("SELECT hash FROM tx WHERE sender_pub=(SELECT pub_key FROM keyCache WHERE address=?) ORDER BY timestamp DESC LIMIT 1;");
+        
+        try {
+            statement.setBytes(1, address);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        try (var result = statement.executeQuery()) {
+            if (!result.next()) {
+                return new byte[32];
+            }
+
+            return result.getBytes(1);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return new byte[32];
     }
 
     private synchronized void init() {

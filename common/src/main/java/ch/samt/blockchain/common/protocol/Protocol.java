@@ -18,7 +18,6 @@ public class Protocol {
     public final static byte SERVE_OLD_POW                      = 0xB;
     public final static byte DOWNLOAD_DONE                      = 0xC;
     
-    // TODO usare Protocol.Crypto al posto che new CryptoUtils
     public static final CryptoUtils CRYPTO = new CryptoUtils();
 
     public static class Database {

@@ -65,7 +65,6 @@ public class Main {
 
         HttpServer webserver = new Webserver(http, path);
 
-
         webserver.init();
         
         // terminal

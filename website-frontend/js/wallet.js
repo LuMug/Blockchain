@@ -102,7 +102,7 @@ function processTxsJson(json) {
         div.appendChild(col3);
         div.appendChild(col4);
         
-        div.onclick = _ => window.location.href = url + '/transaction.html?hash=' + json.txs[i].hash;
+        div.onclick = _ => window.location.href = url + '/transaction.html?hash=' + json.txs[i].hash.replaceAll('/', '%2F');
         
         container.prepend(div);
     }

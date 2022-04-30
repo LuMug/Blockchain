@@ -12,10 +12,14 @@ public class MinerNode extends HighLevelNode {
 
     public MinerNode(int port, byte[] privKey, String db) {
         super(port, db);
+
         wallet = Protocol.CRYPTO.sha256(
             Protocol.CRYPTO.publicKeyFromPrivateKey(
                 Protocol.CRYPTO.privateKeyFromEncoded(privKey))
                 .getEncoded());
+
+        int core = Runtime.getRuntime().availableProcessors();
+        System.out.println("Cores: " + core);
     }
 
     public MinerNode(int port, byte[] privKey) {
