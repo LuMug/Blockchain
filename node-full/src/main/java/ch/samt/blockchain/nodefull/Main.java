@@ -20,7 +20,7 @@ public class Main {
         }
 
         if (handler.getFlag("help")) {
-            System.out.println("Arguments: [-p <port>] [-db <file>] [-h]");
+            System.out.println("Arguments: [-p <port>] [-db <file>] [-help]");
             return;
         }
 

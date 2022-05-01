@@ -40,30 +40,71 @@ The \texttt{protocol/} folder contains all the documents regarding
 the project (documentation + diary).
 
 \subsection{node-full}
+
+\subsubsection{Usage}
+
+\begin{lstlisting}[style=generic]
+     .Arguments: [-p <port>]
+                 [-db <file>]
+                 [-help]
+\end{lstlisting}
+
 \subsection{node-api}
+
+\subsubsection{Usage}
+
+\begin{lstlisting}[style=generic]
+     Arguments: [-nodeport <port>]
+                [-apiport <port>]
+                [-db <file>]
+                [-keystore <keystore.jks> -password <password>]
+                [-h]
+\end{lstlisting}
+
 \subsection{node-miner}
 
-% TODO
+\subsubsection{Usage}
+
+\begin{lstlisting}[style=generic]
+     Arguments: -priv <file>
+                [-p <port>]
+                [-db <file>]
+                [-help]
+\end{lstlisting}
 
 \subsection{piccions}
 
-% TODO
+Programming language compiler and virtual machine.
 
 \subsection{scripts}
 
-% TODO
+Utility scripts
+
+\texttt{build.sh} Linux bash shell to build everything
 
 \subsection{seeder}
 
-% TODO
+\subsubsection{Usage}
 
-\subsection{website-backend}
+\begin{lstlisting}[style=generic]
+     Arguments: <port>
+\end{lstlisting}
 
-% TODO
+\subsection{webserver}
+
+\subsubsection{Usage}
+
+\begin{lstlisting}[style=generic]
+     Arguments: -www <path>
+                [-port <port>]
+                [-db <file>]
+                [-ssl <keystore.jks> <password>]
+                [-h]
+\end{lstlisting}
 
 \subsection{website-frontend}
 
-% TODO
+Website source code
 
 \subsection{forger}
 
