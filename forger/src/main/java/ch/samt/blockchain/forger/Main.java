@@ -1,11 +1,9 @@
 package ch.samt.blockchain.forger;
 
+import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.common.utils.paramhandler.ParamHandler;
 
 public class Main {
-    
-    public static final String DEFAULT_API_IP = "127.0.0.1";
-    public static final int DEFAULT_API_PORT = 6767;
 
     public static void main(String[] args) {
         var params = new ParamHandler();
@@ -62,8 +60,8 @@ public class Main {
             var out = params.getArg("out");
             var last = params.getArg("last");
 
-            int port = DEFAULT_API_PORT; // TOOD move to Protocol
-            String ip = DEFAULT_API_IP;
+            int port = Protocol.Forger.DEFAULT_API_PORT;
+            String ip = Protocol.Forger.DEFAULT_API_IP;
 
             if (!params.isNull("ip")) {
                 ip = params.getArg("ip");

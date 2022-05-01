@@ -115,7 +115,13 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
                 return status("Not Found");
             }
 
-            return "{\"status\":\"Ok\"," + serialize(block) + "}";
+            return """
+                    {
+                        "status": "Ok",
+                        %block
+                    }
+                    """
+                        .replace("%block", serialize(block));
         };
     }
 
@@ -168,7 +174,14 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
                 return status("Not Found");
             }
 
-            return "{\"status\":\"Ok\"," + serialize(tx) + "}";
+            return """
+                    {
+                        "status": "Ok",
+                        %tx
+                    }
+
+                    """
+                        .replace("%tx", serialize(tx));
         };
     }
 
@@ -204,7 +217,13 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
 
             json.append("]");
 
-            return "{\"status\":\"Ok\"," + json.toString() + "}";
+            return """
+                    {
+                        "status": "Ok",
+                        %json
+                    }
+                    """
+                        .replace("%json", json.toString());
         };
     }
 
@@ -252,7 +271,13 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
                 return status("Not Found");
             }
 
-            return "{\"status\":\"Ok\"," + serialize(tx) + "}";
+            return """
+                    {
+                        "status": "Ok",
+                        %tx
+                    }
+                    """
+                        .replace("%tx", serialize(tx));
         };
     }
 

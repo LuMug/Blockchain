@@ -1,5 +1,6 @@
 package ch.samt.blockchain.nodefull;
 
+import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.common.utils.paramhandler.ParamHandler;
 
 public class Main {
@@ -23,7 +24,7 @@ public class Main {
             return;
         }
 
-        int port = 5555; // Default port
+        int port = Protocol.Node.DEFAULT_PORT;
 
         if (!handler.isNull("p")) {
             try {

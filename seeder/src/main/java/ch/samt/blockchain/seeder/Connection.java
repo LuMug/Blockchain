@@ -44,7 +44,9 @@ public class Connection implements Runnable {
 
             var packet = in.nextPacket();
             if (packet != null) {
-                processPacket(packet);
+                try {
+                    processPacket(packet);
+                } catch (Exception e) {}
             }
         } catch (IOException e) {
             // discard connection
@@ -52,7 +54,6 @@ public class Connection implements Runnable {
         }
     }
 
-    // TODO: prevent NullPointerExceptions
     private void processPacket(byte[] data) throws IOException {
         switch (data[0]) {
             case Protocol.REGISTER_NODE -> {

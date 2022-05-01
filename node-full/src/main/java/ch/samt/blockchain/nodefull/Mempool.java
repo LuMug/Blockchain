@@ -25,8 +25,6 @@ public class Mempool {
         return tx;
     }
 
-    // TOOD using .sublist()
-
     public void add(SendTransactionPacket packet) {
         transactions.add(packet);
         txSigHashTable.add(packet.getSignature());

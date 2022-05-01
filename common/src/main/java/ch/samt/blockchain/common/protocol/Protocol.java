@@ -20,6 +20,14 @@ public class Protocol {
     
     public static final CryptoUtils CRYPTO = new CryptoUtils();
 
+    public static class Forger {
+
+        public static final String DEFAULT_API_IP = "127.0.0.1";
+
+        public static final int DEFAULT_API_PORT = 6767;
+    
+    }
+
     public static class Database {
 
         /**
@@ -81,6 +89,8 @@ public class Protocol {
          * Maximum number of queries to the neighbours at a time.
          */
         public final static int MAX_TRIES_NEIGHBOUR = 5;
+
+        public final static int DEFAULT_PORT = 5555;
 
     }
 

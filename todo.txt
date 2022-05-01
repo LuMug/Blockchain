@@ -1,6 +1,4 @@
-un readme per ogni tool
 pow effettivo
-i nodi periodicamente fanno il download dai peer 
 documentazione:
     rifare req
     test case
@@ -12,7 +10,15 @@ documentazione:
         download from peer
     programming language impl 
     website impl (dipendenze etc.)
-salvare gli offset delle transazioni in una mappa e non aggiornare subito il db
 controllare prima di startare il download
 forger http request
-CORS
+
+
+TODO difficulty
+TODO actual minining
+doc last hash nel calcolo (00000 if genesis)
+/getLasttxHash + http request in forger
+test case
+rifare requirements
+L'effetto delle tx dovrebbe vedersi solo quando vengono aggiunte al db (quindi check UTXO + offset in mappa)
+Ordinare getTx ASC per data

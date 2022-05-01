@@ -65,7 +65,7 @@ public class Main {
                 .ignite()
                 .port(apiPort);
 
-        if (handler.any("keystore", "password")) { // non va
+        if (handler.any("keystore", "password")) {
             handler.assertAll("keystore", "password");
 
             http.secure(

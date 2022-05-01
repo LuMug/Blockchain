@@ -46,7 +46,7 @@ public abstract class Node extends Thread {
     /**
      * The list of peers.
      */
-    protected List<Connection> neighbours; // TODO peers
+    protected List<Connection> peers;
 
     /**
      * Scheduler.
@@ -64,7 +64,7 @@ public abstract class Node extends Thread {
     public Node(int port, String db) {
         this.port = port;
         this.database = new BlockchainDatabaseImpl(db);
-        this.neighbours = new LinkedList<>();
+        this.peers = new LinkedList<>();
         this.scheduler = Executors.newScheduledThreadPool(5);
     }
 
@@ -90,7 +90,7 @@ public abstract class Node extends Thread {
     protected abstract void initHighLevelNode();
 
     public void broadcast(byte[] packet) {
-        for (var peer : neighbours) {
+        for (var peer : peers) {
             peer.sendPacket(packet);
         }
     }
@@ -126,17 +126,17 @@ public abstract class Node extends Thread {
      * @param connection the connection to register
      */
     protected void registerNode(Connection connection) {
-        for (var peer : neighbours) {
+        for (var peer : peers) {
             if (peer.getServiceAddress().equals(connection.getServiceAddress())) {
                 disconnect(connection);
             }
         }
 
-        neighbours.add(connection);
+        peers.add(connection);
 
-        if (neighbours.size() > Protocol.Node.MAX_CONNECTIONS) {
+        if (peers.size() > Protocol.Node.MAX_CONNECTIONS) {
             // disconnect from random node
-            var rnd_connection = getRandomNeighbour();
+            var rnd_connection = getRandomPeer();
             disconnect(rnd_connection);
 
             database.updateLastSeen(rnd_connection.getServiceAddress());
@@ -157,12 +157,12 @@ public abstract class Node extends Thread {
             updateFromCache();
         }
 
-        if (neighbours.size() == 0) {
+        if (peers.size() == 0) {
             updateFromSeeder();
         }
 
         registerToSeeder();
-        updateFromNeighbours();
+        updateFromPeers();
     }
 
     /**
@@ -170,9 +170,9 @@ public abstract class Node extends Thread {
      * @param address
      * @return
      */
-    private boolean neighboursContain(InetSocketAddress address) {
-        for (var neighbour : neighbours) {
-            if (neighbour.getServiceAddress().equals(address)) {
+    private boolean peersContain(InetSocketAddress address) {
+        for (var peer : peers) {
+            if (peer.getServiceAddress().equals(address)) {
                 return true;
             }
         }
@@ -214,15 +214,15 @@ public abstract class Node extends Thread {
      * @param amount
      * @return
      */
-    private InetSocketAddress[] queryNeighbours(int amount) {
-        // Select random neighbour
-        var neighbour = getRandomNeighbour();
+    private InetSocketAddress[] queryPeers(int amount) {
+        // Select random peer
+        var peer = getRandomPeer();
 
-        if (neighbour == null) {
+        if (peer == null) {
             return new InetSocketAddress[0];
         }
 
-        return neighbour.requestNodes(amount);
+        return peer.requestNodes(amount);
     }
 
     /**
@@ -253,8 +253,8 @@ public abstract class Node extends Thread {
      * @param connection
      */
     public void disconnect(Connection connection) {
-        neighbours.remove(connection);
-        if (neighbours.size() == 0) {
+        peers.remove(connection);
+        if (peers.size() == 0) {
             Logger.warn("This node isn't connected to any node. Reconneting...");
             connect();
         }
@@ -263,19 +263,19 @@ public abstract class Node extends Thread {
     /**
      * 
      */
-    private void updateFromNeighbours() {
+    private void updateFromPeers() {
         int requested = 0;
         int received = 0;
 
         for (int i = 0; i < Protocol.Node.MAX_TRIES_NEIGHBOUR &&
-                neighbours.size() < Protocol.Node.MIN_CONNECTIONS &&
+                peers.size() < Protocol.Node.MIN_CONNECTIONS &&
                 requested == received; i++) {
             
-            requested = Math.min(Protocol.Seeder.MAX_REQUEST, Protocol.Node.MIN_CONNECTIONS - neighbours.size());
-            var nodes = queryNeighbours(requested);
+            requested = Math.min(Protocol.Seeder.MAX_REQUEST, Protocol.Node.MIN_CONNECTIONS - peers.size());
+            var nodes = queryPeers(requested);
             received = nodes.length;
             for (var node : nodes) {
-                if (!neighboursContain(node)) {
+                if (!peersContain(node)) {
                     var socket = tryConnection(node.getHostString(), node.getPort());
                 
                     // If has responded
@@ -299,16 +299,16 @@ public abstract class Node extends Thread {
         int received = 0;
 
         for (int i = 0; i < Protocol.Node.MAX_TRIES_SEEDER &&
-                neighbours.size() < Protocol.Node.MIN_CONNECTIONS &&
+            peers.size() < Protocol.Node.MIN_CONNECTIONS &&
                 requested == received; i++) {
 
-            requested = Math.min(Protocol.Seeder.MAX_REQUEST, Protocol.Node.MIN_CONNECTIONS - neighbours.size());
+            requested = Math.min(Protocol.Seeder.MAX_REQUEST, Protocol.Node.MIN_CONNECTIONS - peers.size());
             var nodes = querySeeders(Protocol.Node.MIN_CONNECTIONS);
             received = nodes.length;
 
             Logger.info("Received " + nodes.length + " candidate nodes");
             for (var node : nodes) {
-                if (!neighboursContain(node)) {
+                if (!peersContain(node)) {
                     Logger.info("Trying connection with " + node);
                     var socket = tryConnection(node.getHostString(), node.getPort());
                 
@@ -328,11 +328,11 @@ public abstract class Node extends Thread {
      * 
      */
     private void updateFromCache() {
-        var nodes = database.getCachedNodes(); // TODO: ritorna [] + interface
-        for (int i = 0; i < nodes.length && neighbours.size() < Protocol.Node.MIN_CONNECTIONS; i++) {
+        var nodes = database.getCachedNodes();
+        for (int i = 0; i < nodes.length && peers.size() < Protocol.Node.MIN_CONNECTIONS; i++) {
             var address = nodes[i];
 
-            if (neighboursContain(address)) {
+            if (peersContain(address)) {
                 continue;
             }
             
@@ -353,17 +353,17 @@ public abstract class Node extends Thread {
     private void initPeriodicUpdate() {
         schedule(
             () -> {
-                Logger.info("Updating connections from local cache and neighbour nodes");
+                Logger.info("Updating connections from local cache and peers");
 
-                if (neighbours.size() < Protocol.Node.MIN_CONNECTIONS) {
-                    updateFromNeighbours();
+                if (peers.size() < Protocol.Node.MIN_CONNECTIONS) {
+                    updateFromPeers();
                 }
                 
-                if (neighbours.size() < Protocol.Node.MIN_CONNECTIONS) {
+                if (peers.size() < Protocol.Node.MIN_CONNECTIONS) {
                     updateFromCache();
                 }
 
-                if (neighbours.size() == 0) {
+                if (peers.size() == 0) {
                     updateFromSeeder();
                 }
             },
@@ -413,12 +413,12 @@ public abstract class Node extends Thread {
      * 
      * @return a random peer
      */
-    private Connection getRandomNeighbour() {
-        if (neighbours.size() == 0) {
+    private Connection getRandomPeer() {
+        if (peers.size() == 0) {
             return null;
         }
 
-        return neighbours.get((int) (Math.random() * neighbours.size()));
+        return peers.get((int) (Math.random() * peers.size()));
     }
 
     /**
@@ -428,15 +428,15 @@ public abstract class Node extends Thread {
      * @return
      */
     public InetSocketAddress[] drawNodes(int amount, UUID exclude) {
-        synchronized (neighbours) {
+        synchronized (peers) {
             amount = Math.min(
-                Math.min(amount, neighbours.size()),
-                30 //MAX_REQUEST TODO
+                Math.min(amount, peers.size()),
+                Protocol.Seeder.MAX_REQUEST
             );
 
             int excludeIndex = 0;
 
-            if (amount == neighbours.size() && -1 != (excludeIndex = getIndexFromUUID(exclude))) {
+            if (amount == peers.size() && -1 != (excludeIndex = getIndexFromUUID(exclude))) {
                 --amount;
             }
             
@@ -449,11 +449,11 @@ public abstract class Node extends Thread {
                 indexes[i] = -1; // so that index 0 is not contained
     
                 do {
-                    index = (int) (Math.random() * neighbours.size());
+                    index = (int) (Math.random() * peers.size());
                 } while (index == excludeIndex || contains(indexes, index));
     
                 indexes[i] = index;
-                result[i] = neighbours.get(index).getServiceAddress();
+                result[i] = peers.get(index).getServiceAddress();
             }
     
             return result;
@@ -467,8 +467,8 @@ public abstract class Node extends Thread {
      */
     private int getIndexFromUUID(UUID uuid) {
         int i = 0; // optimized iteration for LinkedList
-        for (var neighbour : neighbours) {
-            if (neighbour.getUuid().equals(uuid)) {
+        for (var peer : peers) {
+            if (peer.getUuid().equals(uuid)) {
                 return i;
             }
             i++;
@@ -535,8 +535,8 @@ public abstract class Node extends Thread {
      * @param ps
      */
     private void printNeighbours(PrintStream ps) {
-        ps.println("Total neighbours (" + neighbours.size() + ")");
-        for (var node : neighbours) {
+        ps.println("Total peers (" + peers.size() + ")");
+        for (var node : peers) {
             ps.println("\t" + node.getServiceAddress());
         }
         ps.println();

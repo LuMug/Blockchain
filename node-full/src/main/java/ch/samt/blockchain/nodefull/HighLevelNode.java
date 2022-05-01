@@ -1,7 +1,9 @@
 package ch.samt.blockchain.nodefull;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.tinylog.Logger;
@@ -13,6 +15,7 @@ import ch.samt.blockchain.common.protocol.RequestDownloadPacket;
 import ch.samt.blockchain.common.protocol.SendTransactionPacket;
 import ch.samt.blockchain.common.protocol.ServeOldPoWPacket;
 import ch.samt.blockchain.common.protocol.ServeOldTransactionPacket;
+import ch.samt.blockchain.nodefull.utils.ByteArrayKey;
 
 public class HighLevelNode extends Node {
 
@@ -21,8 +24,11 @@ public class HighLevelNode extends Node {
 
     private Connection blockchainSeeder;
 
+    private Map<ByteArrayKey, MempoolData> mempoolDataMap = new HashMap<>();
+
     private byte[] lastNonce;
-    
+    private long lastBlockTimestamp = -1;
+
     public HighLevelNode(int port, String db) {
         super(port, db);
     }
@@ -42,7 +48,7 @@ public class HighLevelNode extends Node {
             return false;
         }
 
-        if (registerTx(packet) && live) {
+        if (registerTx(packet, live) && live) {
             broadcast(packet, exclude);
             return true;
         }
@@ -69,8 +75,8 @@ public class HighLevelNode extends Node {
     public boolean deployTx(byte[] packet) {
         SendTransactionPacket.setTimestamp(packet, System.currentTimeMillis());
         
-        if (registerTx(packet)) {
-            for (var peer : super.neighbours) {
+        if (registerTx(packet, true)) {
+            for (var peer : super.peers) {
                 peer.sendPacket(packet);
             }
             return true;
@@ -81,6 +87,12 @@ public class HighLevelNode extends Node {
     @Override
     protected boolean powSolved(byte[] data, boolean live) {
         var packet = new PoWSolvedPacket(data);
+
+        var timestamp = packet.getTimestamp();
+
+        if (live && System.currentTimeMillis() - timestamp > 15000) {
+            Logger.info("PoW with invalid timestamp");
+        }
 
         var nonce = packet.getNonce();
 
@@ -114,7 +126,7 @@ public class HighLevelNode extends Node {
             nonce,
             packet.getMiner(),
             lastHash,
-            packet.getTimestamp()
+            timestamp
         );
 
         super.database.addBlock(
@@ -122,10 +134,12 @@ public class HighLevelNode extends Node {
             miner.getTxHash(),
             nonce,
             packet.getMiner(),
-            packet.getTimestamp(),
+            timestamp,
             lastHash,
             hash
         );
+
+        lastBlockTimestamp = packet.getTimestamp();
 
         newBlock();
         return true;
@@ -137,42 +151,73 @@ public class HighLevelNode extends Node {
     }
 
     private void newBlock() {
-        Logger.info("New block");
-        miner.clear();
-
         int nextId = super.database.getBlockchainLength() + 1;
+        
+        Logger.info("Block: " + (nextId - 1));
+        miner.clear();
 
         miner.setHeight(nextId);
         updateLastHash();
         
-        
-        //for (int i = 0; i < 100 && !mempool.isEmpty(); i++) {
         while (!mempool.isEmpty()) {
             var tx = mempool.drawOne();
 
-            byte[] hash = Protocol.CRYPTO.hashTx(
-                tx.getSenderPublicKey(),
-                tx.getRecipient(),
-                tx.getAmount(),
-                tx.getLastTransactionHash(),
-                tx.getSignature()
-            );
-
-            super.database.addTx(
-                nextId,
-                tx.getSenderPublicKey(),
-                tx.getRecipient(),
-                tx.getAmount(),
-                tx.getTimestamp(), 
-                tx.getLastTransactionHash(),
-                tx.getSignature(),
-                hash
-            );
-
-            System.out.println("Adding tx to db for next block: " + Protocol.CRYPTO.toBase64(hash));
-
-            // miner.addTx(hash);
+            addToNextBlock(tx, nextId);
         }
+
+        mempoolDataMap.clear();
+    }
+
+    private void addToNextBlock(SendTransactionPacket tx) {
+        addToNextBlock(tx, super.database.getBlockchainLength() + 1);
+    }
+    
+    private void addToNextBlock(SendTransactionPacket tx, int nextId) {
+        byte[] hash = Protocol.CRYPTO.hashTx(
+            tx.getSenderPublicKey(),
+            tx.getRecipient(),
+            tx.getAmount(),
+            tx.getLastTransactionHash(),
+            tx.getSignature()
+        );
+
+        super.database.addTx(
+            nextId,
+            tx.getSenderPublicKey(),
+            tx.getRecipient(),
+            tx.getAmount(),
+            tx.getTimestamp(), 
+            tx.getLastTransactionHash(),
+            tx.getSignature(),
+            hash
+        );
+
+        var sender = Protocol.CRYPTO.sha256(tx.getSenderPublicKey());
+        var recipient = tx.getRecipient();
+        var amount = tx.getAmount();
+
+        super.database.updateUTXO(sender,    -amount);
+        super.database.updateUTXO(recipient, +amount);
+        
+        var senderKey = new ByteArrayKey(sender);
+        if (mempoolDataMap.containsKey(senderKey)) {
+            var data = mempoolDataMap.get(senderKey);
+            long v = data.getUtxoOffset() + amount;
+            
+            data.setUtxoOffset(v);
+        }
+
+        var recipientKey = new ByteArrayKey(recipient);
+        if (mempoolDataMap.containsKey(recipientKey)) {
+            var data = mempoolDataMap.get(recipientKey);
+            long v = data.getUtxoOffset() - amount;
+            
+            data.setUtxoOffset(v);
+        }
+
+        System.out.println("Adding tx to db for next block: " + Protocol.CRYPTO.toBase64(hash));
+
+        miner.addTxHash(hash);
     }
 
     private void updateLastHash() {
@@ -184,10 +229,8 @@ public class HighLevelNode extends Node {
         }
     }
 
-    private boolean registerTx(byte[] data) {
+    private boolean registerTx(byte[] data, boolean live) {
         var packet = new SendTransactionPacket(data);
-
-        // TODO if late MAX 5 seconds, add to currently minign block
 
         if (mempool.contains(packet.getSignature())) {
             return false;
@@ -208,13 +251,22 @@ public class HighLevelNode extends Node {
 
         long utxo = super.database.getUTXO(sender);
 
+        var senderKey = new ByteArrayKey(sender);
+        MempoolData mempoolData = null;
+        if (mempoolDataMap.containsKey(senderKey)) {
+            mempoolData = mempoolDataMap.get(senderKey);
+            utxo += mempoolData.getUtxoOffset();
+        }
+
         if (amount > utxo) {
             Logger.info("Insufficient UTXO for " + Protocol.CRYPTO.toBase64(sender));
             return false;
         }
 
         var lastHash = packet.getLastTransactionHash();
-        var actualLastHash = super.database.getLastTransactionHash(sender);
+        var actualLastHash = mempoolData != null ?
+            mempoolData.getLastTxHash() :
+            super.database.getLastTransactionHash(sender);
 
         if (!eq(lastHash, actualLastHash)) {
             Logger.info("Transaction with wrong lastHash");
@@ -232,21 +284,56 @@ public class HighLevelNode extends Node {
 
         var pub = Protocol.CRYPTO.publicKeyFromEncoded(pubKey);
 
-        if (!Protocol.CRYPTO.verify(packet.getSignature(), toSig, pub)) {
+        var sig = packet.getSignature();
+
+        if (!Protocol.CRYPTO.verify(sig, toSig, pub)) {
             Logger.warn("Transaction with invalid signature");
             return false;
         }
 
-        mempool.add(packet);
-
-        Logger.info("Received transaction");
-
         super.database.cacheKey(packet.getSenderPublicKey(), sender);
 
-        // TODO, do this only when adding tx to db, put these offsets
-        // in a map
-        super.database.updateUTXO(sender,                -amount);
-        super.database.updateUTXO(packet.getRecipient(), +amount);
+        if (live && lastBlockTimestamp != -1 && lastBlockTimestamp - System.currentTimeMillis() > 5000) {
+            addToNextBlock(packet);
+        } else {
+            mempool.add(packet);
+
+            var recipient = packet.getRecipient();
+
+            var hash = Protocol.CRYPTO.hashTx(
+                pubKey,
+                recipient,
+                amount,
+                lastHash,
+                sig);
+            
+            var senderMapKey = new ByteArrayKey(sender);
+            if (mempoolDataMap.containsKey(senderMapKey)) {
+                var poolData = mempoolDataMap.get(senderMapKey);
+
+                poolData.setUtxoOffset(poolData.getUtxoOffset() - amount);
+                poolData.setLastTxHash(hash);
+            } else {
+                var tmp = new MempoolData();
+                tmp.setUtxoOffset(-amount);
+                tmp.setLastTxHash(hash);
+
+                mempoolDataMap.put(senderMapKey, tmp);
+            }
+
+            var recipientKey = new ByteArrayKey(recipient);
+            if (mempoolDataMap.containsKey(recipientKey)) {
+                var poolData = mempoolDataMap.get(recipientKey);
+
+                poolData.setUtxoOffset(poolData.getUtxoOffset() + amount);
+            } else {
+                var tmp = new MempoolData();
+                tmp.setUtxoOffset(+amount);
+                mempoolDataMap.put(recipientKey, tmp);
+            }
+        }
+
+        Logger.info("Received transaction");
 
         return true;
     }
@@ -272,7 +359,7 @@ public class HighLevelNode extends Node {
 
         int maxHeight = 0;
         List<Connection> maxConnections = new LinkedList<>();
-        for (var peer : neighbours) {
+        for (var peer : peers) {
             int _height = peer.requestBlockchainLength();
             if (_height > maxHeight) {
                 maxHeight = _height;
@@ -424,7 +511,7 @@ public class HighLevelNode extends Node {
     }
 
     private void broadcast(byte[] packet, Connection exclude) {
-        for (var peer : super.neighbours) {
+        for (var peer : super.peers) {
             if (peer != exclude) {
                 peer.sendPacket(packet);
             }

@@ -9,7 +9,7 @@ public class Miner {
     private byte[] heightHash = new byte[32];
     private byte[] lastHash = new byte[32];
 
-    public synchronized void addTx(byte[] hash) {
+    public synchronized void addTxHash(byte[] hash) {
         for (int i = 0; i < txHash.length; i++) {
             txHash[i] ^= hash[i];
         }
