@@ -184,7 +184,73 @@ A block is mined if a value for \textit{nonce} such that
 
 is found.
 
+When a peer receives a \packet{SendTransactionPacket} it checks its validity.
+If the transaction is valid it gets put into the mempool.
+At the arrival of the next valid \packet{PoWSolvedPacket}, the transactions
+are drawn from the mempool, inserted into the and inserted into the mining computation.
+Finally, at the arrival of the next valid \packet{PoWSolvedPacket}
+the transactions will be effectively confirmed.
+
+Since \packet{SendTransactionPacket} packets contain the sender's public key rather than the
+address itself, a SQL cache is constructed:
+
+\begin{lstlisting}[style=sql]
+	CREATE TABLE IF NOT EXISTS keyCache (
+		pub_key BINARY(32),
+		address BINARY(32)
+	)
+\end{lstlisting}
+
+\pagebreak
+
+Here's the SQL table for storing blocks
+
+\begin{lstlisting}[style=sql]
+	CREATE TABLE IF NOT EXISTS block (
+		id INT PRIMARY KEY,
+		difficulty INT,
+		tx_hash BINARY(32),
+		nonce BINARY(32),
+		miner BINARY(32),
+		mined DATETIME
+	);
+\end{lstlisting}
+
+and for storing transactions
+
+\begin{lstlisting}[style=sql]
+	CREATE TABLE IF NOT EXISTS tx (
+		block_id INT,
+		sender_pub BINARY(32),
+		recipient BINARY(32),
+		amount INT,
+		timestamp DATETIME,
+		last_tx_hash BINARY(32),
+		signature BINARY(64) 
+	);
+\end{lstlisting}
+
+UTXO can be calculated given every block and transaction,
+so here's a table to cache this value.
+
+\begin{lstlisting}[style=sql]
+	CREATE TABLE IF NOT EXISTS wallet (
+		address BINARY(32),
+		amount INT
+	)
+\end{lstlisting}
+
 \subsection{Nodes}
+
+There are three types of nodes:
+
+\begin{itemize}
+    \item \textbf{Full Node} Full functional node
+    \item \textbf{Mining Node} Node that produces Proof-of-Works
+    \item \textbf{API Node} Node with HTTP POST routes
+\end{itemize}
+
+Both miner node and API node extend the full node, so they are both also functional full nodes.
 
 \begin{center}
     \begin{tikzpicture}[font=\ttfamily,
@@ -212,6 +278,8 @@ is found.
     \end{tikzpicture}
 \end{center}
 
+Here is a table of what each node type knows and can do.
+
 \bgroup{}
 \def\arraystretch{1.25}
 \begin{center}
@@ -232,10 +300,7 @@ is found.
 \end{center}
 \egroup{}
 
-
 \pagebreak
-
-\subsection{Mempool}
 
 \subsection{Blockchain download}
 
@@ -301,6 +366,8 @@ Start by sending a \packet{RequestIsHashExistsPacket} containing the hash of the
 available. If the response block ID is positive (not \(-1\), this is the last common block.
 Otherwise, try the same thing with the block before. If the iteration exceeds a depth of \(5\),
 set the common ID to be 0.
+
+\pagebreak
 
 \hypertarget{constants}{}
 \subsection{Constants}
@@ -807,17 +874,31 @@ Example:
 
 \subsubsection{Error responses}
 
+When the ID/Address/Hash is not found
+
 \begin{lstlisting}[language=json]
     {
         "status": "Not Found"
     }
 \end{lstlisting}
 
+When the address is invalid
+
 \begin{lstlisting}[language=json]
     {
         "status": "Invalid Address"
     }
 \end{lstlisting}
+
+When the hash is invalid
+
+\begin{lstlisting}[language=json]
+    {
+        "status": "Invalid Hash"
+    }
+\end{lstlisting}
+
+When the ID is invalid
 
 \begin{lstlisting}[language=json]
     {
@@ -837,6 +918,33 @@ The website interact with an API node to display informations about the blockcha
 and deploy transactions.
 
 The address of the API node is in \texttt{website-frontend/js/post.js}
+
+\subsubsection{Dependency table}
+
+The website relies on various libraries, some of which are not stored locally.
+This means that the user will query third-party servers, thus the website will not work
+locally if you do not have a free internet connection.
+
+\medskip
+
+\bgroup{}
+\def\arraystretch{1.5}
+\begin{center}
+    \begin{tabular}{ |p{3cm}|p{4cm}|p{2cm}|p{2cm}| }
+        \hline
+        \multicolumn{4}{|c|}{\textbf{Dependency table}} \\
+        \hline
+        \textbf{Name} & \textbf{Description} & \textbf{Stored} & \textbf{Version} \\
+        \hline
+        Bootstrap (CSS) & Styling framework & Locally & 5.1.3 \\
+        \hline
+        Bootstrap (JS) & Styling framework & Remotely & 4.6.1 \\
+        \hline
+        Dropzone.js & File drop & Remotely & 1.0 \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
 
 \pagebreak
 

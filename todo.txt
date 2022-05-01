@@ -7,18 +7,12 @@ documentazione:
     blockchain impl
         pow
         mempool
-        download from peer
     programming language impl 
-    website impl (dipendenze etc.)
-controllare prima di startare il download
-forger http request
-
 
 TODO difficulty
 TODO actual minining
 doc last hash nel calcolo (00000 if genesis)
-/getLasttxHash + http request in forger
 test case
 rifare requirements
-L'effetto delle tx dovrebbe vedersi solo quando vengono aggiunte al db (quindi check UTXO + offset in mappa)
 Ordinare getTx ASC per data
+Dependencies of  website
