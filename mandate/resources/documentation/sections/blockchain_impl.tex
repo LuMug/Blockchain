@@ -235,10 +235,77 @@ is found.
 
 \pagebreak
 
+\subsection{Mempool}
+
+\subsection{Blockchain download}
+
+When a node joins the network, either for the first time
+or after some time of being offline, it needs to download
+all the transactions and new blocks.
+
+Furthermore, in the event of a branch of the blockchain, the branch
+that will first reach a higher length than the other must be adopted
+by every node hosting the other branch.
+
+To accomplish so, each peer periodically asks his neighbours for their blockchain length.
+If their length is greater than his (and there is consensus) it will try to establish a common block
+and download the peer's blockchain starting from that block.
+
+\begin{center}
+    \begin{tikzpicture}
+        \path 
+        (0,0) node (b1) {\(1\)}
+        (1,0) node (b2) {\(2\)}
+        (2,0) node (b3) {\(3\)}
+        (3,0) node (b4) {\(4\)}
+        (0,2) node (a1) {\(1\)}
+        (1,2) node (a2) {\(2\)}
+        (2,2) node (a3) {\(3\)}
+        (3,2) node (a4) {\(4\)}
+        (4,2) node (a5) {\(5\)}
+        (5,2) node (a6) {\(6\)};
+        \node[draw,fit=(b1) (b1)] (c1) {};
+        \node[draw,fit=(b2) (b2)] (c2) {};
+        \node[draw,fit=(b3) (b3)] (c3) {};
+        \node[draw,fit=(b4) (b4)] (c4) {};
+        \node[draw,fit=(a1) (a1)] (c5) {};
+        \node[draw,fit=(a2) (a2)] (c6) {};
+        \node[draw,fit=(a3) (a3)] (c7) {};
+        \node[draw,fit=(a4) (a4)] (c8) {};
+        \node[draw,fit=(a5) (a5)] (c9) {};
+        \node[draw,fit=(a6) (a6)] (c10) {};
+        \node[draw] at (4,1) {Last common block};
+        \draw[->] (c1)--(c2);
+        \draw[->] (c2)--(c3);
+        \draw[->] (c3)--(c4);
+        \draw[->] (c5)--(c6);
+        \draw[->] (c6)--(c7);
+        \draw[->] (c7)--(c8);
+        \draw[->] (c8)--(c9);
+        \draw[->] (c9)--(c10);
+        \draw[thick, darkgreen, <->] (c3)--(c7);
+    \end{tikzpicture}    
+\end{center}
+
+Once the common block has been found the other peer will start sending
+\packet{ServeOldTransactionPacket} and \packet{ServeOldPoWPacket} packets in the correct order.
+The peer will also send transactions currently in the mempool. Finally, the peer sends a
+\packet{DownloadDonePacket}.
+
+A peer will not send a download request if the lengths are the same, except
+at startup (so that the mempool is updated and kept up to date).
+
+\subsubsection{Finding common node}
+
+Start by sending a \packet{RequestIsHashExistsPacket} containing the hash of the last block
+available. If the response block ID is positive (not \(-1\), this is the last common block.
+Otherwise, try the same thing with the block before. If the iteration exceeds a depth of \(5\),
+set the common ID to be 0.
+
 \hypertarget{constants}{}
 \subsection{Constants}
 
-Here is a list of hard-coded values.
+Here is a list of hard-coded values and constants.
 
 \paragraphln{Database}
 Constants related to the database node caching
@@ -298,6 +365,44 @@ Constants related to the peer connections:
 \end{tabular}
 \egroup{}
 
+\paragraphln{Packets IDs}
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{tabular}{|l|c|}
+    \hline
+    \textbf{Name} & \textbf{Value}
+    \\ \hline
+    REQUEST\_NODES & 0x0
+    \\ \hline
+    SERVE\_NODES & 0x1
+    \\ \hline
+    REGISTER\_NODE & 0x2
+    \\ \hline
+    SEND\_TRANSACTION & 0x3
+    \\ \hline
+    REQUEST\_BLOCKCHAIN\_LENGTH & 0x4
+    \\ \hline
+    SERVE\_BLOCKCHAIN\_LENGTH & 0x5
+    \\ \hline
+    REQUEST\_IF\_HASH\_EXISTS & 0x6
+    \\ \hline
+    SERVE\_IF\_HASH\_EXISTS & 0x7
+    \\ \hline
+    POW\_SOLVED & 0x8
+    \\ \hline
+    REQUEST\_DOWNLOAD & 0x9
+    \\ \hline
+    SERVE\_OLD\_TX & 0xA
+    \\ \hline
+    SERVE\_OLD\_POW & 0xB
+    \\ \hline
+    DOWNLOAD\_DONE & 0xC
+    \\ \hline
+
+\end{tabular}
+\egroup{}
+
 \pagebreak
 
 \hypertarget{packets}{}
@@ -322,16 +427,47 @@ encoded as a Little-Endian 32-bit integer.
             \tline
             ID & u8 & Packet Identifier
             \tline
-            #1
-            \tline
+
+            \if\relax\detokenize{#1}\relax
+                % if arg is empty
+            \else
+                #1
+                \tline
+            \fi
         \end{tabular}
     \end{center}
     \egroup{}
 }
 
+\newcommand{\packettabularnoid}[1]{
+    \bgroup{}
+    \def\arraystretch{1.25}
+    \begin{center}
+        \begin{tabular}{|l|l|l|}
+            \hline
+            \textbf{Name} & \textbf{Type} & \textbf{Descritpion}
+            \tline
+
+            \if\relax\detokenize{#1}\relax
+                % if arg is empty
+            \else
+                #1
+                \tline
+            \fi
+        \end{tabular}
+    \end{center}
+    \egroup{}
+}
+
+\subsubsection{DownloadDonePacket}
+
+This package indicates that the requested download has ended.
+
+\packettabular{}
+
 \subsubsection{PoWSolvedPacket}
 
-Used when a miner mines a block.
+A miner will broadcast this packet when he mines a block.
 
 \packettabular{
     nonce & blob & The mined nonce
@@ -353,17 +489,30 @@ Used to register the node service to another peer or a seedeer.
 
 \subsubsection{RequestBlockchainLengthPacket}
 
-\packettabular{
+Used to request the length of the blockchain to a peer.
 
+\packettabular{}
+
+\subsubsection{RequestDownloadPacket}
+
+Used to request download of new blocks, transactions and mempool
+from a peer.
+
+\packettabular{
+    port & i32 & Starting block ID
 }
 
 \subsubsection{RequestIfHashExistsPacket}
 
-\packettabular{
+Used to ask a peer wheter a certian hash exists in his blockchain.
 
+\packettabular{
+    hash & blob & Hash
 }
 
 \subsubsection{RequestNodesPacket}
+
+Used to request peers addresses to a peer or a seeder.
 
 \packettabular{
     amount & u32 & Requested amount
@@ -372,6 +521,8 @@ Used to register the node service to another peer or a seedeer.
 }
 
 \subsubsection{SendTransactionPacket}
+
+This packet is broadcasted when a node wants to deploy a transaction.
 
 \packettabular{
     timestamp & u64 & The timestamp
@@ -389,20 +540,326 @@ Used to register the node service to another peer or a seedeer.
 
 \subsubsection{ServeBlockchainLengthPacket}
 
-\packettabular{
+Used to serve the blockchain length to a peer.
 
+\packettabular{
+    length & i32 & Blockchain length
 }
 
 \subsubsection{ServeIfHashExistsPacket}
 
-\packettabular{
+Used to serve the result of a block hash search.
+If the hash is found this packet will contain the block ID.
+The block ID is \(-1\) otherwise.
 
+\packettabular{
+    id & i32 & Block ID
 }
 
 \subsubsection{ServeNodesPacket}
 
-\packettabular{
+This packet is used to serve the requested nodes addresses.
 
+\packettabular{
+    amount & i32 & Amount of nodes
+    \tline
+    nodes & node\ldots & Node addresses
 }
+
+\subsubsection{ServeOldPoWPacket}
+
+This packet is used to serve an old Proof-of-Work packet.
+
+\packettabular{
+    nonce & blob & The mined nonce
+    \tline
+    miner & blob & Address of the miner
+    \tline
+    timestamp & u64 & Timestamp
+}
+
+\subsubsection{ServeOldTransactionPacket}
+
+This packet is used to serve an old trasaction packet.
+
+\packettabular{
+    timestamp & u64 & The timestamp
+    \tline
+    recipient & blob & Recipient address
+    \tline
+    sender\_pub & blob & Sender public key
+    \tline
+    amount & u64 & The amount of the transaction
+    \tline
+    last\_tx\_hash & blob & The hash of the last transaction
+    \tline
+    signature & blob & The signature
+}
+
+\subsection{Encodings}
+
+Here's a certain types are encoded. \\
+Types from u16 to i64 are encoded in Little-Endian format.
+
+\subsubsection{Blob}
+
+Encoding of binary data.
+
+\packettabularnoid{
+    length & i32 & Data size
+    \tline
+    data & u32\ldots & Blob data
+}
+
+\subsubsection{UUID}
+
+Encoding of a UUID value.
+
+\packettabularnoid{
+    left & u64 & Left-most bits
+    \tline
+    right & u64. & Right-most bits
+}
+
+\subsubsection{Node}
+
+Encoding of a node service address.
+
+\packettabularnoid{
+    address & string & Address string
+    \tline
+    port & u16. & Port
+}
+
+\subsubsection{String}
+
+Encoding of a string value.
+
+\packettabularnoid{
+    length & u8 & String length
+    \tline
+    data & u8\ldots & String UTF-8 chars
+}
+
+\subsection{Interactions}
+
+Interactions between nodes when a packet is sent.
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{center}
+    \begin{tabular}{|l|l|}
+        \hline
+        \textbf{Packet sent} & \textbf{Response}
+        \\ \hline
+        \packet{PoWSolvedPacket} & 
+        \\ \hline
+        \packet{RegisterNodePacket} &
+        \\ \hline
+        \packet{RequestBlockchainLengthPacket} & \packet{ServeBlockchainLengthPacket}
+        \\ \hline
+        \packet{RequestDownloadPacket} & (\packet{ServeOldPowPacket} | \packet{ServeOldTransactionPacket}) + \packet{DownloadDonePacket}
+        \\ \hline
+        \packet{RequestIfHashExistsPacket} & \packet{ServeIfHashExistsPacket}
+        \\ \hline
+        \packet{RequestNodesPacket} & \packet{ServeNodesPacket}
+        \\ \hline
+        \packet{SendTransactionPacket} &
+        \\ \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\pagebreak
+
+\subsection{API}
+
+The API node has some HTTP POST routes to interact with the blockchain.
+
+\paragraphln{Blockchain Height}
+
+Returns the height of the blockchain.
+\\
+Route: \texttt{/getBlockchainHeight}
+\\
+Example:
+\begin{lstlisting}[language=json]
+    {
+        "status": "Ok",
+        "height": 3
+    }
+\end{lstlisting}
+
+\subsubsection{Get Block}
+
+Returns the block data given its ID.
+\\
+Route: \texttt{/getBlock/<id>}
+\\
+Example:
+\begin{lstlisting}[language=json]
+    {
+        "status": "Ok",
+        "nonce": "iKU71ffO++lmUKvJNwxyM3x/gOgjoiqlyvRxIcTKmCk=",
+        "miner": "ZZ1PjoBwOZQGP0AYPmwxHsa5Z9YhRDaDbE1XIKyCUsA=",
+        "timestamp": 1651363707165,
+        "last_hash": "AvM6wrrEZL29GGMigfkCzflUN54yrX/jQZXImkFpcAI=",
+        "hash": "6TrC8QKdegOvnonbaFQJhG6DZddkMaXwoOdst9tC+8w=",
+        "nTx": 0
+    }
+\end{lstlisting}
+
+\subsubsection{Get UTXO}
+
+Returns the UTXO of a wallet given its address.
+\\
+Route: \texttt{/getUTXO/<address>}
+\\
+Example:
+\begin{lstlisting}[language=json]
+    {
+        "status": "Ok",
+        "utxo": 1500
+    }
+\end{lstlisting}
+
+\pagebreak
+
+\subsubsection{Get Transaction}
+
+Returns the transaction data given its hash.
+\\
+Route: \texttt{/getTx/<hash>}
+\\
+Example:
+\begin{lstlisting}[language=json]
+    {
+        "status": "Ok",
+        "blockId": 3,
+        "sender": "ZZ1PjoBwOZQGP0AYPmwxHsa5Z9YhRDaDbE1XIKyCUsA=",
+        "recipient": "SQAf8paS6Rr5nnd5dC8Bx5h6YKzdAd0Y0g9UMrTa378=",
+        "amount": 500,
+        "timestamp": 1651363700693,
+        "lastTxHash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+        "signature": "Z0n8TA1zenp+U0ONzSAJLot3JZ5GUedPvViW8vCN8Q6h
+                      vmqB81lHsTFg4g7Gb9DFMcnB8KK6TcknAbIAfZTrBg==",
+        "hash": "MmVCpq21pR/ZLYZwjaMF0AdyRVImq2YZ4MqO9mstnzw="
+    }
+\end{lstlisting}
+
+\subsubsection{Deploy Transaction}
+
+Broadcasts a transaction packet to the network.
+\\
+Route: \texttt{/deploy}
+\\
+The packet data is in the HTTP body.
+
+\subsubsection{Get Transactions}
+
+Returns the list of all transactions received or spent by a given address.
+\\
+Route: \texttt{/getTxs/<address>}
+\\
+Example:
+\begin{lstlisting}[language=json]
+    {
+        "status": "Ok",
+        "txs":[
+            {
+                "blockId": 3,
+                "sender": "ZZ1PjoBwOZQGP0AYPmwxHsa5Z9YhRDaDbE1XIKyCUsA=",
+                "recipient": "SQAf8paS6Rr5nnd5dC8Bx5h6YKzdAd0Y0g9UMrTa378=",
+                "amount": 500,
+                "timestamp": 1651363700693,
+                "lastTxHash": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+                "signature": "Z0n8TA1zenp+U0ONzSAJLot3JZ5GUedPvViW8vCN8Q6hv
+                              mqB81lHsTFg4g7Gb9DFMcnB8KK6TcknAbIAfZTrBg==",
+                "hash": "MmVCpq21pR/ZLYZwjaMF0AdyRVImq2YZ4MqO9mstnzw="
+            }
+        ]
+    }
+\end{lstlisting}
+
+\pagebreak
+
+\subsubsection{Get last Transaction}
+
+Returns the last spent transaction from a given wallet.
+\\
+Route: \texttt{/getLastTx/<address>}
+\\
+Example:
+\begin{lstlisting}[language=json]
+    {
+        "status": "Ok",
+        "blockId": 4,
+        "sender": "ZZ1PjoBwOZQGP0AYPmwxHsa5Z9YhRDaDbE1XIKyCUsA=",
+        "recipient": "SQAf8paS6Rr5nnd5dC8Bx5h6YKzdAd0Y0g9UMrTa378=",
+        "amount": 500,
+        "timestamp": 1651363715045,
+        "lastTxHash": "Bd+Wlarl0kNjxX8ZpvFKaNA0MNjwY2RSUzKrk/iksxQ=",
+        "signature": "VEgzDvWkS+/T4Tt2RBdq/4TZv5Wv6L7dxf7Xb3WqcxV0
+                      svYdL/fxde3N34x04KoilvqifQ0MfqP4Nt+nntYeBw==",
+        "hash": "reAXKECxKhTfpEE/60nrfD+UgYURGka5Wl97XjlrSUg="
+    }
+\end{lstlisting}
+
+\subsubsection{Error responses}
+
+\begin{lstlisting}[language=json]
+    {
+        "status": "Not Found"
+    }
+\end{lstlisting}
+
+\begin{lstlisting}[language=json]
+    {
+        "status": "Invalid Address"
+    }
+\end{lstlisting}
+
+\begin{lstlisting}[language=json]
+    {
+        "status": "Invalid ID"
+    }
+\end{lstlisting}
+
+\subsubsection{Other}
+
+The slash character \texttt{/} must be replaced with \texttt{\%2F} in the URL.
+
+\pagebreak
+
+\subsection{Website}
+
+The website interact with an API node to display informations about the blockchain
+and deploy transactions.
+
+The address of the API node is in \texttt{website-frontend/js/post.js}
+
+\pagebreak
+
+\subsubsection{Design}
+
+\paragraphln{Homepage}
+
+\includegraphics[width=\textwidth]{images/website1}
+
+\paragraphln{Blocks}
+
+\includegraphics[width=\textwidth]{images/website2}
+
+\paragraphln{Block}
+
+\includegraphics[width=\textwidth]{images/website3}
+
+\paragraphln{Wallet}
+
+\includegraphics[width=\textwidth]{images/website4}
+
+\paragraphln{Deploy page}
+
+\includegraphics[width=\textwidth]{images/website5.png}
 
 \end{document}
