@@ -1,6 +1,6 @@
 "use strict";
 
-const API_URL = 'http://127.0.0.1:6767';
+const API_URL = 'http://bettelini.internet-box.ch:6767';
 
 async function postData(url = '', data = {}) {
     url = API_URL + url;

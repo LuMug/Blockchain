@@ -96,7 +96,7 @@ public interface BlockchainDatabase {
      * @param lastHash the hash of the last block
      * @param hash the hash of this block
      */
-    void addBlock(int difficulty, byte[] txHash, byte[] nonce, byte[] miner, long mined, byte[] lastHash, byte[] hash);
+    void addBlock(long difficulty, byte[] txHash, byte[] nonce, byte[] miner, long mined, byte[] lastHash, byte[] hash);
 
     /**
      * Adds a transaction.
@@ -225,6 +225,13 @@ public interface BlockchainDatabase {
      * @param blockId the starting block id
      */
     void deleteBlocksFrom(int blockId);
+
+    /**
+     * Returns the current difficulty.
+     * 
+     * @return the current difficulry
+     */
+    long getDifficulty();
 
     /**
      * Clears all the tables except for `keyCache`.

@@ -22,12 +22,16 @@ public class HighLevelNode extends Node {
     private Mempool mempool = new Mempool();
     private Miner miner = new Miner();
 
+    private List<DownloadListener> downloadListeners = new LinkedList<>();
+
     private Connection blockchainSeeder;
 
     private Map<ByteArrayKey, MempoolData> mempoolDataMap = new HashMap<>();
 
     private byte[] lastNonce;
     private long lastBlockTimestamp = -1;
+
+    private long difficulty;
 
     public HighLevelNode(int port, String db) {
         super(port, db);
@@ -39,6 +43,8 @@ public class HighLevelNode extends Node {
 
     @Override
     protected void initHighLevelNode() {
+        difficulty = super.database.getDifficulty();
+
         initPeriodicDownload();
     }
 
@@ -61,7 +67,7 @@ public class HighLevelNode extends Node {
             return;
         }
 
-        if (powSolved(packet, true) && live) {
+        if (powSolved(packet, live) && live) {
             broadcast(packet, exclude);
         }
     }
@@ -92,6 +98,7 @@ public class HighLevelNode extends Node {
 
         if (live && System.currentTimeMillis() - timestamp > 15000) {
             Logger.info("PoW with invalid timestamp");
+            return false;
         }
 
         var nonce = packet.getNonce();
@@ -119,9 +126,11 @@ public class HighLevelNode extends Node {
             lastHash = new byte[32];
         }
 
+        ++height;
+
         byte[] hash = Protocol.CRYPTO.hashBlock(
-            height + 1,
-            50,
+            height,
+            difficulty,
             miner.getTxHash(),
             nonce,
             packet.getMiner(),
@@ -130,7 +139,7 @@ public class HighLevelNode extends Node {
         );
 
         super.database.addBlock(
-            50, // DIFFICULTY
+            difficulty,
             miner.getTxHash(),
             nonce,
             packet.getMiner(),
@@ -140,6 +149,17 @@ public class HighLevelNode extends Node {
         );
 
         lastBlockTimestamp = packet.getTimestamp();
+
+        if (height % Protocol.Blockchain.DIFFICULTY_ADJUSTMENT_RATE == 0) {
+            var id = Math.max(height - Protocol.Blockchain.DIFFICULTY_ADJUSTMENT_DEPTH + 1, 1);
+            var oldBlock = super.database.getBlock(id);
+            var time = lastBlockTimestamp - oldBlock.timestamp();
+            difficulty *= Protocol.Blockchain.BLOCK_RATE * Protocol.Blockchain.DIFFICULTY_ADJUSTMENT_DEPTH / time;
+
+            difficulty = Math.max(1, difficulty);
+
+            Logger.info("DIFFICULTY: " + difficulty);
+        }
 
         newBlock();
         return true;
@@ -386,6 +406,11 @@ public class HighLevelNode extends Node {
     // force download even if same length at startup
 
     private void downloadBlockchain(Connection peer) {
+        // notify listeners
+        for (var listener : downloadListeners) {
+            listener.onDownloadStart();
+        }
+
         var height = super.database.getBlockchainLength();
         
         int max = Math.min(height, 5);
@@ -428,6 +453,12 @@ public class HighLevelNode extends Node {
     public void downloadEnded(Connection from) {
         if (from == blockchainSeeder) {
             blockchainSeeder = null;
+
+            for (var listener : downloadListeners) {
+                listener.onDownloadEnd();
+            }
+
+            difficulty = super.database.getDifficulty();
         }
     }
 
@@ -455,7 +486,7 @@ public class HighLevelNode extends Node {
 
             while (id <= super.database.getBlockchainLength()) {
                 // send transactions
-                var txs = super.database.getTransactions(id + 1); // order by timestamp
+                var txs = super.database.getTransactions(id + 1); // TODO order by timestamp
 
                 for (var tx : txs) {
                     var toSend = ServeOldTransactionPacket.create(
@@ -508,6 +539,16 @@ public class HighLevelNode extends Node {
  
             to.sendPacket(DownloadDonePacket.create());
         });
+    }
+
+    @Override
+    public void registerDownloadListener(DownloadListener listener) {
+        downloadListeners.add(listener);
+    }
+
+    @Override
+    public void unregisterDownloadListener(DownloadListener listener) {
+        downloadListeners.remove(listener);
     }
 
     private void broadcast(byte[] packet, Connection exclude) {

@@ -86,6 +86,8 @@ public abstract class Node extends Thread {
     public abstract void downloadEnded(Connection from);
     public abstract void oldTx(byte[] packet);
     public abstract void serveBlockchain(byte[] packet, Connection to);
+    public abstract void registerDownloadListener(DownloadListener listener);
+    public abstract void unregisterDownloadListener(DownloadListener listener);
     
     protected abstract void initHighLevelNode();
 

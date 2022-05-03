@@ -113,7 +113,7 @@ public class CryptoUtils {
         return base64Decoder.decode(data);
     }
 
-    public byte[] hashBlock(int id, int difficulty, byte[] txHash, byte[] nonce, byte[] miner, byte[] lastHash, long timestamp) {
+    public byte[] hashBlock(int id, long difficulty, byte[] txHash, byte[] nonce, byte[] miner, byte[] lastHash, long timestamp) {
         var result = sha256(toBytes(id));
         xor(result, sha256(toBytes(difficulty)));
         xor(result, sha256(txHash));

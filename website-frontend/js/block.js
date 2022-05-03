@@ -2,6 +2,7 @@
 
 let idContainer = document.getElementById('id');
 let nonceContainer = document.getElementById('nonce');
+let difficultyContainer = document.getElementById('difficulty');
 let minerContainer = document.getElementById('miner');
 let timestampContainer = document.getElementById('timestamp');
 let lastHashContainer = document.getElementById('last-hash');
@@ -47,6 +48,7 @@ function processJson(json) {
     }
 
     nonceContainer.innerHTML = json.nonce;
+    difficultyContainer.innerHTML = json.difficulty;
     minerContainer.innerHTML = '<a href="wallet.html?address=' + json.miner.replaceAll('/', '%2F') + '">' + json.miner + '</a>';
     timestampContainer.innerHTML = new Date(json.timestamp).toLocaleString();
     lastHashContainer.innerHTML = json.last_hash;

@@ -29,7 +29,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         """
         CREATE TABLE IF NOT EXISTS block (
             id INT PRIMARY KEY,
-            difficulty INT,
+            difficulty BIGINT,
             tx_hash BINARY(32),
             nonce BINARY(32),
             miner BINARY(32),
@@ -189,6 +189,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     /* Blockchain */
 
     private int blockchainLength = 0;
+    private long difficulty = 0;
 
     @Override
     public synchronized int getBlockchainLength() {
@@ -196,12 +197,17 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
     }
 
     @Override
-    public synchronized void addBlock(int difficulty, byte[] tx_hash, byte[] nonce, byte[] miner, long mined, byte[] lastHash, byte[] hash) {
+    public synchronized long getDifficulty() {
+        return difficulty;
+    }
+
+    @Override
+    public synchronized void addBlock(long difficulty, byte[] tx_hash, byte[] nonce, byte[] miner, long mined, byte[] lastHash, byte[] hash) {
         var statement = connection.prepareStatement("INSERT INTO block VALUES (?, ?, ?, ?, ?, ?, ?, ?);");
 
         try {
             statement.setInt(1, ++blockchainLength);
-            statement.setInt(2, difficulty);
+            statement.setLong(2, difficulty);
             statement.setBytes(3, tx_hash);
             statement.setBytes(4, nonce);
             statement.setBytes(5, miner);
@@ -212,6 +218,8 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        this.difficulty = difficulty;
     }
 
     @Override
@@ -317,7 +325,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
             return null;
         }
 
-        int difficulty;
+        long difficulty;
         byte[] txHash;
         byte[] nonce;
         byte[] miner;
@@ -330,7 +338,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
                 return null;
             }
 
-            difficulty = result.getInt(2);
+            difficulty = result.getLong(2);
             txHash = result.getBytes(3);
             nonce = result.getBytes(4);
             miner = result.getBytes(5);
@@ -582,6 +590,7 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         }
 
         blockchainLength = blockId - 1;
+        loadDifficulty();
     }
 
     @Override
@@ -609,6 +618,10 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        blockchainLength = 0;
+
+        loadDifficulty();
     }
 
     @Override
@@ -681,6 +694,18 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
             this.blockchainLength = result.getInt(1);
         } catch (SQLException e) {
             e.printStackTrace();
+            return;
+        }
+
+        loadDifficulty();
+    }
+
+    private void loadDifficulty() {
+        if (blockchainLength == 0) {
+            difficulty = Protocol.Blockchain.INITIAL_DIFFICULTY;
+        } else {
+            var block = getBlock(blockchainLength); // lastBlock
+            difficulty = block.difficulty();
         }
     }
 

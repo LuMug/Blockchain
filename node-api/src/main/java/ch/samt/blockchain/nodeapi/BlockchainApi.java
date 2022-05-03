@@ -5,6 +5,8 @@ import java.util.List;
 import javax.servlet.MultipartConfigElement;
 import javax.servlet.http.Part;
 
+import org.bouncycastle.crypto.util.DigestFactory;
+
 import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.nodefull.HighLevelNode;
 import ch.samt.blockchain.nodefull.models.Block;
@@ -284,6 +286,7 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
     private static String serialize(Block block) {
         return """
             "nonce": "%nonce",
+            "difficulty": %difficulty,
             "miner": "%miner",
             "timestamp": %timestamp,
             "last_hash": "%last_hash",
@@ -291,6 +294,7 @@ public class BlockchainApi extends HighLevelNode implements HttpServer {
             "nTx": %nTx
         """
             .replace("%nonce", Protocol.CRYPTO.toBase64(block.nonce()))
+            .replace("%difficulty", Long.toString(block.difficulty()))
             .replace("%miner", Protocol.CRYPTO.toBase64(block.miner()))
             .replace("%timestamp", Long.toString(block.timestamp()))
             .replace("%last_hash", Protocol.CRYPTO.toBase64(block.lastHash()))

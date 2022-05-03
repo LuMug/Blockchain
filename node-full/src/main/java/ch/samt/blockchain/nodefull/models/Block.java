@@ -2,7 +2,7 @@ package ch.samt.blockchain.nodefull.models;
 
 public record Block(
     int id,
-    int difficulty,
+    long difficulty,
     byte[] txHash,
     byte[] nonce,
     byte[] miner,

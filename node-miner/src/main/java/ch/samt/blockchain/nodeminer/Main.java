@@ -58,13 +58,21 @@ public class Main {
         // Start service
         node.start();
 
-        try (var scanner = new Scanner(System.in)) {
+        while (true) {
+            try {
+                Thread.sleep(500);
+                node.solvePoW();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        /*try (var scanner = new Scanner(System.in)) {
             while (scanner.hasNext()) {
                 switch (scanner.nextLine()) {
                     case "pow" -> node.solvePoW();
                 }
             }
-        }
+        }*/
     }
 
 }

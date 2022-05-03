@@ -44,11 +44,33 @@ public class Protocol {
          */
         public static final int BLOCK_REWARD = 1000;
 
+        /**
+         * Every how much time a block should approxaimtely
+         * be mined (ms).
+         */
+        public static final int BLOCK_RATE = 1000; // 120000
+
+        /**
+         * Every how many blocks to adjust the difficulty.
+         */
+        public static final int DIFFICULTY_ADJUSTMENT_RATE = 5; // 100
+
+        /**
+         * How many last blocks to consider when adjusting the difficulty.
+         */
+        public static final int DIFFICULTY_ADJUSTMENT_DEPTH = 6; // 100
+
+        /**
+         * The inizia difficulty.
+         */
+        public static final long INITIAL_DIFFICULTY = 1L; // 100
+
     }
 
     public static class Seeder {
 
         public static final int POOL_CAPACITY = 100;
+
         public static final int MAX_REQUEST = 10;
 
     }
