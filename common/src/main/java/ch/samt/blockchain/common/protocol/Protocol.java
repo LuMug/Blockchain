@@ -1,5 +1,7 @@
 package ch.samt.blockchain.common.protocol;
 
+import java.math.BigInteger;
+
 import ch.samt.blockchain.common.utils.crypto.CryptoUtils;
 
 public class Protocol {
@@ -63,7 +65,12 @@ public class Protocol {
         /**
          * The inizia difficulty.
          */
-        public static final long INITIAL_DIFFICULTY = 1L; // 100
+        public static final long INITIAL_DIFFICULTY = 1L;
+
+        /**
+         * Maximum block target for proof-of-work.
+         */
+        public static final BigInteger MAX_TARGET = new BigInteger("00000000FFFF0000000000000000000000000000000000000000000000000000", 16);
 
     }
 

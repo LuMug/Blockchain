@@ -124,6 +124,13 @@ public class CryptoUtils {
         return result;
     }
 
+    public byte[] hashBlockForPoW(byte[] txHash, byte[] nonce, byte[] lastHash) {
+        var result = txHash;
+        xor(result, nonce);
+        xor(result, lastHash);
+        return result;
+    }
+
     public byte[] hashTx(byte[] senderPub, byte[] recipient, long amount, byte[] lastTxHash, byte[] signature) {
         var result = sha256(senderPub);
         xor(result, sha256(recipient));

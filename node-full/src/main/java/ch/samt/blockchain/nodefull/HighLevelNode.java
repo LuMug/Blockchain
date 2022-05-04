@@ -44,6 +44,7 @@ public class HighLevelNode extends Node {
     @Override
     protected void initHighLevelNode() {
         difficulty = super.database.getDifficulty();
+        miner.setDifficulty(difficulty);
 
         initPeriodicDownload();
     }
@@ -158,8 +159,10 @@ public class HighLevelNode extends Node {
 
             difficulty = Math.max(1, difficulty);
 
+            miner.setDifficulty(difficulty);
             Logger.info("DIFFICULTY: " + difficulty);
         }
+
 
         newBlock();
         return true;
