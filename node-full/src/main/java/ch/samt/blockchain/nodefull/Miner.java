@@ -32,21 +32,6 @@ public class Miner {
         for (int i = 0; i < target.length; i++) {
             this.target[32 - target.length + i] = target[i];
         }
-
-       // print(this.target);
-    }
-
-    private static void print(byte[] arr) {
-        var outer = new StringBuilder();
-        for (int i = 0; i < arr.length; i++) {
-            StringBuilder inner = new StringBuilder();
-            inner.append(Integer.toBinaryString(arr[i] % 0xFF));
-            for (int  j = 0; j < 8 - inner.length(); j++) {
-                inner.insert(0, "0");
-            }
-            outer.append(inner.toString());
-        }
-        System.out.println(outer.toString());
     }
     
     public byte[] getTxHash() {

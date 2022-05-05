@@ -1,11 +1,7 @@
 package ch.samt.blockchain.piccions;
 
-import ch.samt.blockchain.piccions.compiler.assembler.Assembler;
 import ch.samt.blockchain.piccions.vm.VirtualMachine;
-import static ch.samt.blockchain.piccions.bytecode.ByteCode.*;
-import static ch.samt.blockchain.piccions.compiler.assembler.Assembler.*;
 
-import ch.samt.blockchain.piccions.bytecode.ByteCode;
 import ch.samt.blockchain.piccions.compiler.CompileException;
 import ch.samt.blockchain.piccions.compiler.Compiler;
 import ch.samt.blockchain.piccions.compiler.SyntaxException;

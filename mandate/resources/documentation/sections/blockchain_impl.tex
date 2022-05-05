@@ -380,6 +380,36 @@ set the common ID to be 0.
 
 \pagebreak
 
+\subsubsection{Hashing}
+
+Here are the effective hashes for a block and for a transaction
+
+\paragraph{Block}
+
+\begin{align*}
+    \text{block}_\text{hash} &=
+    \text{SHA}_{256}(\text{id}) \\
+    &\oplus \text{SHA}_{256}(\text{difficulty}) \\
+    &\oplus \text{SHA}_{256}(\text{tx}_\text{hash}) \\
+    &\oplus \text{SHA}_{256}(\text{nonce}) \\
+    &\oplus \text{SHA}_{256}(\text{miner}) \\
+    &\oplus \text{SHA}_{256}(\text{last}_\text{hash}) \\
+    &\oplus \text{SHA}_{256}(\text{timestamp})
+\end{align*}
+
+\paragraph{Transaction}
+
+\begin{align*}
+    \text{block}_\text{hash} &=
+    \text{SHA}_{256}(\text{sender}_\text{public}) \\
+    &\oplus \text{SHA}_{256}(\text{recipient}) \\
+    &\oplus \text{SHA}_{256}(\text{amount}) \\
+    &\oplus \text{SHA}_{256}(\text{last}_\text{hash}) \\
+    &\oplus \text{SHA}_{256}(\text{signature})
+\end{align*}
+
+\pagebreak
+
 \hypertarget{constants}{}
 \subsection{Constants}
 
@@ -1001,6 +1031,8 @@ locally if you do not have a free internet connection.
 \paragraphln{Block}
 
 \includegraphics[width=\textwidth]{images/website3}
+
+\pagebreak
 
 \paragraphln{Wallet}
 

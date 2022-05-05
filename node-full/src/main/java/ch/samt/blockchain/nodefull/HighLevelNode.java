@@ -115,7 +115,6 @@ public class HighLevelNode extends Node {
         lastNonce = packet.getNonce();
 
         if (!miner.isMined(nonce)) {
-            Logger.info("Invalid PoW received");
             return false;
         }
 
