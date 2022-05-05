@@ -82,7 +82,7 @@ public abstract class Node extends Thread {
     protected abstract boolean broadcastTx(byte[] packet, Connection exclude, boolean live);
     protected abstract boolean broadcastTx(byte[] packet);
     protected abstract boolean powSolved(byte[] packet, boolean live);
-    protected abstract void broadcastPoW(byte[] packet, Connection exclude, boolean live);
+    protected abstract boolean broadcastPoW(byte[] packet, Connection exclude, boolean live);
     public abstract void downloadEnded(Connection from);
     public abstract void oldTx(byte[] packet);
     public abstract void serveBlockchain(byte[] packet, Connection to);
@@ -511,10 +511,10 @@ public abstract class Node extends Thread {
                         printNeighbours(out);
                         out.println();
                     }
-                    case "stop" -> {
+                    case "stop, exit" -> {
                         System.exit(0);
                     }
-                    case "help" -> printHelp(out);
+                    case "help", "h" -> printHelp(out);
                     default -> printHelp(out);
                 }
             }

@@ -3,7 +3,8 @@ package ch.samt.blockchain.nodeminer;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Scanner;
+
+import org.tinylog.Logger;
 
 import ch.samt.blockchain.common.protocol.Protocol;
 import ch.samt.blockchain.common.utils.paramhandler.ParamHandler;
@@ -16,6 +17,7 @@ public class Main {
         handler.addArg("priv", true, "file");
         handler.addArg("p", false, "port");
         handler.addArg("db", false, "file");
+        handler.addArg("cores", false, "number");
         handler.addFlag("help");
 
         try {
@@ -55,24 +57,28 @@ public class Main {
             new MinerNode(port, priv) :
             new MinerNode(port, priv, handler.getArg("db"));
 
+        int cpus = Runtime.getRuntime().availableProcessors();
+        if (!handler.isNull("cores")) {
+            try {
+                cpus = Integer.parseInt(handler.getArg("cores"));
+            } catch (NumberFormatException e) {
+                Logger.error("Invalid number of cores: " + handler.getArg("cores"));
+                System.exit(0);
+            }
+
+            if (cpus < 1) {
+                Logger.error("Invalid number of cores: " + cpus);
+                System.exit(0);
+            }
+        }
+
         // Start service
         node.start();
 
-        while (true) {
-            try {
-                Thread.sleep(500);
-                node.solvePoW();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        /*try (var scanner = new Scanner(System.in)) {
-            while (scanner.hasNext()) {
-                switch (scanner.nextLine()) {
-                    case "pow" -> node.solvePoW();
-                }
-            }
-        }*/
+        Logger.info("Starting mining on " + cpus + " cores");
+        node.startMining(cpus);
+
+        node.attachConsole(System.in, System.out);
     }
 
 }

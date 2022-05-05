@@ -125,7 +125,13 @@ public class CryptoUtils {
     }
 
     public byte[] hashBlockForPoW(byte[] txHash, byte[] nonce, byte[] lastHash) {
-        var result = txHash;
+        var result = new byte[32];
+
+        // clone txHash
+        for (int i = 0; i < result.length; i++) {
+            result[i] = txHash[i];
+        }
+
         xor(result, nonce);
         xor(result, lastHash);
         return result;

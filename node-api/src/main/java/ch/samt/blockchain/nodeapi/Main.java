@@ -83,14 +83,7 @@ public class Main {
 
         api.init();
 
-        // terminal
-        new Thread(() -> {
-            try (Scanner scanner = new Scanner(System.in)) {
-                switch (scanner.next()) {
-                    case "exit", "stop" -> api.terminate();
-                }
-            }
-        }).start();
+        api.attachConsole(System.in, System.out);
     }
 
 }

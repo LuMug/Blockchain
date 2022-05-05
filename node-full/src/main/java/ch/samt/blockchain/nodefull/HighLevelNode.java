@@ -20,7 +20,7 @@ import ch.samt.blockchain.nodefull.utils.ByteArrayKey;
 public class HighLevelNode extends Node {
 
     private Mempool mempool = new Mempool();
-    private Miner miner = new Miner();
+    protected Miner miner = new Miner();
 
     private List<DownloadListener> downloadListeners = new LinkedList<>();
 
@@ -63,14 +63,17 @@ public class HighLevelNode extends Node {
     }
 
     @Override
-    protected void broadcastPoW(byte[] packet, Connection exclude, boolean live) {
+    protected boolean broadcastPoW(byte[] packet, Connection exclude, boolean live) {
         if (downloading() ^ !live) {
-            return;
+            return false;
         }
 
         if (powSolved(packet, live) && live) {
             broadcast(packet, exclude);
+            return true;
         }
+
+        return false;
     }
 
     @Override
@@ -110,9 +113,8 @@ public class HighLevelNode extends Node {
         }
 
         lastNonce = packet.getNonce();
-        
-        miner.setNonce(nonce);
-        if (!miner.isMined()) {
+
+        if (!miner.isMined(nonce)) {
             Logger.info("Invalid PoW received");
             return false;
         }
@@ -160,7 +162,7 @@ public class HighLevelNode extends Node {
             difficulty = Math.max(1, difficulty);
 
             miner.setDifficulty(difficulty);
-            Logger.info("DIFFICULTY: " + difficulty);
+            Logger.info("New Difficulty: " + difficulty);
         }
 
 
@@ -179,7 +181,6 @@ public class HighLevelNode extends Node {
         Logger.info("Block: " + (nextId - 1));
         miner.clear();
 
-        miner.setHeight(nextId);
         updateLastHash();
         
         while (!mempool.isEmpty()) {
@@ -395,6 +396,14 @@ public class HighLevelNode extends Node {
 
         if (maxConnections.size() == 0) {
             Logger.warn("No peer to check blockchain length with");
+
+            if (forceIfSameLength) {
+                for (var listener : downloadListeners) {
+                    listener.onDownloadStart();
+                    listener.onDownloadEnd();
+                }
+            }
+
             return;
         }
 

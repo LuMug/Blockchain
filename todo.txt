@@ -1,4 +1,3 @@
-pow effettivo
 documentazione:
     test case
     risultati test case 
@@ -7,7 +6,6 @@ documentazione:
         pow
     programming language impl 
 
-TODO actual minining
 doc last hash nel calcolo (00000 if genesis)
 test case
 Ordinare getTx ASC per data
