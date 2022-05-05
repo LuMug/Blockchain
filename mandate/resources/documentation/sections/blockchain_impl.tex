@@ -161,9 +161,7 @@ A miner will try to compute the following:
     \theta =
     \text{hash}_\text{last}
     \oplus
-    \text{SHA}_{256}(\text{height})
-    \oplus
-    \text{SHA}_{256}(\text{nonce})
+    \text{nonce}
     \oplus
     \underset{i}{\oplus}\,
     \text{SHA}_{256}(\text{tx}_i)
@@ -176,10 +174,7 @@ so \(0 \leq i < \text{length}(\text{tx})\).
 A block is mined if a value for \textit{nonce} such that
 
 \[
-    0 = \sum_{n=0}^{\text{difficulty}}
-    \Big(
-        \text{SHA}_{256}(\theta \oplus n) \mod{2}
-    \Big)
+    \theta < \frac{\const{MAX\_TARGET}}{\text{difficulty}}
 \]
 
 is found.
@@ -302,6 +297,22 @@ Here is a table of what each node type knows and can do.
 
 \pagebreak
 
+\subsection{Difficulty}
+
+Difficulty is adjusted every \const{DIFFICULTY\_ADJUSTMENT\_RATE} blocks.
+The difficulty is adjusted such that the time to mine a block is 
+approximately \const{BLOCK\_RATE} ms.
+Every adjustament is based on the last \const{DIFFICULTY\_ADJUSTMENT\_DEPTH} blocks.
+
+\[
+    \text{difficulty}_\text{new} =
+    \text{difficulty}_\text{old} \cdot
+    \frac{\const{BLOCK\_RATE}\cdot\const{DIFFICULTY\_ADJUSTMENT\_DEPTH}}
+    {\Delta(\const{DIFFICULTY\_ADJUSTMENT\_DEPTH})} 
+\]
+
+where \(\Delta (x)\) is the time to mine the last \(x\) blocks.
+
 \subsection{Blockchain download}
 
 When a node joins the network, either for the first time
@@ -381,9 +392,25 @@ Constants related to the database node caching
 \def\arraystretch{1.25}
 \begin{tabular}{|l|l|}
     \hline
-    \textbf{Name} & \textbf{Value}
+    \textbf{Name} & \textbf{Default}
     \\ \hline
     MAX\_CACHED\_NODES & 50
+    \\ \hline
+\end{tabular}
+\egroup{}
+
+\paragraphln{Seeder}
+Constants related to the seeder
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{tabular}{|l|l|}
+    \hline
+    \textbf{Name} & \textbf{Default}
+    \\ \hline
+    POOL\_CAPACITY & 100
+    \\ \hline
+    MAX\_REQUEST & 10
     \\ \hline
 \end{tabular}
 \egroup{}
@@ -395,9 +422,19 @@ Constants related to the blockchain system:
 \def\arraystretch{1.25}
 \begin{tabular}{|l|l|}
     \hline
-    \textbf{Name} & \textbf{Value}
+    \textbf{Name} & \textbf{Default}
     \\ \hline
     BLOCK\_REWARD & 1000
+    \\ \hline
+    BLOCK\_RATE & 20000
+    \\ \hline
+    DIFFICULTY\_ADJUSTMENT\_RATE & 5
+    \\ \hline
+    DIFFICULTY\_ADJUSTMENT\_DEPTH & 6
+    \\ \hline
+    INITIAL\_DIFFICULTY & 1
+    \\ \hline
+    MAX\_TARGET & \(15 \cdot 2^{248}\)
     \\ \hline
 \end{tabular}
 \egroup{}
@@ -409,7 +446,7 @@ Constants related to the peer connections:
 \def\arraystretch{1.25}
 \begin{tabular}{|l|l|}
     \hline
-    \textbf{Name} & \textbf{Value}
+    \textbf{Name} & \textbf{Default}
     \\ \hline
     MAX\_CONNECTIONS & 150
     \\ \hline
@@ -423,6 +460,8 @@ Constants related to the peer connections:
     \\ \hline
     MAX\_TRIES\_NEIGHBOUR & 5
     \\ \hline
+    DEFAULT\_PORT & 5555
+    \\ \hline
     SEEDERS & \makecell[t] {
         127.0.0.1:4670 \\
         127.0.0.1:4671 \\
@@ -432,13 +471,15 @@ Constants related to the peer connections:
 \end{tabular}
 \egroup{}
 
+\pagebreak
+
 \paragraphln{Packets IDs}
 
 \bgroup{}
 \def\arraystretch{1.25}
 \begin{tabular}{|l|c|}
     \hline
-    \textbf{Name} & \textbf{Value}
+    \textbf{Name} & \textbf{Default}
     \\ \hline
     REQUEST\_NODES & 0x0
     \\ \hline
@@ -469,8 +510,6 @@ Constants related to the peer connections:
 
 \end{tabular}
 \egroup{}
-
-\pagebreak
 
 \hypertarget{packets}{}
 \subsection{Packets}
@@ -768,6 +807,7 @@ Example:
     {
         "status": "Ok",
         "nonce": "iKU71ffO++lmUKvJNwxyM3x/gOgjoiqlyvRxIcTKmCk=",
+        "difficulty": 368273
         "miner": "ZZ1PjoBwOZQGP0AYPmwxHsa5Z9YhRDaDbE1XIKyCUsA=",
         "timestamp": 1651363707165,
         "last_hash": "AvM6wrrEZL29GGMigfkCzflUN54yrX/jQZXImkFpcAI=",

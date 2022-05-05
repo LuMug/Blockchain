@@ -1,0 +1,144 @@
+\documentclass[../documentation.tex]{subfiles}
+
+\begin{document}
+
+\newcommand{\requirement}[5]{
+    \bgroup{}
+    \def\arraystretch{1.25}
+    \begin{center}
+        \begin{tabular}{ |l|p{9cm}| }
+            \hline
+            \multicolumn{2}{|c|}{\textbf{Test-#1}} \\
+            \hline
+            \textbf{Name} & #2 \\
+            \hline
+            \textbf{Reference} & #3 \\
+            \hline
+            \textbf{Prerequisites} & #4 \\
+            \hline
+            \textbf{Description} &
+            \begin{itemize}
+                #5
+            \end{itemize} \\
+            \hline
+        \end{tabular}
+    \end{center}
+    \egroup{}
+}
+
+\subsection{Test protocol}
+
+\requirement{00}
+    {Proof-of-work}
+    {Req-00}
+    {A private key file}
+    {\item Start a miner with the given private key. Given some time
+    the node should mine some blocks}
+
+\requirement{01}
+    {Peer discovery}
+    {Req-01}
+    {An active seeder}
+    {
+        \item Start at least 3 nodes (full, api or miners)
+        \item type 'ls' on the seeder terminal
+        \item type 'ls' on each node terminal
+        \item the nodes should all be connected 
+    }
+
+    \requirement{02}
+    {Programming Language}
+    {Req-02}
+    {A correct source code file}
+    {
+        \item Compile the source code using the compiler
+        \item The compiler should give no errors and produce the bytecode
+    }
+
+\requirement{03}
+    {Smart contract}
+    {Req-03}
+    {A compiled smart contract, active webserver and node-api}
+    {
+        \item Go to the website > Deploy
+        \item Drag the compiled contract into the dropzone
+        \item The node-api should log the new smart contract
+    }
+
+    \requirement{04}
+    {Forger Tool}
+    {Req-04}
+    {None}
+    {
+        \item Generate a wallet
+        \item Generate a transaction to a random wallet
+        \item Dump the transaction file
+    }
+
+\requirement{05}
+    {API}
+    {Req-05}
+    {Active node-api with some test data}
+    {
+        \item Open a terminal
+        \item curl -X POST http://<ip>:<port>/<route>[/value]
+        \item The response should be valid JSONs
+    }
+
+\requirement{06}
+    {Miner}
+    {Req-06}
+    {Active seeder, active node-api, active webserver, private key file}
+    {
+        \item Start a miner with the private key file
+        \item Wait for some blocks to be mined by the miner
+        \item Go to the website > Blocks > Miner
+        \item The miner should have blocks\_mined \(\cdot 1000\) UTXO
+    }
+
+\requirement{07}
+    {Website}
+    {Req-07}
+    {Active api with some test data, active webserver}
+    {
+        \item Open the website
+        \item Go to /blocks
+        \item Click a block
+        \item Click the miner of the block
+        \item Click a transaction associated with the miner
+        \item Click the recipient of the transaction
+        \item There should be no errors
+    }
+
+\pagebreak
+
+\subsection{Test results}
+
+\bgroup{}
+\def\arraystretch{1.25}
+\begin{center}
+    \begin{tabular}{ |l|l|l| }
+        \hline
+        \textbf{ID} & Result & Note \\
+        \hline
+        \textbf{Test-00} & \color{darkgreen} Passed & The node mines blocks \\
+        \hline
+        \textbf{Test-01} & \color{darkgreen} Passed & The nodes connect to eachother \\
+        \hline
+        \textbf{Test-02} & \color{red} Failed & The compiler is not done \\
+        \hline
+        \textbf{Test-03} & \color{red} Failed & Smart contracts have not been implemented \\
+        \hline
+        \textbf{Test-04} & \color{darkgreen} Passed & Transaction successfully generated\\
+        \hline
+        \textbf{Test-05} & \color{darkgreen} Passed & Valid responses \\
+        \hline
+        \textbf{Test-06} & \color{darkgreen} Passed & Correct UTXO value \\
+        \hline
+        \textbf{Test-07} & \color{darkgreen} Passed & No errors \\
+        \hline
+    \end{tabular}
+\end{center}
+\egroup{}
+
+\end{document}
