@@ -50,7 +50,7 @@ public class Protocol {
          * Every how much time a block should approxaimtely
          * be mined (ms).
          */
-        public static final int BLOCK_RATE = 20000; // 120000
+        public static final int BLOCK_RATE = 7500; // 120000
 
         /**
          * Every how many blocks to adjust the difficulty.
@@ -65,7 +65,7 @@ public class Protocol {
         /**
          * The inizia difficulty.
          */
-        public static final long INITIAL_DIFFICULTY = 1L;
+        public static final long INITIAL_DIFFICULTY = 1000000L;
 
         /**
          * Maximum block target for proof-of-work.

@@ -115,6 +115,7 @@ public class HighLevelNode extends Node {
         lastNonce = packet.getNonce();
 
         if (!miner.isMined(nonce)) {
+            Logger.info("Invalid Proof-of-Work received");
             return false;
         }
 
@@ -156,14 +157,13 @@ public class HighLevelNode extends Node {
             var id = Math.max(height - Protocol.Blockchain.DIFFICULTY_ADJUSTMENT_DEPTH + 1, 1);
             var oldBlock = super.database.getBlock(id);
             var time = lastBlockTimestamp - oldBlock.timestamp();
-            difficulty *= Protocol.Blockchain.BLOCK_RATE * Protocol.Blockchain.DIFFICULTY_ADJUSTMENT_DEPTH / time;
+            difficulty = (int) ((double) difficulty * Protocol.Blockchain.BLOCK_RATE * Protocol.Blockchain.DIFFICULTY_ADJUSTMENT_DEPTH / (double) time);
 
             difficulty = Math.max(1, difficulty);
 
             miner.setDifficulty(difficulty);
             Logger.info("New Difficulty: " + difficulty);
         }
-
 
         newBlock();
         return true;
@@ -181,6 +181,7 @@ public class HighLevelNode extends Node {
         miner.clear();
 
         updateLastHash();
+        miner.setDifficulty(super.database.getDifficulty()); //
         
         while (!mempool.isEmpty()) {
             var tx = mempool.drawOne();
@@ -456,6 +457,7 @@ public class HighLevelNode extends Node {
         }
 
         updateLastHash();
+        miner.setDifficulty(super.database.getDifficulty());
         
         blockchainSeeder.initDownload(startId);
     }

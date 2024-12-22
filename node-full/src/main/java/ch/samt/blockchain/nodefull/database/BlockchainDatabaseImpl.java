@@ -687,6 +687,22 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
         return new byte[32];
     }
 
+    @Override
+    public void updateDifficulty() {
+        if (blockchainLength != 0 && blockchainLength % Protocol.Blockchain.DIFFICULTY_ADJUSTMENT_RATE == 0) {
+            var id = Math.max(blockchainLength - Protocol.Blockchain.DIFFICULTY_ADJUSTMENT_DEPTH + 1, 1);
+            var oldBlock = getBlock(id);
+            var lastBlock = getBlock(blockchainLength);
+            var time = lastBlock.timestamp()- oldBlock.timestamp();
+            // non dovrebbe farli su DEPTH, ma su quanti ne prende effettivamente
+            difficulty = (int) ((double) difficulty * Protocol.Blockchain.BLOCK_RATE * Protocol.Blockchain.DIFFICULTY_ADJUSTMENT_DEPTH / (double) time);
+
+            difficulty = Math.max(1, difficulty);
+
+            Logger.info("New Difficulty: " + difficulty);
+        }
+    }
+
     private synchronized void init() {
         var result = connection.query("SELECT COUNT(id) FROM block;");
         try (result) {
@@ -707,6 +723,8 @@ public class BlockchainDatabaseImpl implements BlockchainDatabase {
             var block = getBlock(blockchainLength); // lastBlock
             difficulty = block.difficulty();
         }
+
+        updateDifficulty();
     }
 
 }

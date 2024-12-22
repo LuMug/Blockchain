@@ -238,4 +238,6 @@ public interface BlockchainDatabase {
      */
     void clear();
 
+    void updateDifficulty();
+
 }
